@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Administration Panel Control Console - Customize Collection</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+/* ==========================================================================
+   STOREFRONT INVENTORY CORE PANEL - CLEANED & DE-DUPLICATED
+   ========================================================================== */
+
+/* 1. Category and Row Wrappers */
+.inventory-category-group-wrapper {
+    background: #fdfdfd;
+    border: 1px solid #eef2f5;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 25px;
+}
+
+.inventory-category-title {
+    font-size: 16px;
+    color: #e65100; /* Theme branding highlight */
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #ffe0b2;
+    font-weight: 700;
+}
+
+.inventory-product-management-row {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+/* 2. Product Metadata and Header Section */
+.inv-product-meta-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.inv-prod-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.inv-prod-name {
+    font-size: 15px;
+    color: #212121;
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* 3. Three-Column Attribute Layout Grid */
+.inv-attributes-management-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 15px;
+}
+
+@media (max-width: 991px) {
+    .inv-attributes-management-grid { 
+        grid-template-columns: 1fr; 
+    }
+}
+
+.inv-attr-col {
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.inv-attr-col > span {
+    font-size: 11px;
+    font-weight: bold;
+    color: #718096;
+    display: block;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.inv-chips-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto; /* Scroll clean window containment */
+    padding-right: 4px;
+}
+
+/* 4. Interactive Attribute Option Chips (DEFAULT / ACTIVE STATE) */
+.inv-chips-flex button {
+    background: #eef2f7; 
+    border: 1px solid #cbd5e0;
+    color: #2d3748;
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+/* Hovering over an active item hints that clicking will block it */
+.inv-chips-flex button:hover:not(.item-attr-stocked-out) {
+    border-color: #e53e3e;
+    color: #e53e3e;
+    background: #fff5f5;
+}
+
+/* 5. Master Two-Way Toggle State (STOCKED OUT STATE) */
+.item-attr-stocked-out {
+    background: #fff5f5 !important;
+    color: #e53e3e !important;
+    border-color: #feb2b2 !important;
+    text-decoration: line-through;
+    cursor: pointer !important; /* Kept interactive so it can be turned back on! */
+    font-weight: 600;
+}
+
+/* Hovering over a blocked item clearly hints at a green RESTOCK option */
+.item-attr-stocked-out:hover {
+    background: #f0fff4 !important;
+    color: #38a169 !important;
+    border-color: #9ae6b4 !important;
+    text-decoration: none !important;
+}
+
+/* 6. Whole Product Master Styles Active Toggles */
+.inv-stockout-whole-product-btn {
+    background: #f0fff4;
+    color: #38a169;
+    border: 1px solid #9ae6b4;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.1s ease;
+}
+
+.inv-stockout-whole-product-btn:hover:not(.item-attr-stocked-out) {
+    background: #e6fffa;
+    border-color: #4fd1c5;
+}
+
+.inv-stockout-whole-product-btn.item-attr-stocked-out {
+    background: #fff5f5 !important;
+    color: #e53e3e !important;
+    border-color: #feb2b2 !important;
+}
+
+/* 7. Miscellanous Helpers */
+.inv-color-control-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.inv-color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.inv-empty-text {
+    font-size: 11px;
+    color: #a0aec0;
+    font-style: italic;
+}
+
+        body { font-family: system-ui, sans-serif; background: #f1f5f9; padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; color: #0f172a; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+        .status-btn { padding: 6px 16px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .active { background: #dcfce7; color: #166534; }
+        .inactive { background: #fee2e2; color: #991b1b; }
+        #admin-chat-view { height: 250px; overflow-y: auto; background: #f8fafc; padding: 15px; border-radius: 6px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+
+<div id="inventory-core-management" class="inventory-admin-section">
+    <div class="admin-header-row">
+        <h3><i class="fa fa-boxes"></i> Storefront Stock & Inventory Core Management</h3>
+        <span class="badge-status-live">Live Sync Active</span>
+    </div>
+    
+    <div class="inventory-grid-dashboard">
+        <div class="inventory-card-panel">
+            <h5>Quick Stock-Out Actions By Attributes</h5>
+            <p class="panel-subtext">Instantly toggle or deduct batch inventory limits across catalog specifications.</p>
+            <div id="dynamic-stockout-button-hub" class="stockout-actions-wrapper"></div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Customer Orders & Intercom</h2>
+
+    <div style="display:grid;grid-template-columns:220px 1fr;gap:16px;">
+        <div>
+            <h4 style="margin:0 0 10px 0;">Orders</h4>
+            <div id="admin-order-list"
+                 style="height:360px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;padding:8px;">
+            </div>
+        </div>
+
+        <div>
+            <div id="admin-order-details"
+                 style="margin-bottom:10px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;">
+                Select an order
+            </div>
+
+            <div id="admin-chat-view"></div>
+
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <input type="text"
+                       id="admin-chat-input"
+                       placeholder="Type reply to selected customer..."
+                       style="flex-grow:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+
+                <button onclick="transmitAdminResponseText()"
+                        style="background:#0b57d0;color:white;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:bold;">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="twoFactorWall" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999999;">
+    <div style="text-align: center; font-family: Arial, sans-serif; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <h2 style="color: #0b57d0; margin-top: 0;">🔒 Device Verification Required</h2>
+        <p style="color: #4a5568; margin-bottom: 20px;">Enter the 6-digit security pin from your Google Authenticator App.</p>
+        
+        <input type="text" id="twoFactorPinInput" maxLength="6" placeholder="000 000" style="font-size: 24px; text-align: center; padding: 10px; width: 180px; letter-spacing: 5px; border: 2px solid #cbd5e1; border-radius: 8px; outline: none; margin-bottom: 20px;" />
+        <br>
+        <button onclick="submitAdmin2FACode()" style="background: #0b57d0; color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;">Verify & Enter Dashboard</button>
+        <p id="errorMessage" style="color: #e53e3e; font-weight: bold; margin-top: 15px; display: none;"></p>
+    </div>
+</div>
+
+<script>
+let targetedOrderId = "";
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadStockConfigurationTables();
+    loadAdminOrders();
+    setInterval(function(){
+    const activeInput = document.activeElement;
+
+    if(
+        activeInput &&
+        (
+            activeInput.id === "owner-extra-amount-input" ||
+            activeInput.id === "owner-final-total-box"
+        )
+    ){
+        return;
+    }
+
+    loadAdminOrders();
+}, 1000);
+
+    document.getElementById("admin-chat-input").addEventListener("keypress", function(event){
+        if(event.key === "Enter"){
+            transmitAdminResponseText();
+        }
+    });
+});
+
+function loadStockConfigurationTables() {
+    const view = document.getElementById("inventory-table-target");
+    if(!view) return;
+
+    view.innerHTML = `
+        <p style="color:#64748b;">
+            Inventory server is not connected yet.
+        </p>
+    `;
+}
+
+function getAllOrders(){
+    return JSON.parse(localStorage.getItem("allOrdersData")) || [];
+}
+
+function saveAllOrders(orders){
+    localStorage.setItem("allOrdersData", JSON.stringify(orders));
+}
+
+function loadAdminOrders(){
+    const orders = getAllOrders();
+    const list = document.getElementById("admin-order-list");
+
+    if(!list) return;
+
+    if(orders.length === 0){
+        list.innerHTML = `
+            <div style="color:#64748b;text-align:center;padding:20px;">
+                No orders yet.
+            </div>
+        `;
+
+        document.getElementById("admin-chat-view").innerHTML = "";
+        document.getElementById("admin-order-details").innerHTML = "Select an order";
+        return;
+    }
+
+    list.innerHTML = "";
+
+    orders.slice().reverse().forEach(order => {
+        const messageCount = (order.chatLedgerHistory || []).filter(msg => msg.sender === "Customer").length;
+        const isActive = order.orderId === targetedOrderId;
+        const customerLabel = order.customerName || order.orderId || "Customer";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.onclick = () => selectAdminOrder(order.orderId);
+
+        btn.style.cssText = `
+            width:100%;
+            text-align:left;
+            border:1px solid ${isActive ? "#0b57d0" : "#e2e8f0"};
+            background:${isActive ? "#eaf2ff" : "#fff"};
+            border-radius:6px;
+            padding:10px;
+            margin-bottom:8px;
+            cursor:pointer;
+        `;
+
+        btn.innerHTML = `
+            <div style="font-weight:700;color:#0f172a;font-size:13px;">
+                ${customerLabel}
+            </div>
+
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                ₹${order.total || 0} • ${order.status || "active"}
+            </div>
+
+            <div style="font-size:11px;color:#0b57d0;margin-top:4px;">
+                ${messageCount} customer message${messageCount === 1 ? "" : "s"}
+            </div>
+        `;
+
+        list.appendChild(btn);
+    });
+
+    if(!targetedOrderId){
+        targetedOrderId = orders[orders.length - 1].orderId;
+    }
+
+    loadSelectedOrderChat();
+    loadSelectedOrderDetails();
+}
+
+function getOrderCustomerLabel(order){
+    if(order.customerName){
+        const numberPart = String(order.orderId || "").includes("#")
+            ? String(order.orderId).split("#").pop().trim()
+            : String(order.orderId || "").slice(-4);
+
+        return order.customerName + " #" + numberPart;
+    }
+
+    if(String(order.orderId || "").startsWith("CC-")){
+        return "Customer #" + String(order.orderId).slice(-4);
+    }
+
+    return order.orderId || "Customer";
+}
+
+function selectAdminOrder(orderId){
+    targetedOrderId = orderId;
+    loadAdminOrders();
+}
+
+function getSelectedOrder(){
+    const orders = getAllOrders();
+    return orders.find(order => order.orderId === targetedOrderId);
+}
+
+function loadSelectedOrderDetails(){
+    const box = document.getElementById("admin-order-details");
+    const order = getSelectedOrder();
+
+    if(!box) return;
+
+    if(!order){
+        box.innerHTML = "Select an order";
+        return;
+    }
+
+    const items = order.purchasedItems || order.items || [];
+    const colorValueFromItem = item => item.color || item.answer2 || "";
+
+    box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:start;">
+            <div>
+                <div style="font-weight:800;color:#0f172a;">${getOrderCustomerLabel(order)}</div>
+                <div style="font-size:12px;color:#64748b;">${order.customerEmail || ""}</div>
+                <div style="font-size:12px;color:#64748b;">Status: ${order.status || "active"}</div>
+            </div>
+
+            <button onclick="acceptSelectedOrderForDelivery()"
+                    style="background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:700;cursor:pointer;">
+                ACCEPT
+            </button>
+        </div>
+
+        <div style="font-weight:800;color:#111;margin-top:8px;">₹${order.total || order.totalPaid || 0}</div>
+
+        <div style="margin-top:12px;font-size:13px;color:#334155;">
+            ${items.length ? items.map(item => `
+                <div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9;">
+                    <img src="${item.img || item.image || ""}"
+                         style="width:58px;height:58px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;"
+                         onerror="this.style.display='none'">
+
+                    <div style="flex:1;">
+                        <b>${item.displayName || item.name}</b>
+                        <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                            ${item.material ? `Material: ${item.material}<br>` : ""}
+                            ${colorValueFromItem(item) ? `
+                                Color:
+                                <span style="
+                                    display:inline-block;
+                                    width:12px;
+                                    height:12px;
+                                    border-radius:50%;
+                                    background:${colorValueFromItem(item)};
+                                    border:1px solid #999;
+                                    vertical-align:middle;
+                                    margin:0 4px;
+                                "></span><br>
+                            ` : ""}
+                            ${item.size ? `Size: ${item.size}<br>` : ""}
+                            ${item.notes ? `Notes: ${item.notes}<br>` : ""}
+                            Qty: ${item.qty || 1}
+                        </div>
+                    </div>
+                </div>
+            `).join("") : "No item details found."}
+        </div>
+
+        ${renderAdminFulfillmentMap(order)}
+    `;
+}
+
+function loadSelectedOrderChat(){
+    const chatView = document.getElementById("admin-chat-view");
+    const order = getSelectedOrder();
+
+    if(!chatView) return;
+
+    chatView.innerHTML = "";
+
+    if(!order){
+        chatView.innerHTML = `
+            <div style="color:#64748b;text-align:center;padding:20px;">
+                Select an order to view messages.
+            </div>
+        `;
+        return;
+    }
+
+    (order.chatLedgerHistory || []).forEach(msg => {
+        showAdminRenderedBubble(msg.sender, msg.text, msg.stamp);
+    });
+}
+
+function transmitAdminResponseText() {
+    const field = document.getElementById("admin-chat-input");
+    const txt = field.value.trim();
+
+    if(!txt) return;
+
+    const orders = getAllOrders();
+    const order = orders.find(order => order.orderId === targetedOrderId);
+
+    if(!order){
+        alert("Select an order first");
+        return;
+    }
+
+    order.chatLedgerHistory = order.chatLedgerHistory || [];
+
+    order.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: "Owner",
+        text: txt,
+        stamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+        })
+    });
+
+    saveAllOrders(orders);
+    field.value = "";
+    loadAdminOrders();
+}
+
+function showAdminRenderedBubble(role, text, stamp = "") {
+    const container = document.getElementById("admin-chat-view");
+    const bubble = document.createElement("div");
+    const isOwner = role === "Owner" || role === "owner";
+
+    bubble.style = `
+        padding:8px 14px;
+        border-radius:12px;
+        max-width:75%;
+        width:fit-content;
+        font-size:14px;
+        word-wrap:break-word;
+        margin-bottom:8px;
+        ${isOwner
+            ? "background:#0b57d0;align-self:flex-end;color:white;"
+            : "background:#cbd5e1;align-self:flex-start;color:#1e293b;"
+        }
+    `;
+
+    bubble.innerHTML = `
+        <div style="font-size:11px;font-weight:bold;margin-bottom:3px;">
+            ${isOwner ? "Owner" : "Customer"}
+        </div>
+        <div>${text || ""}</div>
+        <div style="font-size:10px;opacity:0.75;margin-top:4px;text-align:right;">
+            ${stamp || ""}
+        </div>
+    `;
+
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
+}
+
+function acceptSelectedOrderForDelivery(){
+    const orders = getAllOrders();
+    const order = orders.find(order => order.orderId === targetedOrderId);
+
+    if(!order){
+        alert("Select an order first");
+        return;
+    }
+
+    const stamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    order.status = "delivery_active";
+    order.currentPhase = 3;
+    order.dispatchTimestamp = stamp;
+    order.timeline = order.timeline || [];
+    order.chatLedgerHistory = order.chatLedgerHistory || [];
+
+    order.timeline.push({
+        title: "Delivery Process Activated",
+        time: stamp
+    });
+
+    order.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: "System",
+        text: "Owner accepted the order. Delivery process activated.",
+        stamp: stamp
+    });
+
+    saveAllOrders(orders);
+    loadAdminOrders();
+}
+
+function renderAdminFulfillmentMap(order){
+    const isAccepted = order.currentPhase === 3 || order.status === "delivery_active" || order.status === "delivered";
+    const isDelivered = order.status === "delivered" || order.isDeliveryFinalized;
+
+    return `
+        <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;">
+                Fulfillment Map Tracking Logistics
+            </div>
+
+            <div style="font-size:13px;color:#334155;line-height:1.8;">
+                <div>
+                    <b style="color:#16a34a;">●</b>
+                    Order Settlement Confirmed
+                    <span style="float:right;color:#64748b;">${order.paymentTimestamp || ""}</span>
+                </div>
+
+                <div>
+                    <b style="color:${isAccepted ? "#fb641b" : "#cbd5e1"};">●</b>
+                    Out for Delivery
+                    <span style="float:right;color:#64748b;">${order.dispatchTimestamp || "Waiting"}</span>
+                </div>
+
+                <div>
+                    <b style="color:${isDelivered ? "#16a34a" : "#cbd5e1"};">●</b>
+                    Package Complete
+                    <span style="float:right;color:#64748b;">${order.deliveryTimestamp || "Awaiting"}</span>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <button onclick="acceptSelectedOrderForDelivery()"
+                        style="flex:1;background:#16a34a;color:#fff;border:none;padding:9px 10px;border-radius:6px;font-weight:800;cursor:pointer;">
+                    ACCEPT
+                </button>
+
+                <button onclick="markSelectedOrderDone()"
+                        style="flex:1;background:#0b57d0;color:#fff;border:none;padding:9px 10px;border-radius:6px;font-weight:800;cursor:pointer;">
+                    DONE
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function markSelectedOrderDone(){
+    const orders = getAllOrders();
+    const order = orders.find(order => order.orderId === targetedOrderId);
+
+    if(!order){
+        alert("Select an order first");
+        return;
+    }
+
+    const stamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    order.status = "delivered";
+    order.currentPhase = 3;
+    order.isDeliveryFinalized = true;
+    order.deliveryTimestamp = stamp;
+    order.chatLedgerHistory = order.chatLedgerHistory || [];
+
+    order.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: "System",
+        text: "Owner marked the package as complete.",
+        stamp: stamp
+    });
+
+    saveAllOrders(orders);
+    loadAdminOrders();
+}
+
+// ======================================================
+// OWNER EXTRA AMOUNT + FINAL TOTAL BOXES
+// Paste at bottom of admin.html before 
+// ======================================================
+
+(function(){
+    if(window.ownerAmountBoxPatchInstalled) return;
+    window.ownerAmountBoxPatchInstalled = true;
+
+    const oldLoadSelectedOrderDetails = window.loadSelectedOrderDetails;
+    
+    // 🟢 LOCK STATE DRIVER: Keeps track of whether your keyboard is active
+    window.adminIsTypingInPriceBox = false;
+
+    function moneyNumber(value){
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    }
+
+    // 🟢 SECURE DATA WRITER
+    window.saveDirectOrderPricePatch = function(value){
+        const orders = getAllOrders();
+        const targetId = typeof targetedOrderId !== "undefined" ? targetedOrderId : localStorage.getItem("activeOrderId");
+        const order = orders.find(order => order.orderId === targetId);
+
+        if(!order) return;
+
+        const updatedPrice = moneyNumber(value);
+
+        // Mutate storage variables directly
+        order.total = updatedPrice;
+        order.totalPaid = updatedPrice;
+        order.baseTotal = updatedPrice;
+        order.finalTotal = updatedPrice;
+        order.ownerAddedAmount = 0; 
+
+        saveAllOrders(orders);
+
+        if(localStorage.getItem("activeOrderId") === order.orderId){
+            localStorage.setItem("pendingOrderTotal", String(updatedPrice));
+        }
+        
+        // Instant visual match for your left listing menu panel
+        const listTotalElement = document.getElementById(`order-total-${targetId}`);
+        if(listTotalElement) {
+            listTotalElement.innerText = `₹${updatedPrice}`;
+        }
+    };
+
+    // 🟢 ISOLATED WORKFLOW ACTION FOR THE CHAT BUTTON ONLY
+    window.executeChatButtonWorkflowOnly = function(event) {
+        if(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        const order = getSelectedOrder();
+        if(!order) return;
+
+        // 1. Post/Render exclusively the message log timeline event update
+        // (Ensures the order status does NOT step forward into delivery execution channels)
+        if (typeof appendAdminChatStatusNotification === "function") {
+            appendAdminChatStatusNotification("Order created. You can now message the store about customization.");
+        } else if (typeof renderOrderTimelineMessages === "function") {
+            // Fallback safety to check if your platform relies on a structural data push layout
+            if (!order.timelineMessages) order.timelineMessages = [];
+            
+            // Avoid pushing duplicates if it already exists
+            const msgExists = order.timelineMessages.some(m => m.text && m.text.includes("You can now message"));
+            if (!msgExists) {
+                order.timelineMessages.push({
+                    text: "Order created. You can now message the store about customization.",
+                    timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                });
+                const orders = getAllOrders();
+                const matched = orders.find(o => o.orderId === order.orderId);
+                if (matched) {
+                    matched.timelineMessages = order.timelineMessages;
+                    saveAllOrders(orders);
+                }
+            }
+        }
+
+        // 2. Safely re-render layout blocks to display the newly posted text bubble cleanly
+        if (typeof loadSelectedOrderDetails === "function" && !window.adminIsTypingInPriceBox) {
+            // Temporarily clear our local lock flag variables so it draws the dialogue text bubble update
+            const oldLockState = window.adminIsTypingInPriceBox;
+            window.adminIsTypingInPriceBox = false;
+            oldLoadSelectedOrderDetails();
+            injectOwnerAmountBoxes();
+            window.adminIsTypingInPriceBox = oldLockState;
+        }
+    };
+
+    // 🟢 BUTTON MODIFIER: Splits functionality between the two green elements completely
+    function applySeparatedButtonActions(box) {
+        const buttons = box.querySelectorAll("button");
+        if (buttons && buttons.length > 0) {
+            let foundFirstAccept = false;
+            for (let btn of buttons) {
+                const text = btn.innerText.trim().toUpperCase();
+                
+                if (text === "ACCEPT" || text === "CHAT") {
+                    if (!foundFirstAccept) {
+                        // 🟢 TARGETING BUTTON 1 (TOP): Transform completely into Chat control workflow
+                        btn.innerText = "CHAT";
+                        
+                        // Strip original execution functions to prevent acceptance workflow triggers
+                        btn.removeAttribute("onclick");
+                        btn.onclick = null;
+                        
+                        // Bind securely to our custom notification handler event loop
+                        btn.onclick = window.executeChatButtonWorkflowOnly;
+                        
+                        foundFirstAccept = true;
+                    } else {
+                        // 🟢 TARGETING BUTTON 2 (BOTTOM): Leave as the real deployment accept execution node
+                        btn.innerText = "ACCEPT";
+                        
+                        // Fallback backup script link to re-attach your standard core system function if wiped
+                        if (!btn.getAttribute("onclick") && typeof acceptSelectedOrderForDelivery === "function") {
+                            btn.onclick = function() { acceptSelectedOrderForDelivery(); };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function injectOwnerAmountBoxes(){
+        const box = document.getElementById("admin-order-details");
+        const order = getSelectedOrder();
+
+        if(!box || !order) return;
+
+        // Clean out duplicates cleanly if they exist
+        const oldRow = document.getElementById("owner-amount-row");
+        if(oldRow){
+            oldRow.remove();
+        }
+
+        const currentPriceAmount = order.total || order.totalPaid || 0;
+
+        const row = document.createElement("div");
+        row.id = "owner-amount-row";
+        row.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0 8px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        `;
+
+        // 🟢 PRELOADED INPUT FIELD MAP LAYOUT STRUCT
+        row.innerHTML = `
+            <span style="font-weight:700; color:#111; font-size:14px;">Order Price (₹):</span>
+            <input id="owner-direct-price-input"
+                   type="number"
+                   min="0"
+                   value="${currentPriceAmount}"
+                   placeholder="Add amount"
+                   onfocus="window.adminIsTypingInPriceBox = true;"
+                   oninput="saveDirectOrderPricePatch(this.value)"
+                   onblur="window.adminIsTypingInPriceBox = false;"
+                   onkeydown="if(event.key === 'Enter') { this.blur(); }"
+                   style="width:140px; padding:5px 7px; border:2px solid #06b6d4; border-radius:4px; font-weight:800; cursor:text; color:#111; background:#ffffff; outline:none;">
+        `;
+
+        const firstBlock = box.firstElementChild;
+        if(firstBlock){
+            firstBlock.insertAdjacentElement("afterend", row);
+        } else {
+            box.prepend(row);
+        }
+
+        // Always check and disconnect event callbacks on layout refreshes
+        applySeparatedButtonActions(box);
+    }
+
+    // 🟢 INTERCEPTOR PROXY: Overrides the old function layout to pause updates
+    window.loadSelectedOrderDetails = function(){
+        // IF YOU ARE TYPING, DO NOTHING. Stop the background reload loop completely!
+        if (window.adminIsTypingInPriceBox) {
+            const inputField = document.getElementById("owner-direct-price-input");
+            // If the element was somehow lost, let it rebuild, otherwise skip completely!
+            if (inputField && document.activeElement === inputField) {
+                return; 
+            }
+        }
+
+        // Run original core structure only when user is idle
+        if(typeof oldLoadSelectedOrderDetails === "function"){
+            oldLoadSelectedOrderDetails();
+        }
+
+        injectOwnerAmountBoxes();
+    };
+})();
+
+// ==========================================================================
+// 3 & 4. DYNAMIC TWO-WAY INVENTORY ENGINE WITH PERMANENT STORAGE LOCKS
+// ==========================================================================
+
+const STORAGE_KEY = "storefront_inventory_cache";
+
+function renderInventoryCoreManagement() {
+    const hubContainer = document.getElementById("dynamic-stockout-button-hub");
+    if (!hubContainer) return;
+
+    hubContainer.innerHTML = "";
+
+    const colorMap = {
+        '#FF5733': 'Flame Red', '#C70039': 'Crimson', '#900C3F': 'Deep Maroon',
+        '#581845': 'Plum Wine', '#FF8D1A': 'Tangerine', '#FFC300': 'Amber Gold',
+        '#EDDD53': 'Mustard Yellow', '#ADD45C': 'Soft Lime', '#57C785': 'Emerald Mint',
+        '#00BAAD': 'Teal Turquoise', '#2A7B9B': 'Ocean Slate', '#3D3D6B': 'Midnight Navy',
+        '#ECF0F1': 'Pearl White', '#95A5A6': 'Stone Gray', '#7F8C8D': 'Charcoal',
+        '#34495E': 'Dark Slate', '#16A085': 'Sea Green', '#27AE60': 'Forest Green',
+        '#3498DB': 'Dodger Blue', '#9B59B6': 'Amethyst', '#8E44AD': 'Royal Purple'
+    };
+
+    // Shared key for all blouse attribute entries — must match storefront-inventory-sync.js
+    const BLOUSE_SHARED = 'BLOUSE_SHARED';
+    const BLOUSE_SIZES  = ['Bust 32', 'Bust 34', 'Bust 36', 'Bust 38', 'Bust 40'];
+
+    if (typeof subProducts === 'undefined') {
+        hubContainer.innerHTML = '<p style="color:red;padding:10px;">Error: subProducts data not found.</p>';
+        return;
+    }
+
+    const savedStockOuts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+    Object.keys(subProducts).forEach(categoryName => {
+        const productsInCat = subProducts[categoryName];
+        if (!productsInCat || productsInCat.length === 0) return;
+
+        const categoryBlock = document.createElement("div");
+        categoryBlock.className = "inventory-category-group-wrapper";
+        categoryBlock.innerHTML = `<h4 class="inventory-category-title">${categoryName}</h4>`;
+
+        // ============================================================
+        // BLOUSE DESIGNS — ONE unified section (shared color/size/mat)
+        // Individual per-image style blocks remain below as compact tiles
+        // ============================================================
+        if (categoryName === "Blouse Designs") {
+
+            // Collect materials from first blouse product that has any
+            let blouseMatOptions = [];
+            productsInCat.forEach(p => {
+                if (blouseMatOptions.length === 0 && typeof sareeMaterials !== "undefined") {
+                    const m = sareeMaterials[p.name];
+                    if (m && m.length > 0) blouseMatOptions = m;
+                }
+            });
+
+            // --- Shared color chips ---
+            const colorChipsHtml = Object.entries(colorMap).map(([hex, name]) => {
+                const isOut = savedStockOuts[`${BLOUSE_SHARED}||Color Variant||${name}`] === true;
+                return `<button class="inv-color-control-chip ${isOut ? 'item-attr-stocked-out' : ''}"
+                            data-stocked-out="${isOut}"
+                            onclick="toggleGranularStock('Color Variant','${BLOUSE_SHARED}','${name}',this)">
+                            <span class="inv-color-dot" style="background:${hex};"></span>
+                            ${isOut ? `❌ ${name} Out` : name}
+                        </button>`;
+            }).join('');
+
+            // --- Shared size chips ---
+            const sizeChipsHtml = BLOUSE_SIZES.map(size => {
+                const isOut = savedStockOuts[`${BLOUSE_SHARED}||Size Option||${size}`] === true;
+                return `<button class="${isOut ? 'item-attr-stocked-out' : ''}"
+                            data-stocked-out="${isOut}"
+                            onclick="toggleGranularStock('Size Option','${BLOUSE_SHARED}','${size}',this)">
+                            ${isOut ? `❌ ${size} Out` : size}
+                        </button>`;
+            }).join('');
+
+            // --- Shared material chips ---
+            const matChipsHtml = blouseMatOptions.length === 0
+                ? `<em class="inv-empty-text">Standard Base Fabric (no variants)</em>`
+                : blouseMatOptions.map(mat => {
+                    const isOut = savedStockOuts[`${BLOUSE_SHARED}||Material option||${mat.name}`] === true;
+                    return `<button class="${isOut ? 'item-attr-stocked-out' : ''}"
+                                data-stocked-out="${isOut}"
+                                onclick="toggleGranularStock('Material option','${BLOUSE_SHARED}','${mat.name}',this)">
+                                ${isOut ? `❌ ${mat.name} Out` : mat.name}
+                            </button>`;
+                  }).join('');
+
+            // Shared settings card
+            const sharedCard = document.createElement("div");
+            sharedCard.className = "inventory-product-management-row";
+            sharedCard.style.cssText = "border-left:4px solid #e65100;margin-bottom:18px;";
+            sharedCard.innerHTML = `
+                <div style="font-size:13px;font-weight:700;color:#e65100;margin-bottom:12px;">
+                    🧵 Shared Settings — applies to <em>all</em> blouse designs at once
+                </div>
+                <div class="inv-attributes-management-grid">
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-ruler"></i> Sizes — Shared</span>
+                        <div class="inv-chips-flex">${sizeChipsHtml}</div>
+                    </div>
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-scroll"></i> Materials — Shared</span>
+                        <div class="inv-chips-flex">${matChipsHtml}</div>
+                    </div>
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-palette"></i> Production Colors — Shared</span>
+                        <div class="inv-chips-flex">${colorChipsHtml}</div>
+                    </div>
+                </div>
+            `;
+            categoryBlock.appendChild(sharedCard);
+
+            // Per-image style grid header
+            const styleHeader = document.createElement("div");
+            styleHeader.style.cssText = "font-size:11px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;";
+            styleHeader.textContent = "Individual Design Styles — block a specific design image";
+            categoryBlock.appendChild(styleHeader);
+
+            // Per-image compact grid
+            const styleGrid = document.createElement("div");
+            styleGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;";
+            productsInCat.forEach(product => {
+                const imgFilename = (product.img || "").split('/').pop().split('?')[0].trim() || "placeholder.png";
+                const isOut       = savedStockOuts[`${imgFilename}||Entire Product Style||${imgFilename}`] === true;
+                const tile = document.createElement("div");
+                tile.style.cssText = "display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;";
+                tile.innerHTML = `
+                    <img src="${product.img || 'images/placeholder.png'}"
+                         style="width:38px;height:38px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;"
+                         onerror="this.style.display='none'">
+                    <div style="flex:1;min-width:0;font-size:12px;">
+                        <div style="font-weight:600;color:#212121;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${product.name}">${product.name}</div>
+                        <div style="color:#999;">₹${product.price}</div>
+                    </div>
+                    <button class="inv-stockout-whole-product-btn ${isOut ? 'item-attr-stocked-out' : ''}"
+                            data-stocked-out="${isOut}"
+                            style="font-size:11px;padding:4px 8px;white-space:nowrap;flex-shrink:0;"
+                            onclick="toggleGranularStock('Entire Product Style','${imgFilename}','${imgFilename}',this)">
+                        <i class="fa ${isOut ? 'fa-times' : 'fa-check-circle'}"></i>
+                        ${isOut ? 'Blocked' : 'Active'}
+                    </button>
+                `;
+                styleGrid.appendChild(tile);
+            });
+            categoryBlock.appendChild(styleGrid);
+            hubContainer.appendChild(categoryBlock);
+            return; // skip normal per-product loop for Blouse Designs
+        }
+
+        // ============================================================
+        // DEFAULT: all other categories — original per-product rows
+        // ============================================================
+        productsInCat.forEach(product => {
+            const productName = product.name;
+            const imgSrc      = product.img || "";
+            const imgFilename = imgSrc.split('/').pop().split('?')[0].trim() || "placeholder.png";
+
+            const sizeOptions     = (typeof subProductSizeOptions !== 'undefined' ? subProductSizeOptions[productName] : []) || [];
+            const materialOptions = (typeof sareeMaterials !== 'undefined' ? sareeMaterials[productName] : []) || [];
+
+            const itemContainer = document.createElement("div");
+            itemContainer.className = "inventory-product-management-row";
+
+            const wholeProductKey    = `${imgFilename}||Entire Product Style||${imgFilename}`;
+            const isWholeProductOut  = savedStockOuts[wholeProductKey] === true;
+
+            itemContainer.innerHTML = `
+                <div class="inv-product-meta-header">
+                    <img src="${product.img || 'images/placeholder.png'}" class="inv-prod-thumb">
+                    <div>
+                        <strong class="inv-prod-name">${productName}</strong>
+                        <div class="inv-action-header-buttons">
+                            <button class="inv-stockout-whole-product-btn ${isWholeProductOut ? 'item-attr-stocked-out' : ''}"
+                                data-stocked-out="${isWholeProductOut}"
+                                onclick="toggleGranularStock('Entire Product Style', '${imgFilename}', '${imgFilename}', this)">
+                                <i class="fa ${isWholeProductOut ? 'fa-times' : 'fa-check-circle'}"></i>
+                                ${isWholeProductOut ? 'Whole Style Blocked' : 'Style Active'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inv-attributes-management-grid">
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-ruler"></i> Sizes</span>
+                        <div class="inv-chips-flex">
+                            ${sizeOptions.length === 0
+                                ? '<em class="inv-empty-text">Drape/Free Size Only</em>'
+                                : sizeOptions.map(size => {
+                                    const isSizeOut = savedStockOuts[`${imgFilename}||Size Option||${size}`] === true;
+                                    return `<button class="${isSizeOut ? 'item-attr-stocked-out' : ''}"
+                                                data-stocked-out="${isSizeOut}"
+                                                onclick="toggleGranularStock('Size Option', '${imgFilename}', '${size}', this)">
+                                                ${isSizeOut ? '❌ ' + size + ' Out' : size}
+                                            </button>`;
+                                  }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-scroll"></i> Materials</span>
+                        <div class="inv-chips-flex">
+                            ${materialOptions.length === 0
+                                ? '<em class="inv-empty-text">Standard Base Fabric</em>'
+                                : materialOptions.map(mat => {
+                                    const isMatOut = savedStockOuts[`${imgFilename}||Material option||${mat.name}`] === true;
+                                    return `<button class="${isMatOut ? 'item-attr-stocked-out' : ''}"
+                                                data-stocked-out="${isMatOut}"
+                                                onclick="toggleGranularStock('Material option', '${imgFilename}', '${mat.name}', this)">
+                                                ${isMatOut ? '❌ ' + mat.name + ' Out' : mat.name}
+                                            </button>`;
+                                  }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-palette"></i> Production Colors</span>
+                        <div class="inv-chips-flex">
+                            ${Object.entries(colorMap).map(([hex, name]) => {
+                                const isColorOut = savedStockOuts[`${imgFilename}||Color Variant||${name}`] === true;
+                                return `<button class="inv-color-control-chip ${isColorOut ? 'item-attr-stocked-out' : ''}"
+                                            data-stocked-out="${isColorOut}"
+                                            onclick="toggleGranularStock('Color Variant', '${imgFilename}', '${name}', this)">
+                                            <span class="inv-color-dot" style="background: ${hex};"></span>
+                                            ${isColorOut ? '❌ ' + name + ' Out' : name}
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            categoryBlock.appendChild(itemContainer);
+        });
+
+        hubContainer.appendChild(categoryBlock);
+    });
+}
+function toggleGranularStock(attributeType, targetProduct, valueLabel, buttonNode) {
+    // targetProduct now reliably holds the clean imgFilename passed from renderInventoryCoreManagement
+    const imageIdentifier = targetProduct; 
+    const isCurrentlyStockedOut = buttonNode.getAttribute("data-stocked-out") === "true";
+    
+    let savedStockOuts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    
+    // ========================================================
+    // FIXED STORAGE KEY GENERATION
+    // ========================================================
+    // Uses valueLabel at the end so individual attributes (Sizes/Colors/Mats) get tracked uniquely!
+    const storageUniqueId = `${imageIdentifier}||${attributeType}||${valueLabel}`;
+    const timerStorageKey = `${imageIdentifier}||${imageIdentifier}||timer`;
+    // ========================================================
+
+    if (isCurrentlyStockedOut) {
+        console.log(`[STORAGE SYNC] Restocking: ${storageUniqueId}`);
+        delete savedStockOuts[storageUniqueId];
+        
+        // Only clear the timer if they are restocking the entire product style
+        if (attributeType === "Entire Product Style") {
+            delete savedStockOuts[timerStorageKey];
+        }
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedStockOuts));
+
+        buttonNode.setAttribute("data-stocked-out", "false");
+        buttonNode.classList.remove("item-attr-stocked-out");
+        
+        if (buttonNode.classList.contains("inv-stockout-whole-product-btn")) {
+            buttonNode.innerHTML = `<i class="fa fa-check-circle"></i> Style Active`;
+        } else if (buttonNode.classList.contains("inv-color-control-chip")) {
+            const existingDot = buttonNode.querySelector(".inv-color-dot");
+            const savedHex = existingDot ? existingDot.style.backgroundColor : "";
+            buttonNode.innerHTML = `<span class="inv-color-dot" style="background: ${savedHex};"></span> ${valueLabel}`;
+        } else {
+            buttonNode.innerHTML = valueLabel;
+        }
+
+        window.dispatchEvent(new Event("storage"));
+    } else {
+        const confirmationText = `Confirm Inventory Action:\nMark ${attributeType} "${valueLabel}" as OUT OF STOCK?`;
+        
+        if (confirm(confirmationText)) {
+            console.warn(`[STORAGE SYNC] Stocking Out: ${storageUniqueId}`);
+            savedStockOuts[storageUniqueId] = true;
+
+            if (attributeType === "Entire Product Style") {
+                const timelineInput = prompt(
+                    `Enter Restock Timeline (e.g., "Restocking in 3 Hours", "Back Tomorrow"):`, 
+                    "Restocking Soon"
+                );
+                savedStockOuts[timerStorageKey] = timelineInput && timelineInput.trim() !== "" ? timelineInput.trim() : "Restocking Soon";
+            }
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedStockOuts));
+
+            buttonNode.setAttribute("data-stocked-out", "true");
+            buttonNode.classList.add("item-attr-stocked-out");
+            
+            if (buttonNode.classList.contains("inv-stockout-whole-product-btn")) {
+                buttonNode.innerHTML = `<i class="fa fa-times"></i> Whole Style Blocked`;
+            } else if (buttonNode.classList.contains("inv-color-control-chip")) {
+                const existingDot = buttonNode.querySelector(".inv-color-dot");
+                const savedHex = existingDot ? existingDot.style.backgroundColor : "";
+                buttonNode.innerHTML = `<span class="inv-color-dot" style="background: ${savedHex};"></span> ❌ ${valueLabel} Out`;
+            } else {
+                buttonNode.innerHTML = `❌ ${valueLabel} Out`;
+            }
+
+            window.dispatchEvent(new Event("storage"));
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", renderInventoryCoreManagement);
+
+
+
+
+
+// SUB-PRODUCTS LIBRARY
+const subProducts = {
+    "Saree": [
+    { name: "Mundum Neriyathum", img: "images/Mundum-Neriyathum.png", price: 450 },
+    { name: "Jamdani Saree", img: "images/Jamdani.png", price: 1200 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador1.png", price: 999 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador2.png", price: 1049 },
+    { name: "Cape Saree", img: "images/Cape-Saree.png", price: 1150 },
+    { name: "Net Saree", img: "images/Net-Saree.png", price: 799 },
+    { name: "Half Saree", img: "images/Half-Saree.png", price: 1299 },
+    { name: "Applique Work Saree", img: "images/Applique-Work-Saree.png", price: 999 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree.png", price: 499 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree1.png", price: 549 },
+    { name: "Silk Saree", img: "images/Silk-Saree.png", price: 889 },
+    { name: "Ready-to-Wear Saree", img: "images/Ready-to-Wear-Saree.png", price: 1199 }
+    ],
+    "Western Short Dresses": [
+    { name: "Ruffle Sleeve Dress", img: "images/Ruffle-Sleeve-Dress.png", price: 549 },
+    { name: "Off-Shoulder Short Dress", img: "images/Off-Shoulder-Short-Dress.png", price: 499 },
+    { name: "Puff Sleeve Short Dress", img: "images/Puffy-Sleeves-Short-Dress.png", price: 599 },
+    { name: "Barbie Style Short Dress", img: "images/Barbie-Style-Short-Dress.png", price: 699 },
+    { name: "Bodycon Short Dress", img: "images/Bodycon-Short-Dress.png", price: 399 }
+    ],
+    "Lehenga & Chaniya Choli & Ghagra": [
+    { name: "Chaniya Choli", img: "images/Chaniya-Choli.png", price: 1100 },
+    { name: "Ghagra", img: "images/Ghagra.png", price: 999 },
+    { name: "Party Wear Lehenga", img: "images/Party-Wear-Lehenga.png", price: 1999 },
+    { name: "Bridal Lehenga", img: "images/Bridal-Lehenga.png", price: 4500 },
+    { name: "Mermaid Or Fish-Cut Lehenga", img: "images/Mermaid-Or-Fish-Cut-Lehenga.png", price: 1799 },
+    { name: "Party Wear Fish-Cut Lehenga", img: "images/Party-Wear-Fish-Cut-Lehenga.png", price: 2864 },
+    { name: "Banarasi Lehenga", img: "images/Banarasi-Lehenga.png", price: 2200 }
+    ],
+    "Gown": [
+    { name: "Indo Gown", img: "images/Indo-Gown.png", price: 1499 },
+    { name: "Indo Gown", img: "images/Indo-Gown1.png", price: 1549 },
+    { name: "Saree Gown", img: "images/Saree-Gown.png", price: 1599 },
+    { name: "Ball Gown", img: "images/Ball-Gown.png", price: 2499 },
+    { name: "Mermaid Style Gown", img: "images/Mermaid-Style-Gown.png", price: 1400 },
+    { name: "Trail Gown", img: "images/Gown-With-Trail.png", price: 1999 },
+    { name: "Off-Shoulder Pleated Gown", img: "images/Off-Shoulder-With-Pleated-Gown.png", price: 1699 },
+    { name: "Big Size Ball Trail Gown", img: "images/Big-Size-Ball-Gown-With-Trail.png", price: 2999 },
+    { name: "A-Line Gown", img: "images/A-Line-Gown.png", price: 999 },
+    { name: "Asymmetrical Gown", img: "images/Asymmetrical-Gown.png", price: 1100 },
+    { name: "Balloon Sleeve Gown", img: "images/Balloon-Sleeve-Gown.png", price: 1299 },
+    { name: "Bohemian Gown", img: "images/Bohemian-Gown.png", price: 899 },
+    { name: "Cape Gown", img: "images/Cape-Gown.png", price: 1250 },
+    { name: "Empire Gown", img: "images/Empire-Gown.png", price: 1050 },
+    { name: "Halter Gown", img: "images/Halter-Gown.png", price: 1199 },
+    { name: "High Low Gown", img: "images/High-Low-Gown.png", price: 1150 },
+    { name: "Sheath Gown", img: "images/Sheath-Gown.png", price: 950 },
+    { name: "Slip Gown", img: "images/Slip-Gown.png", price: 699 },
+    { name: "Tea Length Gown", img: "images/Tea-Length-Gown.png", price: 1199 },
+    { name: "Trumpet Gown", img: "images/Trumpet-Gown.png", price: 1450 }
+    ],
+    "Palazzo": [
+    { name: "Palazzo with Crop Top", img: "images/Palazzo-With-Crop-Top.png", price: 799 },
+    { name: "Palazzo with Jacket", img: "images/Palazzo-With-Jacket.png", price: 1199 },
+    { name: "Palazzo with Kurti", img: "images/Palazzo-with-Kurti.png", price: 850 },
+    { name: "Palazzo with Indo-Western Dress", img: "images/Palazzo-with-Indo-Western-Dress.png", price: 1299 }
+    ],
+    "Gharara": [
+        { name: "Gharara", img: "images/Gharara1.png", price: 1499 },
+    ],
+    "Salwar Kameez": [
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez1.png", price: 899 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez2.png", price: 1099 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez3.png", price: 999 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez4.png", price: 1049 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez5.png", price: 949 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez6.png", price: 1149 }
+    ],
+    "Peplum": [
+        { name: "Peplum", img: "images/Peplum1.png", price: 799 },
+        { name: "Peplum", img: "images/Peplum2.png", price: 849 },
+        { name: "Peplum", img: "images/Peplum3.png", price: 899 },
+        { name: "Peplum", img: "images/Peplum4.png", price: 949 },
+        { name: "Peplum", img: "images/Peplum5.png", price: 999 },
+        { name: "Peplum", img: "images/Peplum6.png", price: 949 },
+        { name: "Peplum", img: "images/Peplum7.png", price: 899 },
+        { name: "Peplum", img: "images/Peplum8.png", price: 849 },
+        { name: "Peplum", img: "images/Peplum9.png", price: 799 }
+    ],
+    "Anarkali": [
+        { name: "Anarkali", img: "images/Anarkali1.png", price: 1299 },
+        { name: "Anarkali", img: "images/Anarkali2.png", price: 1349 },
+        { name: "Anarkali", img: "images/Anarkali3.png", price: 1399 },
+        { name: "Anarkali", img: "images/Anarkali4.png", price: 1449 }
+    ],
+    "Pattu Pavadai": [
+        { name: "Pattu Pavadai", img: "images/Pattu-Pavadai1.png", price: 699 },
+        { name: "Pattu Pavadai", img: "images/Pattu-Pavadai2.png", price: 749 }
+    ],
+    "Sharara": [
+        { name: "Sharara", price: 2100, img: "images/Sharara1.png" },
+        { name: "Flared-Sharara", price: 2100, img: "images/Flared-Sharara.png" }
+    ],
+    "Kurti": [
+        { name: "Short Kurti", price: 299, img: "images/Short-Kurti.png" },
+        { name: "Short Kurti", price: 349, img: "images/Short-Kurti1.png" },
+        { name: "Short Kurti", price: 399, img: "images/Short-Kurti2.png" },
+        { name: "Long Kurti", price: 899, img: "images/Long-Kurti.png" },
+        { name: "Long Kurti", price: 949, img: "images/Long-Kurti1.png" }
+    ],
+    "Jumpsuits": [
+        { name: "Wedding Wear Jumpsuit", price: 1199, img: "images/Wedding-Wear-Jupsuit.png" },
+        { name: "Western Style Jumpsuit", price: 599, img: "images/Western-Style-Jumpsuit.png" },
+        { name: "Beach Wear Jumpsuit", price: 499, img: "images/Beach-Wear-Jumpsuit.png" }
+    ],
+    "Blouse Designs": [
+        { name: "Blouse Front Neck Design", price: 399, img: "images/Blouse-Front-Neck-Design1.png" },
+        { name: "Blouse Front Neck Design", price: 409, img: "images/Blouse-Front-Neck-Design2.png" },
+        { name: "Blouse Front Neck Design", price: 419, img: "images/Blouse-Front-Neck-Design3.png" },
+        { name: "Blouse Front Neck Design", price: 429, img: "images/Blouse-Front-Neck-Design4.png" },
+        { name: "Blouse Front Neck Design", price: 439, img: "images/Blouse-Front-Neck-Design5.png" },
+        { name: "Blouse Front Neck Design", price: 449, img: "images/Blouse-Front-Neck-Design6.png" },
+        { name: "Blouse Front Neck Design", price: 459, img: "images/Blouse-Front-Neck-Design7.png" },
+        { name: "Blouse Front Neck Design", price: 469, img: "images/Blouse-Front-Neck-Design8.png" },
+        { name: "Blouse Front Neck Design", price: 479, img: "images/Blouse-Front-Neck-Design9.png" },
+        { name: "Blouse Back Neck Design", price: 450, img: "images/Blouse-Back-Neck-Design0.png" },
+        { name: "Blouse Back Neck Design", price: 460, img: "images/Blouse-Back-Neck-Design1.png" },
+        { name: "Blouse Back Neck Design", price: 470, img: "images/Blouse-Back-Neck-Design2.png" },
+        { name: "Blouse Back Neck Design", price: 480, img: "images/Blouse-Back-Neck-Design3.png" },
+        { name: "Blouse Back Neck Design", price: 490, img: "images/Blouse-Back-Neck-Design4.png" },
+        { name: "Blouse Back Neck Design", price: 500, img: "images/Blouse-Back-Neck-Design5.png" },
+        { name: "Blouse Back Neck Design", price: 510, img: "images/Blouse-Back-Neck-Design6.png" },
+        { name: "Blouse Back Neck Design", price: 520, img: "images/Blouse-Back-Neck-Design7.png" },
+        { name: "Blouse Back Neck Design", price: 530, img: "images/Blouse-Back-Neck-Design8.png" },
+        { name: "Blouse Back Neck Design", price: 540, img: "images/Blouse-Back-Neck-Design9.png" },
+        { name: "Blouse Back Neck Design", price: 550, img: "images/Blouse-Back-Neck-Design10.png" },
+        { name: "Blouse Back Neck Design", price: 560, img: "images/Blouse-Back-Neck-Design11.png" },
+        { name: "Blouse Back Neck Design", price: 570, img: "images/Blouse-Back-Neck-Design12.png" },
+        { name: "Blouse Back Neck Design", price: 580, img: "images/Blouse-Back-Neck-Design13.png" },
+        { name: "Blouse Back Neck Design", price: 590, img: "images/Blouse-Back-Neck-Design14.png" },
+        { name: "Blouse Back Neck Design", price: 600, img: "images/Blouse-Back-Neck-Design15.png" },
+        { name: "Blouse Back Neck Design", price: 610, img: "images/Blouse-Back-Neck-Design16.png" },
+        { name: "Blouse Back Neck Design", price: 620, img: "images/Blouse-Back-Neck-Design17.png" },
+        { name: "Blouse Back Neck Design", price: 630, img: "images/Blouse-Back-Neck-Design18.png" },
+        { name: "Blouse Back Neck Design", price: 640, img: "images/Blouse-Back-Neck-Design19.png" },
+        { name: "Blouse Back Neck Design", price: 650, img: "images/Blouse-Back-Neck-Design20.png" },
+        { name: "Blouse Back Neck Design", price: 660, img: "images/Blouse-Back-Neck-Design21.png" },
+        { name: "Blouse Back Neck Design", price: 670, img: "images/Blouse-Back-Neck-Design22.png" },
+        { name: "Blouse Back Neck Design", price: 680, img: "images/Blouse-Back-Neck-Design23.png" },
+        { name: "Blouse Back Neck Design", price: 690, img: "images/Blouse-Back-Neck-Design24.png" },
+        { name: "Blouse Back Neck Design", price: 700, img: "images/Blouse-Back-Neck-Design25.png" },
+        { name: "Blouse Back Neck Design", price: 710, img: "images/Blouse-Back-Neck-Design26.png" },
+        { name: "Blouse Back Neck Design", price: 720, img: "images/Blouse-Back-Neck-Design27.png" },
+        { name: "Blouse Back Neck Design", price: 730, img: "images/Blouse-Back-Neck-Design28.png" },
+        { name: "Blouse Back Neck Design", price: 740, img: "images/Blouse-Back-Neck-Design29.png" },
+        { name: "Blouse Back Neck Design", price: 750, img: "images/Blouse-Back-Neck-Design30.png" },
+        { name: "Blouse Back Neck Design", price: 760, img: "images/Blouse-Back-Neck-Design31.png" },
+        { name: "Blouse Back Neck Design", price: 770, img: "images/Blouse-Back-Neck-Design32.png" },
+        { name: "Blouse Back Neck Design", price: 780, img: "images/Blouse-Back-Neck-Design33.png" },
+        { name: "Blouse Back Neck Design", price: 790, img: "images/Blouse-Back-Neck-Design34.png" }
+    ],
+    "Dhoti Sets": [
+        { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set.png", price: 999 },
+        { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set1.png", price: 1049 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress.png", price: 1099 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress1.png", price: 1149 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress2.png", price: 1199 },
+    ],
+    "Phanek": [
+        { name: "Phanek", img: "images/Phanek1.png", price: 499 }
+    ],
+    "One Piece Frock": [
+        { name: "A-Line Frock", price: 499, img: "images/A-Line-Frock.png" },
+        { name: "Fit & Flare Frock", price: 549, img: "images/Fit-&-Flare-Frock.png" },
+        { name: "Empire Waist Frock", price: 599, img: "images/Empire-Waist-Frock.png" },
+        { name: "Sheath Frock", price: 450, img: "images/Sheath-Frock.png" },
+        { name: "Wrap Frock", price: 550, img: "images/Wrap-Frock.png" },
+        { name: "Bodycon Frock", price: 399, img: "images/Bodycon-Frock.png" },
+        { name: "Maxi Frock", price: 799, img: "images/Maxi-Frock.png" },
+        { name: "Shirt Frock", price: 599, img: "images/Shirt-Frock.png" },
+        { name: "Tiered Frock", price: 699, img: "images/Tiered-Frock.png" },
+        { name: "Peplum Frock", price: 499, img: "images/Peplum-Frock.png" },
+        { name: "Halter Neck Frock", price: 549, img: "images/Halter-Neck-Frock.png" },
+        { name: "Off-Shoulder Frock", price: 499, img: "images/Off-Shoulder-Frock.png" },
+        { name: "Square Neck Frock", price: 450, img: "images/Square-Neck-Frock.png" },
+        { name: "Sweetheart Neck Frock", price: 599, img: "images/Sweetheart-Neck-Frock.png" },
+        { name: "Ball Gown Frock", price: 899, img: "images/Ball-Gown-Frock.png" },
+        { name: "Asymmetrical Frock", price: 550, img: "images/Asymmetrical-Frock.png" },
+        { name: "Spaghetti Strap Frock", price: 349, img: "images/Spaghetti-Strap-Frock.png" }
+    ],
+    "Short Skirts": [
+        { name: "Pleated", price: 399, img: "images/Pleated.png" },
+        { name: "Denim", price: 499, img: "images/Denim.png" },
+        { name: "A-line", price: 349, img: "images/A-line.png" },
+        { name: "Mini", price: 299, img: "images/Mini.png" },
+        { name: "Tennis", price: 349, img: "images/Tennis.png" },
+        { name: "Wrap", price: 399, img: "images/Wrap.png" },
+        { name: "Ruffled", price: 449, img: "images/Ruffled.png" },
+        { name: "Cargo", price: 499, img: "images/Cargo.png" },
+        { name: "Skater", price: 349, img: "images/Skater.png" },
+        { name: "Tiered", price: 450, img: "images/Tiered.png" },
+        { name: "Flounce", price: 399, img: "images/Flounce.png" },
+        { name: "Tulip", price: 399, img: "images/Tulip.png" },
+        { name: "Tulip", price: 429, img: "images/Tulip1.png" },
+        { name: "Ruched", price: 449, img: "images/Ruched.png" },
+        { name: "Asymmetrical", price: 429, img: "images/Asymmetrical.png" },
+        { name: "Pleather", price: 599, img: "images/Pleather.png" }
+    ],
+    "Tops": [
+        { name: "Knit Sweater", price: 499, img: "images/Knit-Sweater.png" },
+        { name: "Camisole Top", price: 249, img: "images/Camisole-Top.png" },
+        { name: "Square Neck Top", price: 299, img: "images/Square-Neck-Top.png" },
+        { name: "Bell Sleeve Top", price: 399, img: "images/Bell-Sleeve-Top.png" },
+        { name: "Smocked Top", price: 349, img: "images/Smocked-Top.png" },
+        { name: "Tie Front Top", price: 349, img: "images/Tie-Front-Top.png" },
+        { name: "Asymmetrical Top", price: 329, img: "images/Asymmetrical-Top.png" },
+        { name: "Cold Shoulder Top", price: 349, img: "images/Cold-Shoulder-Top.png" },
+        { name: "Button Down Blouse", price: 449, img: "images/Button-Down-Blouse.png" },
+        { name: "Tunic Top", price: 399, img: "images/Tunic-Top.png" },
+        { name: "Cape Top", price: 450, img: "images/Cape-Top.png" },
+        { name: "Layered Top", price: 399, img: "images/Layered-Top.png" },
+        { name: "Mesh Top", price: 299, img: "images/Mesh-Top.png" },
+        { name: "Embroidered Top", price: 499, img: "images/Embroidered-Top.png" },
+        { name: "Satin Blouse", price: 449, img: "images/Satin-Blouse.png" },
+        { name: "Off-Shoulder Blouse", price: 349, img: "images/Off-Shoulder-Blouse.png" },
+        { name: "Peasant Top", price: 399, img: "images/Peasant-Top.jpg" },
+        { name: "Knot Front Top", price: 299, img: "images/Knot-Front-Top.png" },
+        { name: "Chiffon Blouse", price: 399, img: "images/Chiffon-Blouse.png" }
+    ],
+    "Indo Dress": [
+        { name: "Indo Western Dress", img: "images/indo1.PNG", price: 999 },
+        { name: "Indo Western Dress", img: "images/indo2.png", price: 1049 }
+    ]
+};
+
+const subProductSizeOptions = {
+    // Saree Styles (Empty array means it automatically SKIPS to Step 3!)
+    "Mundum Neriyathum": [],
+    "Jamdani Saree": [],
+    "Mekhela Chador": [],
+    "Cape Saree": [],
+    "Net Saree": [],
+    "Half Saree": [],
+    "Applique Work Saree": [],
+    "Fabric Work Saree": [],
+    "Silk Saree": [],
+    "Ready-to-Wear Saree": [],
+
+    // Western Short Dresses
+    "Ruffle Sleeve Dress": ["XS", "S", "M", "L", "XL"],
+    "Off-Shoulder Short Dress": ["S (34)", "M (36)", "L (38)", "XL (40)"],
+    "Puff Sleeve Short Dress": ["UK 8", "UK 10", "UK 12", "UK 14"],
+    "Barbie Style Short Dress": ["Custom Standard Fit (Petite)", "Custom Standard Fit (Regular)"],
+    "Bodycon Short Dress": ["Stretchable S/M", "Stretchable L/XL"],
+
+    // Lehenga Styles
+    "Chaniya Choli": ["Waist 28", "Waist 30", "Waist 32", "Waist 34", "Waist 36"],
+    "Ghagra": ["Waist 30", "Waist 32", "Waist 34", "Waist 36"],
+    "Party Wear Lehenga": ["Bust 34/Waist 28", "Bust 36/Waist 30", "Bust 38/Waist 32", "Bust 40/Waist 34"],
+    "Bridal Lehenga": ["Semi-Stitched Free Size", "Fully Tailored Fit"],
+    "Mermaid Or Fish-Cut Lehenga": ["Bust 34", "Bust 36", "Bust 38"],
+    "Party Wear Fish-Cut Lehenga": ["Bust 34", "Bust 36", "Bust 38"],
+    "Banarasi Lehenga": ["Semi-Stitched Free Size"],
+
+    // Palazzo
+    "Palazzo with Crop Top": ["S", "M", "L", "XL"],
+    "Palazzo with Jacket": ["S", "M", "L", "XL"],
+    "Palazzo with Kurti": ["S", "M", "L", "XL"],
+    "Palazzo with Indo-Western Dress": ["Free Size"],
+
+    // Gowns
+    "Indo Gown": ["Bust 36", "Bust 38", "Bust 40", "Bust 42"],
+    "Saree Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Ball Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Mermaid Style Gown": ["Bust 34", "Bust 36", "Bust 38"],
+    "Trail Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Big Size Ball Trail Gown": ["Bust 44","Bust 46","Bust 48","Bust 50"],
+    "Off-Shoulder Pleated Gown": ["S", "M", "L"],
+    "A-Line Gown": ["XS","S","M","L","XL"],
+    "Asymmetrical Gown": ["Bust 34","Bust 36","Bust 38","Bust 40"],
+    "Balloon Sleeve Gown": ["S","M","L","XL"],
+    "Bohemian Gown": ["Free Size","Plus Size"],
+    "Cape Gown": ["Bust 36","Bust 38","Bust 40"],
+    "Empire Gown": ["XS","S","M","L"],
+    "Halter Gown": ["Bust 34","Bust 36","Bust 38"],
+    "High Low Gown": ["S","M","L","XL"],
+    "Sheath Gown": ["Bust 34","Bust 36","Bust 38","Bust 40"],
+    "Slip Gown": ["XS","S","M","L"],
+    "Tea Length Gown": ["S","M","L","XL"],
+    "Trumpet Gown": ["Bust 34","Bust 36","Bust 38","Bust 40"],
+
+    // Peplum
+    "Peplum1": ["XS", "S", "M", "L", "XL"],
+    "Peplum2": ["S", "M", "L", "XL"],
+    "Peplum3": ["XS", "S", "M", "L"],
+    "Peplum4": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+    "Peplum5": ["S", "M", "L", "XL"],
+    "Peplum6": ["XS", "S", "M", "L", "XL"],
+    "Peplum7": ["S", "M", "L", "XL"],
+    "Peplum8": ["XS", "S", "M", "L"],
+    "Peplum9": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+    
+    // Western Short Dresses
+    "Ruffle Sleeve Dress": ["XS", "S", "M", "L", "XL"],
+    "Off-Shoulder Short Dress": ["S (34)", "M (36)", "L (38)", "XL (40)"],
+    "Puff Sleeve Short Dress": ["UK 8", "UK 10", "UK 12", "UK 14"],
+    "Barbie Style Short Dress": ["Custom Standard Fit (Petite)", "Custom Standard Fit (Regular)"],
+    "Bodycon Short Dress": ["Stretchable S/M", "Stretchable L/XL"],
+
+    // Lehenga Styles
+    "Chaniya Choli": ["Waist 28", "Waist 30", "Waist 32", "Waist 34", "Waist 36"],
+    "Ghagra": ["Waist 30", "Waist 32", "Waist 34", "Waist 36"],
+    "Party Wear Lehenga": ["Bust 34/Waist 28", "Bust 36/Waist 30", "Bust 38/Waist 32", "Bust 40/Waist 34"],
+    "Bridal Lehenga": ["Semi-Stitched Free Size", "Fully Tailored Fit"],
+    "Mermaid Or Fish-Cut Lehenga": ["Bust 34", "Bust 36", "Bust 38"],
+    "Party Wear Fish-Cut Lehenga": ["Bust 34", "Bust 36", "Bust 38"],
+    "Banarasi Lehenga": ["Semi-Stitched Free Size"],
+
+    // Palazzo
+    "Palazzo with Crop Top": ["S", "M", "L", "XL"],
+    "Palazzo with Jacket": ["S", "M", "L", "XL"],
+    "Palazzo with Kurti": ["S", "M", "L", "XL"],
+    "Palazzo with Indo-Western Dress": ["Free Size"],
+
+    // Gowns
+    "Indo Gown": ["Bust 36", "Bust 38", "Bust 40", "Bust 42"],
+    "Saree Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Ball Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Mermaid Style Gown": ["Bust 34", "Bust 36", "Bust 38"],
+    "Trail Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Big Size Ball Trail Gown": ["Bust 44", "Bust 46", "Bust 48", "Bust 50"],
+    "Off-Shoulder Pleated Gown": ["S", "M", "L"],
+    "A-Line Gown": ["XS", "S", "M", "L", "XL"],
+    "Asymmetrical Gown": ["Bust 34", "Bust 36", "Bust 38", "Bust 40"],
+    "Balloon Sleeve Gown": ["S", "M", "L", "XL"],
+    "Bohemian Gown": ["Free Size", "Plus Size"],
+    "Cape Gown": ["Bust 36", "Bust 38", "Bust 40"],
+    "Empire Gown": ["XS", "S", "M", "L"],
+    "Halter Gown": ["Bust 34", "Bust 36", "Bust 38"],
+    "High Low Gown": ["S", "M", "L", "XL"],
+    "Sheath Gown": ["Bust 34", "Bust 36", "Bust 38", "Bust 40"],
+    "Slip Gown": ["XS", "S", "M", "L"],
+    "Tea Length Gown": ["S", "M", "L", "XL"],
+    "Trumpet Gown": ["Bust 34", "Bust 36", "Bust 38", "Bust 40"],
+
+    // Dhoti-Sets
+    "Dhoti with Kurti set": ["S", "M", "L", "XL"],
+    "Dhoti Style Dress": ["S", "M", "L", "XL"],
+    "Classic Dhoti Set": ["XS", "S", "M", "L", "XL"],
+
+    //Gharara
+    "Gharara": ["XS", "S", "M", "L", "XL"],
+
+    // Peplum
+    "Peplum": ["XS", "S", "M", "L", "XL"],
+
+    // Salwar-Kameez
+    "Salwar Kameez": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+
+    // Anarkali
+    "Anarkali": ["S", "M", "L", "XL"],
+
+    // Pattu-Pavadai
+    "Pattu Pavadai": ["Age 2-4Y", "Age 5-7Y", "Age 8-10Y"],
+
+    // Sharara
+    "Sharara": ["S", "M", "L", "XL"],
+    "Flared-Sharara": ["S", "M", "L", "XL"],
+
+    //Kurti
+    "Short Kurti": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+    "Long Kurti": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+
+    // Jumpsuits
+    "Wedding Wear Jumpsuit": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+    "Western Style Jumpsuit": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+    "Beach Wear Jumpsuit": ["S (36)", "M (38)", "L (40)", "XL (42)"],
+
+    //Phanek
+    "Phanek": ["S", "M", "L", "XL"],
+
+    // One Piece Frock
+    "A-Line Frock": ["S", "M", "L", "XL"],
+    "Fit & Flare Frock": ["S", "M", "L", "XL"],
+    "Empire Waist Frock": ["S", "M", "L", "XL"],
+    "Sheath Frock": ["S", "M", "L", "XL"],
+    "Wrap Frock": ["S", "M", "L", "XL"],
+    "Bodycon Frock": ["S", "M", "L", "XL"],
+    "Maxi Frock": ["S", "M", "L", "XL"],
+    "Shirt Frock": ["S", "M", "L", "XL"],
+    "Tiered Frock": ["S", "M", "L", "XL"],
+    "Peplum Frock": ["S", "M", "L", "XL"],
+    "Halter Neck Frock": ["S", "M", "L", "XL"],
+    "Off-Shoulder Frock": ["S", "M", "L", "XL"],
+    "Square Neck Frock": ["S", "M", "L", "XL"],
+    "Sweetheart Neck Frock": ["S", "M", "L", "XL"],
+    "Ball Gown Frock": ["S", "M", "L", "XL"],
+    "Asymmetrical Frock": ["S", "M", "L", "XL"],
+    "Spaghetti Strap Frock": ["S", "M", "L", "XL"],
+
+    // Short Skirts
+    "Pleated": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Denim": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "A-line":["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Mini": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Tennis": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Wrap": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Ruffled": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Cargo": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Skater": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Tiered": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Flounce": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Tulip": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Ruched": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Asymmetrical": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+    "Pleather": ["Waist 26", "Waist 28", "Waist 30", "Waist 32"],
+
+    // Tops
+    "Knit Sweater": ["Bust 36","Bust 38","Bust 40"],
+    "Camisole Top": ["Bust 36","Bust 38","Bust 40"],
+    "Square Neck Top": ["Bust 36","Bust 38","Bust 40"],
+    "Bell Sleeve Top": ["Bust 36","Bust 38","Bust 40"],
+    "Smocked Top": ["Bust 36","Bust 38","Bust 40"],
+    "Tie Front Top": ["Bust 36","Bust 38","Bust 40"],
+    "Asymmetrical Top": ["XS", "S", "M", "L"],
+    "Cold Shoulder Top": ["S", "M", "L", "XL", "XXL"],
+    "Button Down Blouse": ["S", "M", "L", "XL"],
+    "Tunic Top": ["S", "M", "L", "XL"],
+    "Cape Top": ["S", "M", "L", "XL"],
+    "Layered Top": ["S", "M", "L", "XL"],
+    "Mesh Top": ["S", "M", "L", "XL"],
+    "Embroidered Top": ["S", "M", "L", "XL"],
+    "Satin Blouse": ["S", "M", "L", "XL"],
+    "Off-Shoulder Blouse": ["S", "M", "L", "XL"],
+    "Peasant Top": ["S", "M", "L", "XL"],
+    "Knot Front Top": ["S", "M", "L", "XL"],
+    "Chiffon Blouse": ["S", "M", "L", "XL"],
+
+    // Indo Dress
+    "Indo Western Dress": ["S", "M", "L", "XL"]
+};
+
+const sareeMaterials = {
+
+    "Mundum Neriyathum": [
+        { name: "Cotton", price: 0 },
+        { name: "Kasavu Cotton", price: 200 },
+        { name: "Kerala Silk", price: 600 },
+        { name: "Tissue", price: 350 },
+        { name: "Linen", price: 250 },
+        { name: "Cotton Silk", price: 400 }
+    ],
+
+    "Jamdani Saree": [
+        { name: "Cotton", price: 0 },
+        { name: "Muslin", price: 300 },
+        { name: "Silk", price: 800 },
+        { name: "Cotton Silk", price: 450 },
+        { name: "Linen Cotton", price: 250 },
+        { name: "Organza", price: 500 },
+        { name: "Tissue", price: 350 }
+    ],
+
+    "Mekhela Chador": [
+        { name: "Muga Silk", price: 1200 },
+        { name: "Pat Silk", price: 900 },
+        { name: "Eri Silk", price: 700 },
+        { name: "Cotton", price: 0 },
+        { name: "Cotton Silk", price: 400 },
+        { name: "Tussar Silk", price: 850 }
+    ],
+
+    "Cape Saree": [
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Sequins Fabric", price: 200 }
+    ],
+
+    "Net Saree": [
+        { name: "Soft Net", price: 200 },
+        { name: "Hard Net", price: 200 },
+        { name: "Butterfly Net", price: 200 },
+        { name: "Lycra Net", price: 200 },
+        { name: "Mono Net", price: 200 },
+        { name: "Shimmer Net", price: 200 },
+        { name: "Sequins Net", price: 200 },
+        { name: "Nylon Net", price: 200 }
+    ],
+
+    "Half Saree": [
+        { name: "Silk", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Art Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Banarasi", price: 200 },
+        { name: "Kanjivaram", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Velvet", price: 200 }
+    ],
+
+    "Applique Work Saree": [
+        { name: "Cotton", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Net", price: 200 }
+    ],
+
+    "Fabric Work Saree": [
+        { name: "Georgette", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Lycra", price: 200 }
+    ],
+
+    "Silk Saree": [
+        { name: "Banarasi Silk", price: 200 },
+        { name: "Kanjivaram Silk", price: 200 },
+        { name: "Mysore Silk", price: 200 },
+        { name: "Tussar Silk", price: 200 },
+        { name: "Raw Silk", price: 200 },
+        { name: "Bhagalpuri Silk", price: 200 },
+        { name: "Art Silk", price: 200 },
+        { name: "Soft Silk", price: 200 },
+        { name: "Chanderi Silk", price: 200 },
+        { name: "Muga Silk", price: 200 },
+        { name: "Eri Silk", price: 200 },
+        { name: "Patola Silk", price: 200 },
+        { name: "Uppada Silk", price: 200 },
+        { name: "Paithani Silk", price: 200 }
+    ],
+
+    "Ready-to-Wear Saree": [
+        { name: "Lycra", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Velvet", price: 200 }
+    ],
+
+    "Puff Sleeve Short Dress": [
+        { name: "Cotton", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Linen", price: 200 },
+    ],
+
+    "Off-Shoulder Short Dress": [
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Bodycon Knit", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+    ],
+
+    "Ruffle Sleeve Dress": [
+        { name: "Chiffon", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Silk", price: 200 },
+    ],
+
+    "Bodycon Short Dress": [
+        { name: "Lycra", price: 200 },
+        { name: "Spandex", price: 200 },
+        { name: "Polyester Blend", price: 200 },
+        { name: "Rib Knit", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Stretch Cotton", price: 200 },
+        { name: "Scuba Fabric", price: 200 },
+        { name: "Jersey Knit", price: 200 },
+    ],
+
+    "Barbie Style Short Dress": [
+        { name: "Satin", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Glitter Fabric", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Cotton Candy Tulle", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+    ],
+
+    "Party Wear Lehenga": [
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Tissue", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+    ],
+
+    "Bridal Lehenga": [
+        { name: "Velvet", price: 200 },
+        { name: "Raw Silk", price: 200 },
+        { name: "Banarasi Silk", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Tissue", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Kanjivaram Silk", price: 200 },
+        { name: "Art Silk", price: 200 },
+    ],
+
+    "Mermaid Or Fish-Cut Lehenga": [
+        { name: "Lycra", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Stretch Fabric", price: 200 },
+    ],
+
+    "Party Wear Fish-Cut Lehenga": [
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Glitter Fabric", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Silk", price: 200 },
+    ],
+
+    "Banarasi Lehenga": [
+        { name: "Banarasi Silk", price: 200 },
+        { name: "Katan Silk", price: 200 },
+        { name: "Raw Silk", price: 200 },
+        { name: "Organza Banarasi", price: 200 },
+        { name: "Tissue Silk", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Art Silk", price: 200 },
+        { name: "Satin Silk", price: 200 },
+        { name: "Georgette Banarasi", price: 200 },
+    ],
+
+    "Chaniya Choli": [
+        { name: "Cotton", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Mirror Work Fabric", price: 200 },
+        { name: "Bandhani Fabric", price: 200 },
+        { name: "Ajrakh Fabric", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Crepe", price: 200 },
+    ],
+
+    "Ghagra": [
+        { name: "Cotton", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Linen", price: 200 },
+    ],
+
+    "Indo Gown": [
+        { name: "Georgette", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Tissue", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+    ],
+
+    "Saree Gown": [
+        { name: "Georgette", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+    ],
+
+    "Ball Gown": [
+        { name: "Satin", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Glitter Fabric", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+        { name: "Brocade", price: 200 },
+    ],
+
+    "Mermaid Style Gown": [
+        { name: "Lycra", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Stretch Fabric", price: 200 },
+    ],
+
+    "Gown With Trail": [
+        { name: "Satin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Tissue", price: 200 },
+    ],
+
+    "Big Size Ball Gown with Trail": [
+        { name: "Satin", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Stretch Fabric", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+    ],
+
+    "Off-Shoulder with Pleated Gown": [
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+        { name: "Tissue", price: 200 },
+    ],
+
+    "Palazzo with Crop Top": [
+        { name: "Georgette", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+    ],
+
+    "Palazzo with Jacket": [
+        { name: "Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Tissue", price: 200 },
+    ],
+
+    "Palazzo with Kurti": [
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Chanderi", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Muslin", price: 200 },
+        { name: "Khadi", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Viscose", price: 200 },
+    ],
+
+    "Palazzo with Indo-Western Dress": [
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+    ],
+
+    "Gharara": [
+        { name: "Georgette", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Cotton Silk", price: 200 },
+        { name: "Tissue", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+    ],
+
+    "Salwar Kameez": [
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Chanderi", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Muslin", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Khadi", price: 200 },
+        { name: "Viscose", price: 200 },
+        { name: "Art Silk", price: 200 },
+    ],
+
+    "Peplum": [
+        { name: "Georgette", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+    ],
+
+    "Anarkali": [
+        { name: "Georgette", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Chanderi", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Tissue", price: 200 },
+    ],
+
+    "Pattu Pavadai": [
+        { name: "Kanjivaram Silk", price: 200 },
+        { name: "Raw Silk", price: 200 },
+        { name: "Banarasi Silk", price: 200 },
+        { name: "Art Silk", price: 200 },
+        { name: "Cotton Silk", price: 200 },
+        { name: "Satin Silk", price: 200 },
+        { name: "Tissue Silk", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Soft Silk", price: 200 },
+    ],
+
+    "Sharara": [
+        { name: "Georgette", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+    ],
+
+    "Flared-Sharara": [
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Tissue", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+        { name: "Rayon", price: 200 },
+    ],
+
+    "Short Kurti": [
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Khadi", price: 200 },
+        { name: "Muslin", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Viscose", price: 200 },
+    ],
+
+    "Long Kurti": [
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Chanderi", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Muslin", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Khadi", price: 200 },
+    ],
+
+    "Wedding Wear Jumpsuit": [
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Chiffon", price: 200 },
+    ],
+
+    "Beach Wear Jumpsuit": [
+        { name: "Cotton", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Muslin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Viscose", price: 200 },
+        { name: "Lightweight Satin", price: 200 },
+        { name: "Jersey Knit", price: 200 },
+    ],
+
+    "Dhoti With Kurti Set": [
+        { name: "Cotton", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chanderi", price: 200 },
+        { name: "Khadi", price: 200 },
+        { name: "Muslin", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Cotton Silk", price: 200 },
+    ],
+
+    "Dhoti Style Dress": [
+        { name: "Georgette", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Jersey Knit", price: 200 },
+    ],
+
+    "Phanek": [
+        { name: "Cotton", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Cotton Silk", price: 200 },
+        { name: "Moirang Phee Fabric", price: 200 },
+        { name: "Handloom Cotton", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Traditional Manipuri Weave Fabric", price: 200 },
+    ],
+
+    "One Piece Frock": [
+        { name: "Cotton", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Tulle", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Linen", price: 200 },
+    ],
+
+    "Short Skirts": [
+        { name: "Cotton", price: 200 },
+        { name: "Denim", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Polyester Blend", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Leather Fabric", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Jersey Knit", price: 200 },
+    ],
+
+    "Tops": [
+        { name: "Cotton", price: 200 },
+        { name: "Rayon", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Georgette", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Linen", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Jersey Knit", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Polyester Blend", price: 200 },
+    ],
+
+    "Indo Western Dress": [
+        { name: "Georgette", price: 200 },
+        { name: "Organza", price: 200 },
+        { name: "Silk", price: 200 },
+        { name: "Satin", price: 200 },
+        { name: "Velvet", price: 200 },
+        { name: "Crepe", price: 200 },
+        { name: "Chiffon", price: 200 },
+        { name: "Net", price: 200 },
+        { name: "Brocade", price: 200 },
+        { name: "Tissue", price: 200 },
+        { name: "Lycra", price: 200 },
+        { name: "Sequins Fabric", price: 200 },
+        { name: "Shimmer Fabric", price: 200 },
+    ],
+
+    "Trail Gown": [
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Sequins Fabric", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+    { name: "Tissue", price: 200 },
+],
+
+"Off-Shoulder Pleated Gown": [
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+    { name: "Tissue", price: 200 },
+    { name: "Net", price: 200 },
+],
+
+"Big Size Ball Trail Gown": [
+    { name: "Satin", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Stretch Fabric", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+    { name: "Sequins Fabric", price: 200 },
+    { name: "Tissue", price: 200 },
+],
+
+"A-Line Gown": [
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Cotton Satin", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Brocade", price: 200 },
+],
+
+"Asymmetrical Gown": [
+    { name: "Georgette", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Sequins Fabric", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+],
+
+"Balloon Sleeve Gown": [
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Cotton Satin", price: 200 },
+],
+
+"Bohemian Gown": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Muslin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Crochet Fabric", price: 200 },
+    { name: "Khadi", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+],
+
+"Cape Gown": [
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Sequins Fabric", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+    { name: "Tissue", price: 200 },
+],
+
+"Empire Gown": [
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Tulle", price: 200 },
+],
+
+"Halter Gown": [
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+],
+
+"High Low Gown": [
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+],
+
+"Sheath Gown": [
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Scuba Fabric", price: 200 },
+    { name: "Stretch Fabric", price: 200 },
+    { name: "Net", price: 200 },
+],
+
+"Slip Gown": [
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+],
+
+"Tea Length Gown": [
+    { name: "Organza", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Trumpet Gown": [
+    { name: "Lycra", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Sequins Fabric", price: 200 },
+    { name: "Stretch Fabric", price: 200 },
+],
+
+"Western Style Jumpsuit": [
+    { name: "Lycra", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Denim", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+    { name: "Scuba Fabric", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"A-Line Frock": [
+    { name: "Cotton", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Fit & Flare Frock": [
+    { name: "Cotton", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Empire Waist Frock": [
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Rayon", price: 200 },
+],
+
+"Sheath Frock": [
+    { name: "Crepe", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Scuba Fabric", price: 200 },
+    { name: "Stretch Fabric", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Georgette", price: 200 },
+],
+
+"Wrap Frock": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+],
+
+"Bodycon Frock": [
+    { name: "Lycra", price: 200 },
+    { name: "Spandex", price: 200 },
+    { name: "Rib Knit", price: 200 },
+    { name: "Scuba Fabric", price: 200 },
+    { name: "Stretch Cotton", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+],
+
+"Maxi Frock": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+],
+
+"Shirt Frock": [
+    { name: "Cotton", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Denim", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Poplin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Viscose", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+],
+
+"Tiered Frock": [
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+],
+
+"Peplum Frock": [
+    { name: "Georgette", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+],
+
+"Halter Neck Frock": [
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Net", price: 200 },
+],
+
+"Off-Shoulder Frock": [
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+],
+
+"Square Neck Frock": [
+    { name: "Cotton", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Sweetheart Neck Frock": [
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+],
+
+"Ball Gown Frock": [
+    { name: "Satin", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Sequins Fabric", price: 200 },
+    { name: "Shimmer Fabric", price: 200 },
+],
+
+"Asymmetrical Frock": [
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Spaghetti Strap Frock": [
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+],
+
+"Pleated": [
+    { name: "Cotton", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Linen", price: 200 },
+],
+
+"Denim": [
+    { name: "Denim", price: 200 },
+    { name: "Stretch Denim", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Corduroy", price: 200 },
+    { name: "Twill", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+],
+
+"A-Line": [
+    { name: "Cotton", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Denim", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Rayon", price: 200 },
+],
+
+"Mini": [
+    { name: "Denim", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Leather Fabric", price: 200 },
+    { name: "Pleather", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+],
+
+"Tennis": [
+    { name: "Polyester Blend", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Spandex", price: 200 },
+    { name: "Stretch Cotton", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+    { name: "Scuba Fabric", price: 200 },
+],
+
+"Wrap": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Chiffon", price: 200 },
+],
+
+"Ruffled": [
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+],
+
+"Cargo": [
+    { name: "Cotton", price: 200 },
+    { name: "Twill", price: 200 },
+    { name: "Denim", price: 200 },
+    { name: "Canvas Fabric", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+    { name: "Corduroy", price: 200 },
+],
+
+"Skater": [
+    { name: "Cotton", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Scuba Fabric", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Tiered": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Tulle", price: 200 },
+],
+
+"Flounce": [
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Silk", price: 200 },
+],
+
+"Tulip": [
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Lycra", price: 200 },
+],
+
+"Ruched": [
+    { name: "Lycra", price: 200 },
+    { name: "Spandex", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+],
+
+"Asymmetrical": [
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Pleather": [
+    { name: "Pleather", price: 200 },
+    { name: "PU Leather", price: 200 },
+    { name: "Faux Leather", price: 200 },
+    { name: "Stretch Leather Fabric", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+    { name: "Velvet", price: 200 },
+],
+
+"Knit Sweater": [
+    { name: "Wool", price: 200 },
+    { name: "Cotton Knit", price: 200 },
+    { name: "Acrylic Knit", price: 200 },
+    { name: "Cashmere", price: 200 },
+    { name: "Rib Knit", price: 200 },
+    { name: "Jersey Knit", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+],
+
+"Camisole Top": [
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+],
+
+"Square Neck Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Linen", price: 200 },
+],
+
+"Bell Sleeve Top": [
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+],
+
+"Smocked Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+],
+
+"Tie Front Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Linen", price: 200 },
+],
+
+"Asymmetrical Top": [
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Lycra", price: 200 },
+],
+
+"Cold Shoulder Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Rayon", price: 200 },
+],
+
+"Button Down Blouse": [
+    { name: "Cotton", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Poplin", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+],
+
+"Tunic Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Khadi", price: 200 },
+],
+
+"Cape Top": [
+    { name: "Organza", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Crepe", price: 200 },
+],
+
+"Layered Top": [
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Net", price: 200 },
+],
+
+"Mesh Top": [
+    { name: "Mesh Fabric", price: 200 },
+    { name: "Net", price: 200 },
+    { name: "Lycra", price: 200 },
+    { name: "Polyester Blend", price: 200 },
+    { name: "Spandex", price: 200 },
+    { name: "Organza", price: 200 },
+],
+
+"Embroidered Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Velvet", price: 200 },
+    { name: "Satin", price: 200 },
+],
+
+"Satin Blouse": [
+    { name: "Satin", price: 200 },
+    { name: "Silk Satin", price: 200 },
+    { name: "Poly Satin", price: 200 },
+    { name: "Stretch Satin", price: 200 },
+    { name: "Crepe Satin", price: 200 },
+],
+
+"Off-Shoulder Blouse": [
+    { name: "Satin", price: 200 },
+    { name: "Organza", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Lycra", price: 200 },
+],
+
+"Peasant Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Linen", price: 200 },
+    { name: "Muslin", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Chiffon", price: 200 },
+],
+
+"Knot Front Top": [
+    { name: "Cotton", price: 200 },
+    { name: "Rayon", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Lycra", price: 200 },
+],
+
+"Chiffon Blouse": [
+    { name: "Chiffon", price: 200 },
+    { name: "Georgette", price: 200 },
+    { name: "Crepe", price: 200 },
+    { name: "Satin", price: 200 },
+    { name: "Silk", price: 200 },
+    { name: "Organza", price: 200 },
+],
+
+};
+
+// Automatically check if the server already knows we are logged in
+window.addEventListener('DOMContentLoaded', () => {
+    // If you already verified recently, the server session handles it, but let's secure the interface view
+    document.getElementById('twoFactorPinInput').focus();
+});
+
+async function submitAdmin2FACode() {
+    const pinCode = document.getElementById('twoFactorPinInput').value;
+    const errorBox = document.getElementById('errorMessage');
+    
+    errorBox.style.display = "none";
+
+    // Call your backend verification script endpoint we added in server.js
+    const response = await fetch('/api/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: pinCode })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        // Hide the block wall completely and reveal your history workspace dashboard contents!
+        document.getElementById('twoFactorWall').style.display = 'none';
+    } else {
+        errorBox.textContent = "Invalid code. Please check your phone app and try again.";
+        errorBox.style.display = "block";
+        document.getElementById('twoFactorPinInput').value = "";
+    }
+}
+
+</script>
+</body>
+</html>
