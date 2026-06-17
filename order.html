@@ -1,0 +1,2889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management & Tracking Portal | Customize Collection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+.upi-apps{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:10px;
+}
+
+.upi-option{
+    border:1px solid #ddd;
+    border-radius:6px;
+    padding:10px 15px;
+    cursor:pointer;
+    background:#fff;
+    font-size:14px;
+}
+
+.upi-option:hover{
+    border-color:#fb641b;
+}
+
+.qr-payment-box{
+    text-align:center;
+    border:1px dashed #ccc;
+    border-radius:8px;
+    padding:15px;
+    background:#fafafa;
+}
+
+.qr-payment-box img{
+    width:220px;
+    max-width:100%;
+    margin-bottom:10px;
+}
+
+        :root {
+            --primary-color: #fb641b;
+            --primary-dark: #e15310;
+            --success-color: #2e7d32;
+            --success-light: #eef7ff;
+            --text-main: #212121;
+            --text-muted: #666666;
+            --bg-body: #f1f3f6;
+            --bg-panel: #ffffff;
+            --border-color: #dcdcdc;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Premium Brand Header Block */
+        header {
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .brand h1 {
+            font-size: 22px;
+            color: var(--text-main);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand span {
+            color: var(--primary-color);
+        }
+
+        /* Role Switcher Matrix Widget */
+        .role-selector-widget {
+            background: #f9f9f9;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            display: flex;
+            gap: 5px;
+        }
+
+        .role-btn {
+            background: none;
+            border: none;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .role-btn.active {
+            background: var(--text-main);
+            color: #fff;
+        }
+
+        /* Global Structural Phase Base Panels */
+        .phase-panel {
+            background: var(--bg-panel);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .phase-panel.active {
+            display: block;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Phase 1 Forms & Elements */
+        .payment-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pay-option-card {
+            border: 2px solid var(--border-color);
+            padding: 15px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .pay-option-card input[type="radio"] {
+            accent-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .pay-option-card.selected {
+            border-color: var(--primary-color);
+            background-color: #fffbf7;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .primary-action-btn {
+            width: 100%;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .primary-action-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Phase 2: Interactive Chat Matrix Layout */
+        .owner-alert-banner {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .approve-pipeline-btn {
+            background: var(--success-color);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .approve-pipeline-btn:hover {
+            background: #1b5e20;
+        }
+
+        .chat-container {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            height: 380px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .chat-ledger {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            word-wrap: break-word;
+        }
+
+        .msg-bubble.customer {
+            background: #ffffff;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+            border: 1px solid #e8e8e8;
+        }
+
+        .msg-bubble.owner {
+            background: #fdeee6;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+            border: 1px solid #fbd9c8;
+        }
+
+        .msg-meta {
+            display: block;
+            font-size: 10px;
+            color: #999;
+            margin-top: 4px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .msg-sender-tag {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .customer .msg-sender-tag { color: #0066cc; }
+        .owner .msg-sender-tag { color: var(--primary-dark); }
+
+        /* System Info Pill Alerts */
+        .msg-system {
+            background: #e2e3e5;
+            color: #383d41;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            align-self: center;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: none;
+        }
+
+        /* Voice Note UI element layout */
+        .audio-attachment-player {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            margin-top: 5px;
+            min-width: 200px;
+        }
+
+        .audio-wave-simulation {
+            flex: 1;
+            height: 15px;
+            background: repeating-linear-gradient(90deg, #999, #999 2px, transparent 2px, transparent 6px);
+            opacity: 0.5;
+        }
+
+        /* Dynamic Console Bar Form Component */
+        .chat-input-console {
+            background: var(--bg-panel);
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .console-text-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .console-text-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .console-action-icon-btn {
+            background: none;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .console-action-icon-btn:hover {
+            background: #f0f0f0;
+            color: var(--text-main);
+        }
+
+        .console-action-icon-btn.send-btn {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .console-action-icon-btn.send-btn:hover {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+
+        /* Voice Record Overlay Panel State Indicator */
+        .voice-recording-active-view {
+            display: none;
+            flex: 1;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff5f5;
+            padding: 0 15px;
+            height: 38px;
+            border-radius: 20px;
+            color: #c92a2a;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .recording-pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #c92a2a;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-glow 1s infinite alternate;
+            margin-right: 6px;
+        }
+
+        @keyframes pulse-glow {
+            from { opacity: 0.3; } to { opacity: 1; }
+        }
+
+        /* Locked Chat Overlay Component Styling */
+        .chat-container.locked-state .chat-input-console {
+            background: #f0f0f0;
+            pointer-events: none;
+        }
+        .chat-container.locked-state .chat-input-console::after {
+            content: "🔒 Conversation archieve finalized by workshop administrator.";
+            width: 100%;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .chat-container.locked-state .chat-input-console * {
+            display: none !important;
+        }
+
+        /* Phase 3: Logistical Milestone Tracking Map Layout */
+        .logistics-timeline-map {
+            position: relative;
+            padding: 20px 0 20px 30px;
+            margin-top: 15px;
+        }
+
+        .logistics-timeline-map::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 25px;
+            bottom: 25px;
+            width: 3px;
+            background: #e0e0e0;
+        }
+
+        .logistics-timeline-map.pipeline-completed::before {
+            background: var(--success-color);
+        }
+
+        .milestone-node-item {
+            position: relative;
+            margin-bottom: 35px;
+        }
+
+        .milestone-node-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .milestone-indicator-icon {
+            position: absolute;
+            left: -30px;
+            top: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #b0bec5;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .milestone-node-item.active .milestone-indicator-icon {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            box-shadow: 0 0 0 5px rgba(251, 100, 27, 0.2);
+        }
+
+        .milestone-node-item.completed .milestone-indicator-icon {
+            border-color: var(--success-color);
+            background: var(--success-color);
+        }
+
+        .milestone-details-box {
+            padding-left: 10px;
+        }
+
+        .milestone-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .milestone-title-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: #757575;
+        }
+        .milestone-node-item.active .milestone-title-text,
+        .milestone-node-item.completed .milestone-title-text {
+            color: var(--text-main);
+        }
+
+        .milestone-timestamp-stamp {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .milestone-caption-desc {
+            font-size: 13px;
+            color: #9e9e9e;
+        }
+        .milestone-node-item.active .milestone-caption-desc,
+        .milestone-node-item.completed .milestone-caption-desc {
+            color: var(--text-muted);
+        }
+
+        .fulfillment-complete-banner {
+            margin-top: 25px;
+            background: var(--success-light);
+            border: 1px solid #b8e2fc;
+            padding: 15px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--success-color);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        /* Utilities */
+        .credit-card-inputs-sub {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #fdfdfd;
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+
+        /* Responsive Breakpoints grid templates */
+        @media (max-width: 600px) {
+            .payment-options-grid, .form-row {
+                grid-template-columns: 1fr;
+            }
+            .milestone-header-row {
+                flex-direction: column;
+                gap: 2px;
+            }
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+            <header>
+        <div class="brand">
+            <h1>Customize<span>Collection</span></h1>
+            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 2px;">Order Management Workspace</p>
+        </div>
+        
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+    <button onclick="window.location.href='index.html'" 
+            class="transition-colors duration-200" 
+            style="cursor: pointer; background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" 
+            title="Go to Home">
+        <i class="fa fa-home" style="font-size: 20px; color: #000000;"></i>
+    </button>
+
+        <div class="role-selector-widget" style="align-items: center;">
+            <!-- New Clear Old Order Button -->
+            <button class="role-btn" id="clear-order-btn" onclick="clearOldOrder()" style="background-color: #ffebee; color: #c62828; margin-right: 5px; font-weight: bold; border: 1px solid #ffcdd2;">
+                <i class="fa fa-trash-can"></i> Clear Old Order
+            </button>
+            <button class="role-btn active" id="role-customer-btn" onclick="switchActiveRoleScope('Customer')">
+                <i class="fa fa-user"></i> Customer Mode
+            </button>
+            <button class="role-btn" id="role-owner-btn" onclick="switchActiveRoleScope('Owner')">
+                <i class="fa fa-user-gear"></i> Owner Mode
+            </button>
+        </div>
+    </header>
+
+    <section id="panel-phase-2" class="phase-panel">
+        <div class="panel-title" style="justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="fa fa-comments" style="color: var(--primary-color);"></i>
+                Order Customization Desk & Ledger
+            </div>
+        </div>
+
+        <div class="owner-alert-banner" id="owner-management-admin-strip" style="display: none;">
+            <div>
+                <i class="fa fa-sliders"></i> <strong>Admin Management Node:</strong> Review chat specifications and confirm requirements layout metrics.
+            </div>
+            <button class="approve-pipeline-btn" onclick="executeOwnerPipelineApprovalSignature()">
+                <i class="fa fa-circle-check"></i> Approve & Fire Delivery Route Map
+            </button>
+        </div>
+
+        <div class="chat-container" id="chat-workspace-frame">
+            <div class="chat-ledger" id="chat-history-scroll-box">
+                </div>
+
+            <div class="chat-input-console">
+                <button type="button" class="console-action-icon-btn" title="Record Voice Note" id="mic-action-trigger" onclick="toggleVoiceRecordingStateLoop()">
+                    <i class="fa fa-microphone" style="color:#d32f2f;"></i>
+                </button>
+
+                <div class="voice-recording-active-view" id="voice-recording-console-feedback">
+                    <div><span class="recording-pulse-dot"></span>Capturing master audio layout sequence tracking details...</div>
+                    <button type="button" style="background:none; border:none; color:#c92a2a; font-weight:700; cursor:pointer;" onclick="finalizeVoiceNoteCaptureOutput()">Save</button>
+                </div>
+
+                <input type="text" class="console-text-input" id="chat-text-message-field" placeholder="Type design feedback variations instructions here..." onkeypress="handleChatConsoleKeyPress(event)">
+                
+                <button type="button" class="console-action-icon-btn send-btn" title="Send Payload Instructions" onclick="dispatchConsoleChatMessage()">
+                    <i class="fa fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="panel-phase-1" class="phase-panel active">
+        <div class="panel-title">
+            <i class="fa fa-credit-card" style="color: var(--primary-color);"></i>
+             Confirmation Desk 
+        </div>
+
+<div class="order-summary-wrapper" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+    <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 700;">
+        <i class="fa fa-basket-shopping" style="color: var(--primary-color);"></i> Order Items Overview
+    </h4>
+    
+    <div id="orderItemsContainer"></div>
+
+</div>
+
+        <div id="wrapper-card-form" class="credit-card-inputs-sub">
+            <div class="form-group">
+                <label>Cardholder Full Name</label>
+                <input type="text" class="form-control" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label>Card Number</label>
+                <input type="text" class="form-control" placeholder="4532 •••• •••• 8824" maxlength="19">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Expiration Date</label>
+                    <input type="text" class="form-control" placeholder="MM/YY" maxlength="5">
+                </div>
+                <div class="form-group">
+                    <label>CVV Secure Code</label>
+                    <input type="password" class="form-control" placeholder="•••" maxlength="3">
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="primary-action-btn" style="margin-top: 10px;" onclick="processSecurePaymentExecutionPipeline()">
+            <i class="fa fa-shield-check"></i> CONFIRM NOW
+        </button>
+    </section>
+
+    <section id="panel-phase-1" class="phase-panel active">
+        <div class="panel-title">
+            <i class="fa fa-credit-card" style="color: var(--primary-color);"></i>
+            Payment Settlement
+        </div>
+        
+        <div id="wrapper-upi-form">
+            
+    <div class="form-group">
+        <label>Check-out Payment Methods</label>
+
+        <div class="upi-apps" style="display: flex; flex-wrap: wrap; gap: 10px;">
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="images/phonepe-icon.png" alt="PhonePe" style="height: 16px; width: auto; vertical-align: middle;">
+                <span>PhonePe</span>
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="images/google-pay-icon.png" alt="Google Pay" style="height: 16px; width: auto; vertical-align: middle;">
+                <span>Google Pay</span>
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="images/Paytm-Logo.wine.svg" alt="Paytm" style="height: 14px; width: auto; vertical-align: middle;">
+                <span>Paytm</span>
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="BHIM UPI" style="height: 12px; width: auto; vertical-align: middle;">
+                <span>BHIM UPI</span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+    <div class="form-group">
+        <label>Scan QR Code</label>
+
+        <div class="qr-payment-box">
+            <img id="paymentQR"
+                 src="images/payment-qr.png"
+                 alt="Payment QR">
+
+            <p>Scan using PhonePe, Google Pay, Paytm or BHIM UPI</p>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eaeaea;">
+        <span style="font-weight: 700; color: #555; font-size: 15px;">Settlement Amount Due:</span>
+        <span id="gatewaySettlementTotal" style="font-size: 22px; font-weight: 800; color: #000;">₹0</span>
+    </div>
+
+</div>
+
+    </section>
+
+    <section id="panel-phase-3" class="phase-panel">
+        <div class="panel-title">
+            <i class="fa fa-truck-fast" style="color: var(--success-color);"></i>
+            Fulfillment Map Tracking Logistics
+        </div>
+
+        <div class="logistics-timeline-map" id="timeline-graphics-wrapper">
+            <div class="milestone-node-item completed" id="node-milestone-1">
+                <div class="milestone-indicator-icon"></div>
+                <div class="milestone-details-box">
+                    <div class="milestone-header-row">
+                        <div class="milestone-title-text">Order Settlement Confirmed</div>
+                        <div class="milestone-timestamp-stamp" id="stamp-time-milestone-1">--:--</div>
+                    </div>
+                    <div class="milestone-caption-desc">Payment cleared. Design patterns and blueprints sent to factory floors.</div>
+                </div>
+            </div>
+
+            <div class="milestone-node-item active" id="node-milestone-2">
+                <div class="milestone-indicator-icon"></div>
+                <div class="milestone-details-box">
+                    <div class="milestone-header-row">
+                        <div class="milestone-title-text">Out for Delivery / Logistics Dispatched</div>
+                        <div class="milestone-timestamp-stamp" id="stamp-time-milestone-2">In Progress</div>
+                    </div>
+                    <div class="milestone-caption-desc">Custom tailored apparel package handed over to local distribution hub services.</div>
+                </div>
+            </div>
+
+            <div class="milestone-node-item" id="node-milestone-3">
+                <div class="milestone-indicator-icon"></div>
+                <div class="milestone-details-box">
+                    <div class="milestone-header-row">
+                        <div class="milestone-title-text">Shipment Handed Over & Complete</div>
+                        <div class="milestone-timestamp-stamp" id="stamp-time-milestone-3">Awaiting Dispatch</div>
+                    </div>
+                    <div class="milestone-caption-desc">Package marked complete by distribution courier services at door steps.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fulfillment-complete-banner" id="banner-fulfillment-final" style="display: none;">
+            <i class="fa fa-square-check" style="font-size: 20px;"></i>
+            This order has been completed successfully. Thank you for choosing Customize Collection!
+        </div>
+    </section>
+    
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+// ==========================================
+// CENTRAL CONFIGURATION & STATES
+// ==========================================
+const ORDER_STATUS = {
+    PAYMENT_PENDING: "payment_pending",
+    CUSTOMIZATION_PENDING: "customization_pending",
+    CUSTOMIZATION_APPROVED: "customization_approved",
+    PRODUCTION_STARTED: "production_started",
+    QUALITY_CHECK: "quality_check",
+    PACKED: "packed",
+    SHIPPED: "shipped",
+    DELIVERED: "delivered"
+};
+
+// Start with a fallback default state so the app doesn't break on a fresh page load
+let allOrders = JSON.parse(localStorage.getItem("allOrdersData")) || []; 
+let activeOrderId = localStorage.getItem("activeOrderId") || null;
+
+// Helper to grab the specific active order out of our history array
+function getCurrentActiveOrder() {
+    if (!activeOrderId && allOrders.length > 0) {
+        // Fallback to the latest order if no pointer is active
+        activeOrderId = allOrders[allOrders.length - 1].orderId;
+    }
+    return allOrders.find(order => order.orderId === activeOrderId) || null;
+}
+
+// ==========================================
+// 7. OWNER ACTIONS & PERMISSIONS
+// ==========================================
+
+// When Owner clicks "Approve Design"
+function ownerApproveDesign() {
+    systemApplicationState.orderStatus = ORDER_STATUS.CUSTOMIZATION_APPROVED;
+    
+    // 3. Create Permanent Snapshot
+    systemApplicationState.approvedDesignSnapshot = {
+        messages: [...systemApplicationState.chatLedgerHistory],
+        approvedAt: Date.now()
+    };
+
+    // 8 & 10. Auto Timeline & Chat Notification
+    systemApplicationState.timeline.push({ title: "Design Approved", time: Date.now() });
+    systemApplicationState.chatLedgerHistory.push({
+        sender: "System",
+        text: "Design approved by workshop. Customization locked."
+    });
+
+    saveAppState();
+    renderUI();
+}
+
+// Owner Status Updates (Production -> Packed -> Shipped)
+function updateOrderStatusByOwner(newStatus) {
+    systemApplicationState.orderStatus = newStatus;
+    
+    let timelineTitle = "";
+    let notificationText = "";
+
+    if (newStatus === ORDER_STATUS.PRODUCTION_STARTED) {
+        timelineTitle = "Production Started";
+        notificationText = "Your item has entered the crafting/production phase.";
+    } else if (newStatus === ORDER_STATUS.PACKED) {
+        timelineTitle = "Package Packed";
+        notificationText = "Package dispatched to logistics wing.";
+    } else if (newStatus === ORDER_STATUS.SHIPPED) {
+        timelineTitle = "Shipped";
+        notificationText = "Package dispatched. Courier details updated.";
+        // 9. Generate Delivery OTP when shipped
+        systemApplicationState.deliveryOTP = Math.floor(Math.random() * 9000 + 1000);
+        console.log(`[SYSTEM OTP GENERATED FOR TESTING]: ${systemApplicationState.deliveryOTP}`);
+    }
+
+    systemApplicationState.timeline.push({ title: timelineTitle, time: Date.now() });
+    systemApplicationState.chatLedgerHistory.push({ sender: "System", text: notificationText });
+
+    saveAppState();
+    renderUI();
+}
+
+// 5. ORDER ID GENERATOR USING GOOGLE CUSTOMER NAME
+function getGoogleCustomerName(){
+    return (
+        localStorage.getItem("googleUserName") ||
+        localStorage.getItem("userName") ||
+        localStorage.getItem("customerName") ||
+        "Customer"
+    ).trim();
+}
+
+function getGoogleCustomerEmail(){
+    return (
+        localStorage.getItem("googleUserEmail") ||
+        localStorage.getItem("userEmail") ||
+        ""
+    ).trim();
+}
+
+function getGoogleCustomerPhoto(){
+    return (
+        localStorage.getItem("googleUserPhoto") ||
+        localStorage.getItem("userPhoto") ||
+        localStorage.getItem("profilePhoto") ||
+        ""
+    ).trim();
+}
+
+function getGoogleCustomerName(){
+    return (
+        localStorage.getItem("googleUserName") ||
+        localStorage.getItem("userName") ||
+        localStorage.getItem("customerName") ||
+        "Customer"
+    ).trim();
+}
+
+function getGoogleCustomerEmail(){
+    return (
+        localStorage.getItem("googleUserEmail") ||
+        localStorage.getItem("userEmail") ||
+        ""
+    ).trim();
+}
+
+function getGoogleCustomerPhoto(){
+    return (
+        localStorage.getItem("googleUserPhoto") ||
+        localStorage.getItem("userPhoto") ||
+        localStorage.getItem("profilePhoto") ||
+        ""
+    ).trim();
+}
+
+function getGoogleCustomerName(){
+    return (localStorage.getItem("googleUserName") || localStorage.getItem("userName") || localStorage.getItem("customerName") || "Customer").trim();
+}
+
+function getGoogleCustomerEmail(){
+    return (localStorage.getItem("googleUserEmail") || localStorage.getItem("userEmail") || "").trim();
+}
+
+function getGoogleCustomerPhoto(){
+    return (localStorage.getItem("googleUserPhoto") || localStorage.getItem("userPhoto") || localStorage.getItem("profilePhoto") || "").trim();
+}
+
+function generateOrderId(){
+    const cleanName = getGoogleCustomerName().replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, " ").trim() || "Customer";
+    return cleanName + " #" + Math.floor(1000 + Math.random() * 9000);
+}
+
+    /**
+     * Native Runtime Entry Initialization Lifecycle
+     */
+    document.addEventListener("DOMContentLoaded", function() {
+        loadStateCacheFromLocalStorage();
+        syncGlobalUIRenderState();
+    });
+
+    // ==========================================
+// LOCALSTORAGE SYNC
+// ==========================================
+// ==========================================
+// MULTI-ORDER LOCALSTORAGE ROUTINES
+// ==========================================
+function saveAppState() {
+    localStorage.setItem("allOrdersData", JSON.stringify(allOrders));
+    localStorage.setItem("activeOrderId", activeOrderId);
+}
+
+function loadAppState() {
+    const savedOrders = localStorage.getItem("allOrdersData");
+    const savedActiveId = localStorage.getItem("activeOrderId");
+
+    if (savedOrders) {
+        allOrders = JSON.parse(savedOrders);
+    }
+    if (savedActiveId) {
+        activeOrderId = savedActiveId;
+    }
+
+    // Instantly load current data into view
+    renderUI();
+}
+
+        /**
+     * Phase Workflow & View Controls Synchronizer Rule Controller
+     */
+    function syncGlobalUIRenderState() {
+        // Clear all active tracking indicators layout scopes
+        document.querySelectorAll('.phase-panel').forEach(panel => panel.classList.remove('active'));
+        
+        // Dynamic visibility switches based on State rules
+        if (systemApplicationState.currentPhase === 1) {
+            // Rule: Customer has Text Box first (Phase 2), then Payment (Phase 1) below it
+            const p1 = document.getElementById('panel-phase-1');
+            const p2 = document.getElementById('panel-phase-2');
+            if (p2) {
+                p2.classList.add('active');
+                p2.style.display = 'block';
+            }
+            if (p1) {
+                p1.classList.add('active');
+                p1.style.display = 'block';
+            }
+        } else if (systemApplicationState.currentPhase === 2) {
+            document.getElementById('panel-phase-1').style.display = 'none'; // Lock out checkout view panel permanently
+            document.getElementById('panel-phase-2').classList.add('active');
+            document.getElementById('panel-phase-2').style.display = 'block';
+        } else if (systemApplicationState.currentPhase === 3) {
+            document.getElementById('panel-phase-1').style.display = 'none';
+            document.getElementById('panel-phase-2').classList.add('active'); // Keep communication history transparently readable
+            document.getElementById('panel-phase-2').style.display = 'block';
+            document.getElementById('panel-phase-3').classList.add('active');
+            document.getElementById('panel-phase-3').style.display = 'block';
+            
+            // Apply conversation lock layer rules permanently
+            document.getElementById('chat-workspace-frame').classList.add('locked-state');
+            const badge = document.getElementById('badge-operational-status');
+            if (badge) {
+                badge.innerText = "ARCHIVED";
+                badge.style.background = "#e0e0e0";
+                badge.style.color = "#424242";
+            }
+        }
+
+        // Apply admin visibility toggles safely based on the active role scope
+        const adminStrip = document.getElementById('owner-management-admin-strip');
+        if (adminStrip) {
+            if (systemApplicationState.currentRole === 'Owner' && systemApplicationState.currentPhase === 2) {
+                adminStrip.style.display = 'flex';
+            } else {
+                adminStrip.style.display = 'none';
+            }
+        }
+
+        // Apply Role Swapper active class toggles inside navigation header bar
+        const custBtn = document.getElementById('role-customer-btn');
+        const ownBtn = document.getElementById('role-owner-btn');
+        if (custBtn) custBtn.classList.remove('active');
+        if (ownBtn) ownBtn.classList.remove('active');
+        
+        if (systemApplicationState.currentRole === 'Customer') {
+            if (custBtn) custBtn.classList.add('active');
+        } else {
+            if (ownBtn) ownBtn.classList.add('active');
+        }
+
+        // Render logs data matrix stream sequentially
+        rebuildChatLedgerUIStream();
+        rebuildLogisticsMilestoneTimeline();
+    }
+
+// ==========================================
+// 2 & 12. PERMISSIONS & CONDITIONAL RENDER CHECKS
+// ==========================================
+function renderUI() {
+    const currentOrder = getCurrentActiveOrder();
+    
+    const panelPhase1 = document.getElementById("panel-phase-1");
+    const panelPhase2 = document.getElementById("panel-phase-2");
+    const timelineContainer = document.getElementById("timelineContainer");
+    const otpSection = document.getElementById("otpSection");
+    const statusBanner = document.getElementById("statusBanner");
+
+    // 🛑 FALLBACK CASE: If no active order exists yet (Initial State / Cleared State)
+    if (!currentOrder) {
+        if (panelPhase2) {
+            panelPhase2.style.display = "block";
+            panelPhase2.classList.add("active");
+        }
+        if (panelPhase1) {
+            panelPhase1.style.display = "block";
+            panelPhase1.classList.add("active");
+        }
+        if (otpSection) otpSection.style.display = "none";
+        if (statusBanner) statusBanner.innerHTML = "";
+        return; 
+    }
+
+    const currentStatus = currentOrder.status;
+    const currentTimeline = currentOrder.timeline;
+
+    // ==========================================
+    // SWAPPED PANEL DISPLAY CONTROLLER
+    // ==========================================
+    if (currentStatus === ORDER_STATUS.PAYMENT_PENDING || currentStatus === "payment_processing") {
+        // Show both Text Box (Phase 2) and Payment (Phase 1)
+        if (panelPhase2) {
+            panelPhase2.style.display = "block";
+            panelPhase2.classList.add("active");
+        }
+        if (panelPhase1) {
+            panelPhase1.style.display = "block";
+            panelPhase1.classList.add("active");
+        }
+    } else {
+        // Payment complete: Hide payment panels, show only customization & chat workspace
+        if (panelPhase2) {
+            panelPhase2.style.display = "block";
+            panelPhase2.classList.add("active");
+        }
+        if (panelPhase1) {
+            panelPhase1.style.display = "none";
+            panelPhase1.classList.remove("active");
+        }
+    }
+
+    // ==========================================
+    // TIMELINE RENDERING
+    // ==========================================
+    if (timelineContainer && currentTimeline) {
+        timelineContainer.innerHTML = currentTimeline.map(node => `
+            <div class="timeline-step" style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                <span class="step-title" style="font-weight: bold;">✓ ${node.title}</span>
+                <span class="step-time" style="color: #666; font-size: 0.85em;">${node.time}</span>
+            </div>
+        `).join("");
+    }
+
+    // ==========================================
+    // DELIVERY OTP INPUT PRESENTATION
+    // ==========================================
+    if (currentStatus === ORDER_STATUS.SHIPPED) {
+        if (otpSection) {
+            otpSection.style.display = "block";
+            otpSection.innerHTML = `
+                <div style="background: #fff8e1; border: 1px solid #ffe082; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Enter Delivery OTP:</label>
+                    <input type="text" id="otpInputField" placeholder="4-digit code" style="padding: 5px; width: 100px; margin-right: 10px;">
+                    <button onclick="verifyDeliveryOTP(document.getElementById('otpInputField').value)" style="padding: 5px 10px; cursor: pointer;">Verify OTP</button>
+                </div>
+            `;
+        }
+    } else {
+        if (otpSection) otpSection.style.display = "none";
+    }
+
+    // ==========================================
+    // CUSTOMER HAPPINESS COMPLETION BANNER
+    // ==========================================
+    if (currentStatus === ORDER_STATUS.DELIVERED) {
+        if (statusBanner) {
+            statusBanner.innerHTML = `
+                <div style="background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; padding: 15px; border-radius: 5px; text-align: center; margin: 15px 0;">
+                    <h3 style="margin: 0 0 5px 0;">✓ Order Completed</h3>
+                    <p style="margin: 0 0 12px 0;">Thank you for shopping with Customize Collection.</p>
+                </div>
+            `;
+        }
+    } else {
+        if (statusBanner) statusBanner.innerHTML = "";
+    }
+}
+ 
+// ============================================================================
+// BUTTON EVENT LISTENERS
+// ============================================================================
+
+// Find your Owner Tab's "Approve Design" button variable and attach the function:
+const approveButton = document.getElementById("approveBtn"); // 👈 Make sure "approveBtn" matches your HTML button's exact ID
+if (approveButton) {
+    approveButton.addEventListener("click", ownerApproveDesign);
+}
+
+    /**
+     * Active Role Scoping Toggle Trigger
+     */
+    function switchActiveRoleScope(targetRole) {
+        systemApplicationState.currentRole = targetRole;
+        saveStateToLocalStorageCache();
+        syncGlobalUIRenderState();
+    }
+
+    /**
+     * Phase 1: Form View Controls Switcher Function
+     */
+    function selectPaymentMethodType(methodCode) {
+        document.getElementById('opt-upi').classList.remove('selected');
+        document.getElementById('opt-card').classList.remove('selected');
+        document.getElementById('wrapper-upi-form').style.display = 'none';
+        document.getElementById('wrapper-card-form').style.display = 'none';
+
+        if (methodCode === 'UPI') {
+            document.getElementById('opt-upi').classList.add('selected');
+            document.getElementById('wrapper-upi-form').style.display = 'block';
+            document.getElementById('rad-upi').checked = true;
+        } else {
+            document.getElementById('opt-card').classList.add('selected');
+            document.getElementById('wrapper-card-form').style.display = 'block';
+            document.getElementById('rad-card').checked = true;
+        }
+    }
+
+    // ==========================================
+// 6. PAYMENT VERIFICATION LAYER & ORDER INITIALIZATION
+// ==========================================
+// ==========================================
+// REWRITTEN: PAYMENT SUCCESS LAYER
+// ==========================================
+function handlePaymentSuccess(purchasedItems, orderTotal) {
+    // 1. Instantly generate a totally fresh order container
+    const newOrder = createNewOrderObject(purchasedItems, orderTotal);
+    
+    // 2. Push it safely into the historical list without touching previous orders
+    allOrders.push(newOrder);
+    
+    // 3. Make this fresh order the one visible on the screen
+    activeOrderId = newOrder.orderId;
+    
+    // 4. Set temporary simulated verification state
+    let currentOrder = getCurrentActiveOrder();
+    currentOrder.status = "payment_processing";
+    
+    updatePaymentUI("Verifying Payment..."); 
+
+    setTimeout(() => {
+        // 5. Update statuses safely locked inside this specific object
+        currentOrder.status = ORDER_STATUS.CUSTOMIZATION_PENDING;
+
+        currentOrder.timeline.push({
+            title: "Payment Confirmed",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        currentOrder.chatLedgerHistory.push({
+            sender: "System",
+            text: "Payment verified. Customization features initialized."
+        });
+
+        // 6. Transition application state phase to customization-only (Phase 2)
+        if (typeof systemApplicationState !== "undefined") {
+            systemApplicationState.currentPhase = 2;
+            systemApplicationState.orderStatus = ORDER_STATUS.CUSTOMIZATION_PENDING;
+        }
+
+        saveAppState();
+        saveStateToLocalStorageCache();
+        
+        syncGlobalUIRenderState();
+        renderUI(); // Everything switches clean because the old session is abandoned
+        
+        alert(`Payment Confirmed! Loaded Order Session: ${activeOrderId}`);
+    }, 2000);
+}
+
+        /**
+     * Phase 2 Chat Console Instruction Process Engine
+     */
+    function dispatchConsoleChatMessage() {
+        const inputField = document.getElementById('chat-text-message-field');
+        const textValue = inputField.value.trim();
+        if (!textValue) return;
+
+        // New Rule: Only customer checking is restricted if the cart/overview has no products
+        if (systemApplicationState.currentRole === 'Customer') {
+            const orderItemsContainer = document.getElementById('orderItemsContainer');
+            const hasProducts = orderItemsContainer && orderItemsContainer.children.length > 0;
+            
+            if (!hasProducts) {
+                alert("Your Selected Items Overview is empty. You must have at least one product in your overview to chat with the owner.");
+                return;
+            }
+        }
+
+        const currentLocalTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        systemApplicationState.chatLedgerHistory.push({
+            id: Date.now(),
+            sender: systemApplicationState.currentRole,
+            text: textValue,
+            stamp: currentLocalTime
+        });
+
+        inputField.value = '';
+        saveStateToLocalStorageCache();
+        rebuildChatLedgerUIStream();
+    }
+
+    function handleChatConsoleKeyPress(event) {
+        if (event.key === 'Enter') {
+            dispatchConsoleChatMessage();
+        }
+    }
+
+    /**
+     * Voice Processing Mock Console Engine Tasks
+     */
+    function toggleVoiceRecordingStateLoop() {
+        const textField = document.getElementById('chat-text-message-field');
+        const recordFeedback = document.getElementById('voice-recording-console-feedback');
+        const micIcon = document.getElementById('mic-action-trigger');
+
+        if (!systemApplicationState.isVoiceRecording) {
+            systemApplicationState.isVoiceRecording = true;
+            textField.style.display = 'none';
+            recordFeedback.style.display = 'flex';
+            micIcon.style.background = '#ffe3e3';
+        } else {
+            systemApplicationState.isVoiceRecording = false;
+            textField.style.display = 'block';
+            recordFeedback.style.display = 'none';
+            micIcon.style.background = 'none';
+        }
+    }
+
+        function finalizeVoiceNoteCaptureOutput() {
+        // New Rule: Only customer checking is restricted if the cart/overview has no products
+        if (systemApplicationState.currentRole === 'Customer') {
+            const orderItemsContainer = document.getElementById('orderItemsContainer');
+            const hasProducts = orderItemsContainer && orderItemsContainer.children.length > 0;
+            
+            if (!hasProducts) {
+                alert("Your Selected Items Overview is empty. You must have at least one product in your overview to send voice notes.");
+                return;
+            }
+        }
+
+        const currentLocalTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        systemApplicationState.chatLedgerHistory.push({
+            id: Date.now(),
+            sender: systemApplicationState.currentRole,
+            text: `🎙️ Voice Customization Note captured successfully. Codec asset verified sequence compiled.`,
+            isAudio: true,
+            stamp: currentLocalTime
+        });
+
+        toggleVoiceRecordingStateLoop();
+        saveStateToLocalStorageCache();
+        rebuildChatLedgerUIStream();
+    }
+
+    /**
+     * Rebuilds Chat Stream Layout View Components Non-Destructively
+     */
+    function rebuildChatLedgerUIStream() {
+        const historyBox = document.getElementById('chat-history-scroll-box');
+        if (!historyBox) return;
+
+        historyBox.innerHTML = '';
+        
+        systemApplicationState.chatLedgerHistory.forEach(msg => {
+            const node = document.createElement('div');
+            node.className = `msg-bubble ${msg.sender.toLowerCase()}`;
+            
+            if (msg.sender === 'System') {
+                node.innerText = msg.text;
+            } else {
+                const nameTag = `<span class="msg-sender-tag">${msg.sender === 'Owner' ? 'Workshop Owner' : 'Customer (You)'}</span>`;
+                let innerContent = `<span>${msg.text}</span>`;
+                
+                if (msg.isAudio) {
+                    innerContent += `
+                        <div class="audio-attachment-player">
+                            <i class="fa fa-play" style="color:var(--primary-color); cursor:pointer;"></i>
+                            <div class="audio-wave-simulation"></div>
+                            <span style="font-size:10px; color:var(--text-muted);">0:14</span>
+                        </div>
+                    `;
+                }
+                const metaTag = `<span class="msg-meta">${msg.stamp}</span>`;
+                node.innerHTML = nameTag + innerContent + metaTag;
+            }
+            historyBox.appendChild(node);
+        });
+
+        // Autoscroll logic metrics
+        historyBox.scrollTop = historyBox.scrollHeight;
+    }
+
+    /**
+     * Phase 2 Admin Authorization Event Function
+     */
+    function executeOwnerPipelineApprovalSignature() {
+        if (systemApplicationState.currentRole !== 'Owner') return;
+
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        systemApplicationState.chatLedgerHistory.push({
+            id: Date.now(),
+            sender: 'System',
+            text: `🔒 Blueprint signature verified locked by Workshop Administrator. Final product measurements compiled into active package files. Delivery tracking route initialized.`,
+            stamp: timestamp
+        });
+
+        systemApplicationState.currentPhase = 3;
+        saveStateToLocalStorageCache();
+        syncGlobalUIRenderState();
+    }
+
+    /**
+     * Phase 3: Logistics Timeline Content Renderer Layout Router Engine
+     */
+    function rebuildLogisticsMilestoneTimeline() {
+        const stamp1 = document.getElementById('stamp-time-milestone-1');
+        const stamp2 = document.getElementById('stamp-time-milestone-2');
+        const stamp3 = document.getElementById('stamp-time-milestone-3');
+
+        if (!stamp1) return;
+
+        // Populate standard timestamp variables metrics arrays safely
+        stamp1.innerText = systemApplicationState.paymentTimestamp || '--:--';
+        stamp2.innerText = systemApplicationState.dispatchTimestamp || 'In Progress';
+
+        const node2 = document.getElementById('node-milestone-2');
+        const node3 = document.getElementById('node-milestone-3');
+        const wrapperAction = document.getElementById('wrapper-customer-delivery-closer-action');
+        const finalBanner = document.getElementById('banner-fulfillment-final');
+        const graphicsLine = document.getElementById('timeline-graphics-wrapper');
+
+        if (systemApplicationState.currentPhase === 3) {
+            if (!systemApplicationState.isDeliveryFinalized) {
+                node2.className = "milestone-node-item active";
+                node3.className = "milestone-node-item";
+                stamp3.innerText = "Awaiting Arrival";
+                
+                // Show recipient delivery confirmation button if operating as Customer
+                if (systemApplicationState.currentRole === 'Customer') {
+                    wrapperAction.style.display = 'block';
+                } else {
+                    wrapperAction.style.display = 'none';
+                }
+                finalBanner.style.display = 'none';
+                graphicsLine.classList.remove('pipeline-completed');
+            } else {
+                node2.className = "milestone-node-item completed";
+                node3.className = "milestone-node-item completed";
+                stamp3.innerText = systemApplicationState.deliveryTimestamp;
+                wrapperAction.style.display = 'none';
+                finalBanner.style.display = 'flex';
+                graphicsLine.classList.add('pipeline-completed');
+            }
+        }
+    }
+
+    /**
+     * Phase 3: Customer Confirms Delivery Receipt
+     */
+    function executeCustomerDeliveryReceiptSignature() {
+        if (systemApplicationState.currentRole !== 'Customer') return;
+
+        const currentTimestamp = new Date();
+        systemApplicationState.deliveryTimestamp = currentTimestamp.toLocaleString();
+        systemApplicationState.isDeliveryFinalized = true;
+
+        systemApplicationState.chatLedgerHistory.push({
+            id: Date.now(),
+            sender: 'System',
+            text: `🏁 Product deployment loop finalized. Client acknowledged delivery receipt authorization at ${systemApplicationState.deliveryTimestamp}. Flow state closed successfully.`,
+            stamp: currentTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        saveStateToLocalStorageCache();
+        syncGlobalUIRenderState();
+    }
+
+// Run this function at the bottom of your code to process layout on load
+loadAppState(); 
+renderUI();
+
+    const socket = io('http://localhost:3000');
+    const currentOrderId = "ORDER_1001"; // Dynamically update this based on your selected active tracking code order parameters
+    const userRole = "customer"; // Identifies this window interface node as the client user instance
+
+    document.addEventListener("DOMContentLoaded", () => {
+        socket.emit('join_order_channel', currentOrderId);
+        
+        // Fetch message logs upon window execution frame initialization
+        fetch(`http://localhost:3000/api/chat/history/${currentOrderId}`)
+            .then(res => res.json())
+            .then(history => {
+                history.forEach(msg => displayRenderedChatMessageNode(msg.sender_role, msg.message_content));
+            });
+    });
+
+    function transmitCustomerChatMessage() {
+        const field = document.getElementById('chat-text-input-field');
+        const text = field.value.trim();
+        if(!text) return;
+
+        socket.emit('send_chat_message', { orderId: currentOrderId, senderRole: userRole, message: text });
+        field.value = '';
+    }
+
+    socket.on('receive_chat_message', (data) => {
+        if(data.orderId === currentOrderId) {
+            displayRenderedChatMessageNode(data.senderRole, data.message);
+        }
+    });
+
+    function displayRenderedChatMessageNode(role, msg) {
+        const view = document.getElementById('chat-messages-viewport');
+        const element = document.createElement('div');
+        const alignment = role === 'customer' ? 'background: #cbd5e1; align-self: flex-start; color: #1e293b;' : 'background: #0b57d0; align-self: flex-end; color: white;';
+        element.style = `padding: 8px 14px; border-radius: 12px; max-width: 75%; width: fit-content; font-size: 14px; word-wrap: break-word; ${alignment}`;
+        element.innerText = msg;
+        view.appendChild(element);
+        view.scrollTop = view.scrollHeight;
+    }
+
+// ==========================================================================
+// MULTI-ITEM DISPLAY LOGIC ENGINE WITH COLOR CAPTURE FALLBACK
+// ==========================================================================
+function displayCartProductsOnOrderPage() {
+    const orderedItems = JSON.parse(localStorage.getItem("checkoutProducts")) || [];
+    const grandTotal = localStorage.getItem("pendingOrderTotal") || "0";
+
+    const orderItemsContainer = document.getElementById("orderItemsContainer");
+    const gatewayDisplay = document.getElementById("gatewaySettlementTotal");
+
+    // Inject the final overall price total across all items combined
+    if (gatewayDisplay) {
+        gatewayDisplay.innerText = "₹" + grandTotal;
+    }
+
+    if (orderedItems.length === 0) {
+        if (orderItemsContainer) {
+            orderItemsContainer.innerHTML = "<p style='padding: 15px; color: #888; font-size: 13px; text-align: center;'>No active items found in this pending settlement payload.</p>";
+        }
+        return;
+    }
+
+    if (orderItemsContainer) {
+        orderItemsContainer.innerHTML = ""; // Clear loader canvas cleanly
+
+        // Loop through and append every single chosen product item individually
+        orderedItems.forEach(item => {
+            let itemRow = document.createElement("div");
+            
+            itemRow.style.display = "flex";
+            itemRow.style.gap = "15px";
+            itemRow.style.padding = "15px";
+            itemRow.style.marginBottom = "12px";
+            itemRow.style.background = "#ffffff";
+            itemRow.style.border = "1px solid #f0f0f0";
+            itemRow.style.borderRadius = "6px";
+            itemRow.style.alignItems = "center";
+            
+            // Safe search parameter to detect the color value no matter how it was named
+            const itemColorValue = item.color || item.colour || item.selectedColor || null;
+
+            itemRow.innerHTML = `
+                <img src="${item.img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/100'">
+                
+                <div style="flex: 1;">
+                    <h5 style="margin: 0 0 5px 0; font-size: 15px; font-weight: 600; color: #222;">
+                        ${item.displayName || item.name}
+                    </h5>
+                    
+                    <div style="font-size: 13px; color: #555; line-height: 1.6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                        ${item.material ? `<span><b>Material:</b> ${item.material}</span>` : ""}
+                        
+                        ${itemColorValue ? `
+                            ${item.material ? `<span>|</span>` : ""}
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <b>Color:</b> 
+                                <span style="
+                                    width: 12px; 
+                                    height: 12px; 
+                                    border-radius: 50%; 
+                                    display: inline-block; 
+                                    border: 1px solid #bbb; 
+                                    background: ${itemColorValue};
+                                "></span>
+                                <span style="font-size: 12px; color: #666;">(${itemColorValue})</span>
+                            </span>
+                        ` : ""}
+                        
+                        ${item.size ? `<span>|</span> <span><b>Size:</b> ${item.size}</span>` : ""}
+                        <span>|</span> <span><b>Qty:</b> ${item.qty || 1}</span>
+                    </div>
+                    
+                    ${item.notes && item.notes !== "no" ? `
+                        <div style="font-size: 12px; color: #666; background: #f9f9f9; padding: 6px 10px; border-radius: 4px; margin-top: 6px; border-left: 3px solid var(--primary-color, #ff6b6b); leading-relaxed;">
+                            <b>Custom Requirements Node:</b> ${item.notes}
+                        </div>
+                    ` : ""}
+                    
+                    <div style="font-size: 15px; font-weight: 700; color: #000; margin-top: 6px;">
+                        ₹${item.price}
+                    </div>
+                </div>
+            `;
+            
+            orderItemsContainer.appendChild(itemRow);
+        });
+    }
+}
+
+// Re-fire initialization runtime map sequence cleanly
+displayCartProductsOnOrderPage();
+   
+   (function initCheckoutGateway() {
+    const totalAmount = localStorage.getItem("pendingOrderTotal") || "0";
+    
+    // Looks for your gate element or text field to inject the total amount
+    const gatewayDisplay = document.getElementById("gatewaySettlementTotal") 
+                        || document.querySelector(".secure-checkout-gateway .payment-total");
+                        
+    if (gatewayDisplay) {
+        gatewayDisplay.innerText = "₹" + totalAmount;
+    }
+})();
+
+// ============================================================================
+// #3: OWNER APPROVAL & SNAPSHOT WORKFLOW
+// ============================================================================
+function ownerApproveDesign() {
+    // 1. Fetch our current running order object out of the multi-order ledger
+    const currentOrder = getCurrentActiveOrder();
+    if (!currentOrder) return;
+
+    // 2. Advance the status lock to approved
+    currentOrder.status = ORDER_STATUS.CUSTOMIZATION_APPROVED;
+    
+    // 3. Create the permanent structural freeze snapshot of the design conversation
+    currentOrder.approvedDesignSnapshot = {
+        messages: [...currentOrder.chatLedgerHistory],
+        approvedAt: Date.now()
+    };
+
+    // 4. Automatically add a milestone block to the timeline container
+    currentOrder.timeline.push({ 
+        title: "Design Approved", 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+    });
+    
+    // 5. Fire an automated notification block directly into the chat list
+    currentOrder.chatLedgerHistory.push({
+        sender: "System",
+        text: "Design approved by workshop. Production phase initiated."
+    });
+
+    // 6. Sync everything to the storage history ledger and update the elements on screen
+    saveAppState();
+    renderUI();
+}
+
+// ============================================================================
+// #6: THE "BUY MORE PRODUCTS" RESET ACTION
+// ============================================================================
+function handleBuyMoreProductsClick() {
+    // 1. Drop the running session pointer so the app can start fresh.
+    // This leaves the old completed order completely untouched inside your array!
+    activeOrderId = null; 
+    
+    // 2. Sync this change to localStorage so it remembers the user checked out
+    saveAppState();
+    
+    // 3. Force your UI layout tabs back to your shopping or catalog view
+    // Change "catalogTab" to whatever your main shopping panel ID is called
+    if (typeof showTab === "function") {
+        showTab("catalogTab"); 
+    } else if (typeof switchTab === "function") {
+        switchTab("catalogTab");
+    }
+    
+    // 4. Fire the interface loop to clear out the completed checkout screen components
+    renderUI(); 
+}
+
+// ============================================================================
+// COMPATIBILITY ALIAS BRIDGE (FIXES REFRESH & BUTTON CLICK ERRORS)
+// ============================================================================
+
+// 1. Fixes the error: loadStateCacheFromLocalStorage is not defined
+function loadStateCacheFromLocalStorage() {
+    console.log("Stitching old storage loader to new Amazon multi-order routine...");
+    if (typeof loadAppState === "function") {
+        loadAppState();
+    }
+}
+
+// 2. Fixes the error: processSecurePaymentExecutionPipeline is not defined
+function processSecurePaymentExecutionPipeline() {
+    console.log("Stitching old checkout trigger to new verification layer...");
+    if (typeof handlePaymentSuccess === "function") {
+        // Automatically grabs your cart and total variables if defined, or runs defaults safely
+        const targetedCart = typeof cart !== 'undefined' ? cart : [];
+        const targetedTotal = typeof totalAmount !== 'undefined' ? totalAmount : 0;
+        
+        handlePaymentSuccess(targetedCart, targetedTotal);
+    }
+}
+
+// 3. Automated Error-Catch Initializer Wrap
+document.addEventListener("DOMContentLoaded", () => {
+    try {
+        loadStateCacheFromLocalStorage();
+        if (typeof renderUI === "function") renderUI();
+    } catch(e) {
+        console.warn("Initialization pass managed safely:", e);
+    }
+});
+
+// ============================================================================
+// REVERSED WORKFLOW DISPLAY CONTROLLER
+// ============================================================================
+
+// ======================================================
+// ORDER.HTML FIX PACK
+// Hide owner mode from customer + fix chat + fix checkout
+// ======================================================
+
+function getLoggedInOrderRole(){
+    const role = (
+        localStorage.getItem("userRole") ||
+        localStorage.getItem("loginRole") ||
+        localStorage.getItem("accountType") ||
+        "customer"
+    ).toLowerCase();
+
+    return (role === "owner" || role === "admin") ? "Owner" : "Customer";
+}
+
+function isOwnerLoggedIn(){
+    return getLoggedInOrderRole() === "Owner";
+}
+
+function applyOrderRoleSecurity(){
+    const ownerBtn = document.getElementById("role-owner-btn");
+    const customerBtn = document.getElementById("role-customer-btn");
+
+    if(!isOwnerLoggedIn()){
+        if(ownerBtn){
+            ownerBtn.style.display = "none";
+        }
+
+        if(customerBtn){
+            customerBtn.classList.add("active");
+            customerBtn.disabled = true;
+        }
+
+        if(window.systemApplicationState){
+            window.systemApplicationState.currentRole = "Customer";
+        }
+    }
+}
+
+function getCheckoutItemsForOrder(){
+    return JSON.parse(localStorage.getItem("checkoutProducts")) || [];
+}
+
+function getCheckoutTotalForOrder(){
+    return Number(localStorage.getItem("pendingOrderTotal")) || 0;
+}
+
+function createNewOrderObject(purchasedItems, orderTotal){
+    const now = new Date();
+
+    return {
+    orderId: generateOrderId(),
+    customerName: getGoogleCustomerName(),
+    customerEmail: getGoogleCustomerEmail(),
+    customerPhoto: getGoogleCustomerPhoto(),
+
+        status: ORDER_STATUS.CUSTOMIZATION_PENDING,
+        purchasedItems: purchasedItems || [],
+        total: orderTotal || 0,
+
+        timeline: [
+            {
+                title: "Payment Confirmed",
+                time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            }
+        ],
+
+        chatLedgerHistory: [
+            {
+                id: Date.now(),
+                sender: "System",
+                text: "Order created. You can now message the store about customization.",
+                stamp: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            }
+        ],
+
+        paymentTimestamp: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        currentPhase: 2,
+        isDeliveryFinalized: false
+    };
+}
+
+function syncSystemStateFromActiveOrder(){
+    const currentOrder = getCurrentActiveOrder();
+
+    window.systemApplicationState = {
+        currentRole: isOwnerLoggedIn() ? "Owner" : "Customer",
+        currentPhase: currentOrder ? (currentOrder.currentPhase || (currentOrder.status === "delivery_active" ? 3 : 2)) : 1,
+        chatLedgerHistory: currentOrder ? (currentOrder.chatLedgerHistory || []) : [],
+        timeline: currentOrder ? (currentOrder.timeline || []) : [],
+        paymentTimestamp: currentOrder ? currentOrder.paymentTimestamp : "--:--",
+        dispatchTimestamp: currentOrder ? currentOrder.dispatchTimestamp : "In Progress",
+        deliveryTimestamp: currentOrder ? currentOrder.deliveryTimestamp : "",
+        isDeliveryFinalized: currentOrder ? !!currentOrder.isDeliveryFinalized : false,
+        isVoiceRecording: false
+    };
+}
+
+function saveStateToLocalStorageCache(){
+    const currentOrder = getCurrentActiveOrder();
+
+    if(currentOrder && window.systemApplicationState){
+        currentOrder.chatLedgerHistory = window.systemApplicationState.chatLedgerHistory || [];
+        currentOrder.timeline = window.systemApplicationState.timeline || [];
+        currentOrder.currentPhase = window.systemApplicationState.currentPhase || 2;
+        currentOrder.isDeliveryFinalized = !!window.systemApplicationState.isDeliveryFinalized;
+        currentOrder.deliveryTimestamp = window.systemApplicationState.deliveryTimestamp || "";
+    }
+
+    saveAppState();
+}
+
+function switchActiveRoleScope(targetRole){
+    if(targetRole === "Owner" && !isOwnerLoggedIn()){
+        alert("Owner Mode is only available from owner login.");
+        return;
+    }
+
+    syncSystemStateFromActiveOrder();
+    window.systemApplicationState.currentRole = targetRole;
+    saveStateToLocalStorageCache();
+    renderUI();
+}
+
+function processSecurePaymentExecutionPipeline(){
+    const purchasedItems = getCheckoutItemsForOrder();
+    const orderTotal = getCheckoutTotalForOrder();
+
+    if(purchasedItems.length === 0){
+        alert("No checkout products found.");
+        return;
+    }
+
+    const newOrder = createNewOrderObject(purchasedItems, orderTotal);
+
+    allOrders.push(newOrder);
+    activeOrderId = newOrder.orderId;
+
+    saveAppState();
+    syncSystemStateFromActiveOrder();
+    renderUI();
+
+    alert("Order confirmed. You can now message the store.");
+}
+
+function dispatchConsoleChatMessage(){
+    syncSystemStateFromActiveOrder();
+
+    const inputField = document.getElementById("chat-text-message-field");
+    const textValue = inputField ? inputField.value.trim() : "";
+
+    if(!textValue) return;
+
+    const currentOrder = getCurrentActiveOrder();
+
+    if(!currentOrder){
+        alert("Confirm the order first before sending messages.");
+        return;
+    }
+
+    const stamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    currentOrder.chatLedgerHistory = currentOrder.chatLedgerHistory || [];
+
+    currentOrder.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: isOwnerLoggedIn() ? "Owner" : "Customer",
+        text: textValue,
+        stamp: stamp
+    });
+
+    inputField.value = "";
+    saveAppState();
+    syncSystemStateFromActiveOrder();
+    rebuildChatLedgerUIStream();
+}
+
+function handleChatConsoleKeyPress(event){
+    if(event.key === "Enter"){
+        dispatchConsoleChatMessage();
+    }
+}
+
+function rebuildChatLedgerUIStream(){
+    const historyBox = document.getElementById("chat-history-scroll-box");
+    if(!historyBox) return;
+
+    const currentOrder = getCurrentActiveOrder();
+    const messages = currentOrder ? (currentOrder.chatLedgerHistory || []) : [];
+
+    historyBox.innerHTML = "";
+
+    messages.forEach(msg => {
+        const node = document.createElement("div");
+
+        if(msg.sender === "System"){
+            node.className = "msg-system";
+            node.innerText = msg.text;
+        } else {
+            node.className = `msg-bubble ${msg.sender === "Owner" ? "owner" : "customer"}`;
+            node.innerHTML = `
+                <span class="msg-sender-tag">
+                    ${msg.sender === "Owner" ? "Workshop Owner" : "Customer"}
+                </span>
+                <span>${msg.text}</span>
+                <span class="msg-meta">${msg.stamp || ""}</span>
+            `;
+        }
+
+        historyBox.appendChild(node);
+    });
+
+    historyBox.scrollTop = historyBox.scrollHeight;
+}
+
+const oldRenderUI = renderUI;
+
+renderUI = function(){
+    syncSystemStateFromActiveOrder();
+    oldRenderUI();
+    applyOrderRoleSecurity();
+    rebuildChatLedgerUIStream();
+};
+
+document.addEventListener("DOMContentLoaded", function(){
+    syncSystemStateFromActiveOrder();
+    applyOrderRoleSecurity();
+    rebuildChatLedgerUIStream();
+});
+
+// ======================================================
+// NEW ORDER BUTTON AFTER CHECKOUT DISAPPEARS
+// ======================================================
+
+function goBackToCartForNewOrder(){
+    localStorage.removeItem("activeOrderId");
+
+    const checkoutProducts = JSON.parse(localStorage.getItem("checkoutProducts")) || [];
+
+    if(checkoutProducts.length > 0){
+        clearOldOrderAndShowPayment();
+    } else {
+        window.location.href = "cart.html";
+    }
+}
+
+function addNewOrderButtonToChatSection(){
+    const panelPhase2 = document.getElementById("panel-phase-2");
+    if(!panelPhase2) return;
+
+    if(document.getElementById("new-order-action-box")) return;
+
+    const actionBox = document.createElement("div");
+    actionBox.id = "new-order-action-box";
+    actionBox.style.cssText = `
+        background:#fff;
+        border:1px solid #e5e5e5;
+        border-radius:8px;
+        padding:14px;
+        margin-bottom:15px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+    `;
+
+    actionBox.innerHTML = `
+        <div>
+            <div style="font-weight:700;color:#222;">Need to order something else?</div>
+            <div style="font-size:12px;color:#666;">Go back to cart and start a new checkout.</div>
+        </div>
+
+        <button type="button"
+                onclick="goBackToCartForNewOrder()"
+                style="
+                    background:#fb641b;
+                    color:#fff;
+                    border:none;
+                    padding:10px 16px;
+                    border-radius:4px;
+                    font-weight:700;
+                    cursor:pointer;
+                ">
+            PLACE NEW ORDER
+        </button>
+    `;
+
+    const title = panelPhase2.querySelector(".panel-title");
+    if(title){
+        title.insertAdjacentElement("afterend", actionBox);
+    } else {
+        panelPhase2.prepend(actionBox);
+    }
+}
+
+const oldRenderUIForNewOrderButton = renderUI;
+
+renderUI = function(){
+    oldRenderUIForNewOrderButton();
+
+    const currentOrder = getCurrentActiveOrder();
+
+    if(currentOrder && currentOrder.status !== ORDER_STATUS.PAYMENT_PENDING){
+        addNewOrderButtonToChatSection();
+    }
+};
+
+document.addEventListener("DOMContentLoaded", function(){
+    const currentOrder = getCurrentActiveOrder();
+
+    if(currentOrder && currentOrder.status !== ORDER_STATUS.PAYMENT_PENDING){
+        addNewOrderButtonToChatSection();
+    }
+});
+
+setInterval(function(){
+    const currentOrder = getCurrentActiveOrder();
+    if(!currentOrder) return;
+
+    const savedOrders = JSON.parse(localStorage.getItem("allOrdersData")) || [];
+    const freshOrder = savedOrders.find(order => order.orderId === currentOrder.orderId);
+    if(!freshOrder) return;
+
+    Object.assign(currentOrder, freshOrder);
+
+    if(freshOrder.currentPhase === 3 || freshOrder.status === "delivery_active"){
+        if(window.systemApplicationState){
+            window.systemApplicationState.currentPhase = 3;
+        }
+
+        const panel1 = document.getElementById("panel-phase-1");
+        const panel2 = document.getElementById("panel-phase-2");
+        const panel3 = document.getElementById("panel-phase-3");
+
+        if(panel1) panel1.style.display = "none";
+        if(panel2) panel2.style.display = "block";
+        if(panel3) panel3.style.display = "block";
+
+        if(typeof rebuildLogisticsMilestoneTimeline === "function"){
+            rebuildLogisticsMilestoneTimeline();
+        }
+    }
+
+    if(typeof rebuildChatLedgerUIStream === "function"){
+        rebuildChatLedgerUIStream();
+    }
+}, 1000);
+
+// ======================================================
+// RESET OLD ORDER + SHOW PAYMENT AGAIN
+// ======================================================
+
+function clearOldOrderAndShowPayment(){
+    localStorage.removeItem("activeOrderId");
+
+    const panel1 = document.getElementById("panel-phase-1");
+    const panel2 = document.getElementById("panel-phase-2");
+    const panel3 = document.getElementById("panel-phase-3");
+
+    if(panel1){
+        panel1.style.display = "block";
+        panel1.classList.add("active");
+    }
+
+    if(panel2){
+        panel2.style.display = "none";
+        panel2.classList.remove("active");
+    }
+
+    if(panel3){
+        panel3.style.display = "none";
+        panel3.classList.remove("active");
+    }
+
+    displayCartProductsOnOrderPage();
+}
+
+function addClearOldOrderButton(){
+    const panel2 = document.getElementById("panel-phase-2");
+    if(!panel2) return;
+
+    if(document.getElementById("clear-old-order-btn")) return;
+
+    btn.style.cssText = `
+        background:#111827;
+        color:#fff;
+        border:none;
+        padding:10px 14px;
+        border-radius:4px;
+        font-weight:700;
+        cursor:pointer;
+        margin-left:10px;
+    `;
+
+    const newOrderBox = document.getElementById("new-order-action-box");
+
+    if(newOrderBox){
+        newOrderBox.appendChild(btn);
+    } else {
+        panel2.prepend(btn);
+    }
+}
+
+function hideFulfillmentMapForNow(){
+    const panel3 = document.getElementById("panel-phase-3");
+    if(panel3){
+        panel3.style.display = "none";
+        panel3.classList.remove("active");
+    }
+}
+
+const oldRenderUIResetPatch = renderUI;
+
+renderUI = function(){
+    oldRenderUIResetPatch();
+    addClearOldOrderButton();
+    hideFulfillmentMapForNow();
+};
+
+document.addEventListener("DOMContentLoaded", function(){
+    addClearOldOrderButton();
+    hideFulfillmentMapForNow();
+
+    const checkoutProducts = JSON.parse(localStorage.getItem("checkoutProducts")) || [];
+
+    if(checkoutProducts.length > 0 && !localStorage.getItem("activeOrderId")){
+        clearOldOrderAndShowPayment();
+    }
+});
+
+function clearOldOrder() {
+    // 1. Clear out all the data cache trackers completely
+    localStorage.removeItem("activeOrderId");
+    localStorage.removeItem("allOrdersData");
+    localStorage.removeItem("allOrders");
+    localStorage.removeItem("activeOrder");
+    localStorage.removeItem("systemApplicationState");
+    
+    // 2. Clear out the product arrays so they stay empty on refresh
+    localStorage.setItem("checkoutProducts", JSON.stringify([]));
+    localStorage.setItem("pendingOrderTotal", "0");
+    
+    // 3. Reset RAM variables 
+    allOrders = [];
+    activeOrderId = null;
+    if (typeof currentOrderId !== 'undefined') currentOrderId = null;
+
+    // 4. Reset the state tracker variables to safe defaults
+    window.systemApplicationState = {
+        currentPhase: 1,
+        currentRole: "Customer",
+        chatLedgerHistory: [],
+        isVoiceRecording: false,
+        isDeliveryFinalized: false,
+        paymentTimestamp: "",
+        dispatchTimestamp: "",
+        deliveryTimestamp: "",
+        timeline: []
+    };
+    localStorage.setItem("systemApplicationState", JSON.stringify(window.systemApplicationState));
+    
+    // 5. Clear the text inside the chat display stream visually
+    const chatStreamElement = document.getElementById("chat-ledger-stream") || 
+                              document.getElementById("chat-workspace-frame");
+    if (chatStreamElement) {
+        chatStreamElement.innerHTML = ""; 
+    }
+
+    const inputField = document.getElementById("chat-text-message-field") || document.getElementById("chat-text-input-field");
+    if (inputField) {
+        inputField.value = "";
+    }
+
+    // 6. Reset item pricing totals on screen
+    const orderItemsContainer = document.getElementById("orderItemsContainer");
+    if (orderItemsContainer) {
+        orderItemsContainer.innerHTML = "<p style='padding: 15px; color: #888; font-size: 13px; text-align: center;'>No active items found in this pending settlement payload.</p>";
+    }
+    const gatewayDisplay = document.getElementById("gatewaySettlementTotal");
+    if (gatewayDisplay) gatewayDisplay.innerText = "₹0";
+
+    // ==========================================================
+    // INSTANT RELOAD AUTOMATION
+    // ==========================================================
+    // This automatically triggers a clean reload behind the scenes 
+    // so everything runs smoothly without you clicking anything manually!
+    window.location.reload();
+}
+
+// ======================================================
+// SHOW OWNER FINAL TOTAL IN SETTLEMENT AMOUNT DUE
+// Paste at bottom of order.html before
+// ======================================================
+
+(function(){
+    function moneyNumber(value){
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    }
+
+    function getActiveOrderWithOwnerTotal(){
+        const orders = JSON.parse(localStorage.getItem("allOrdersData")) || [];
+        const activeId = localStorage.getItem("activeOrderId");
+
+        if(activeId){
+            return orders.find(order => order.orderId === activeId) || null;
+        }
+
+        return null;
+    }
+
+    function getFinalSettlementTotal(){
+        const activeOrder = getActiveOrderWithOwnerTotal();
+
+        if(activeOrder){
+            return moneyNumber(
+                activeOrder.finalTotal ||
+                activeOrder.total ||
+                activeOrder.totalPaid ||
+                localStorage.getItem("pendingOrderTotal")
+            );
+        }
+
+        return moneyNumber(localStorage.getItem("pendingOrderTotal"));
+    }
+
+    window.syncSettlementAmountDueFromOwner = function(){
+        const finalTotal = getFinalSettlementTotal();
+
+        document.querySelectorAll("#gatewaySettlementTotal").forEach(totalBox => {
+            totalBox.innerText = "₹" + finalTotal;
+        });
+    };
+
+    const oldDisplayCartProductsOnOrderPage = window.displayCartProductsOnOrderPage;
+
+    window.displayCartProductsOnOrderPage = function(){
+        if(typeof oldDisplayCartProductsOnOrderPage === "function"){
+            oldDisplayCartProductsOnOrderPage();
+        }
+
+        syncSettlementAmountDueFromOwner();
+    };
+
+    document.addEventListener("DOMContentLoaded", function(){
+        syncSettlementAmountDueFromOwner();
+    });
+
+    setInterval(syncSettlementAmountDueFromOwner, 1000);
+})();
+
+// ======================================================
+// ORDER HISTORY FLOATING WINDOW + CLEAR OLD ORDER ARCHIVE
+// Paste this at the bottom of order.html before
+// ======================================================
+
+(function(){
+    const ORDER_HISTORY_KEY = "customizeCollectionOrderHistory";
+
+    function readJsonStorage(key){
+        try {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        } catch(error) {
+            return [];
+        }
+    }
+
+    function saveJsonStorage(key, value){
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function moneyNumber(value){
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    }
+
+    function escapeHtml(value){
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function getOrderTotal(order){
+        return moneyNumber(
+            order.finalTotal ||
+            order.total ||
+            order.totalPaid ||
+            order.pendingOrderTotal ||
+            0
+        );
+    }
+
+    function getOrderItems(order){
+        return order.purchasedItems || order.items || order.checkoutProducts || [];
+    }
+
+    function getColorValue(item){
+        return item.color || item.answer2 || item.selectedColor || "";
+    }
+
+    function archiveCurrentOrdersBeforeClear(){
+        const currentOrders = readJsonStorage("allOrdersData");
+
+        if(currentOrders.length === 0){
+            return;
+        }
+
+        const oldHistory = readJsonStorage(ORDER_HISTORY_KEY);
+        const nextHistory = [...oldHistory];
+
+        currentOrders.forEach(order => {
+            const orderId = order.orderId || ("order_" + Date.now());
+
+            const alreadySaved = nextHistory.some(savedOrder => {
+                return savedOrder.orderId === orderId;
+            });
+
+            if(!alreadySaved){
+                nextHistory.push({
+                    ...order,
+                    orderId: orderId,
+                    archivedAt: new Date().toLocaleString()
+                });
+            }
+        });
+
+        saveJsonStorage(ORDER_HISTORY_KEY, nextHistory);
+    }
+
+    function createHistoryButtonAndWindow(){
+        if(document.getElementById("order-history-round-button")){
+            return;
+        }
+
+        const button = document.createElement("button");
+        button.id = "order-history-round-button";
+        button.type = "button";
+        button.title = "Order History";
+        button.onclick = toggleOrderHistoryWindow;
+
+        button.style.cssText = `
+            position:fixed;
+            top:18px;
+            left:18px;
+            width:42px;
+            height:42px;
+            border-radius:50%;
+            border:none;
+            background:#111827;
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 6px 18px rgba(0,0,0,0.25);
+            cursor:pointer;
+            z-index:9999;
+            font-size:17px;
+        `;
+
+        button.innerHTML = `<i class="fa fa-clock-rotate-left"></i>`;
+
+        const windowBox = document.createElement("div");
+        windowBox.id = "order-history-floating-window";
+
+        windowBox.style.cssText = `
+            position:fixed;
+            top:70px;
+            left:18px;
+            width:min(420px, calc(100vw - 36px));
+            max-height:75vh;
+            overflow:auto;
+            background:white;
+            border:1px solid #dbe3ea;
+            border-radius:10px;
+            box-shadow:0 18px 45px rgba(15,23,42,0.25);
+            z-index:9998;
+            display:none;
+        `;
+
+        windowBox.innerHTML = `
+            <div style="
+                position:sticky;
+                top:0;
+                background:white;
+                padding:14px;
+                border-bottom:1px solid #e5e7eb;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                z-index:2;
+            ">
+                <div style="font-weight:800;color:#0f172a;">Order History</div>
+
+                <button type="button"
+                        onclick="toggleOrderHistoryWindow()"
+                        style="border:none;background:#f1f5f9;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:800;">
+                    ×
+                </button>
+            </div>
+
+            <div id="order-history-list" style="padding:12px;"></div>
+        `;
+
+        document.body.appendChild(button);
+        document.body.appendChild(windowBox);
+
+        renderOrderHistoryWindow();
+    }
+
+    window.toggleOrderHistoryWindow = function(){
+        const windowBox = document.getElementById("order-history-floating-window");
+        if(!windowBox) return;
+
+        renderOrderHistoryWindow();
+
+        windowBox.style.display = windowBox.style.display === "none" || !windowBox.style.display
+            ? "block"
+            : "none";
+    };
+
+    function renderOrderHistoryWindow(){
+        const list = document.getElementById("order-history-list");
+        if(!list) return;
+
+        const history = readJsonStorage(ORDER_HISTORY_KEY).slice().reverse();
+
+        if(history.length === 0){
+            list.innerHTML = `
+                <div style="padding:20px;text-align:center;color:#64748b;font-size:13px;">
+                    No old orders yet. Click Clear Old Order after an order is created.
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = history.map(order => {
+            const items = getOrderItems(order);
+            const messages = order.chatLedgerHistory || [];
+
+            return `
+                <details style="
+                    border:1px solid #e2e8f0;
+                    border-radius:8px;
+                    margin-bottom:10px;
+                    background:#f8fafc;
+                    overflow:hidden;
+                ">
+                    <summary style="
+                        padding:12px;
+                        cursor:pointer;
+                        font-weight:800;
+                        color:#0f172a;
+                        background:white;
+                    ">
+                        ${escapeHtml(order.customerName || order.orderId || "Customer Order")}
+                        <span style="float:right;">₹${getOrderTotal(order)}</span>
+                        <div style="font-size:11px;color:#64748b;font-weight:500;margin-top:4px;">
+                            ${escapeHtml(order.status || "old order")}
+                            ${order.archivedAt ? " • " + escapeHtml(order.archivedAt) : ""}
+                        </div>
+                    </summary>
+
+                    <div style="padding:10px;">
+                        ${items.length ? items.map(item => {
+                            const colorValue = getColorValue(item);
+
+                            return `
+                                <div style="
+                                    display:flex;
+                                    gap:10px;
+                                    padding:10px 0;
+                                    border-bottom:1px solid #e5e7eb;
+                                ">
+                                    <img src="${escapeHtml(item.img || item.image || "")}"
+                                         style="width:54px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;"
+                                         onerror="this.style.display='none'">
+
+                                    <div style="flex:1;font-size:12px;color:#475569;line-height:1.5;">
+                                        <div style="font-weight:800;color:#0f172a;font-size:13px;">
+                                            ${escapeHtml(item.displayName || item.name || "Product")}
+                                        </div>
+
+                                        ${item.material ? `<div>Material: ${escapeHtml(item.material)}</div>` : ""}
+
+                                        ${colorValue ? `
+                                            <div>
+                                                Color:
+                                                <span style="
+                                                    display:inline-block;
+                                                    width:12px;
+                                                    height:12px;
+                                                    border-radius:50%;
+                                                    background:${escapeHtml(colorValue)};
+                                                    border:1px solid #999;
+                                                    vertical-align:middle;
+                                                    margin-left:4px;
+                                                "></span>
+                                            </div>
+                                        ` : ""}
+
+                                        ${item.size ? `<div>Size: ${escapeHtml(item.size)}</div>` : ""}
+                                        ${item.notes ? `<div>Notes: ${escapeHtml(item.notes)}</div>` : ""}
+                                        <div>Qty: ${escapeHtml(item.qty || 1)}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join("") : `
+                            <div style="font-size:12px;color:#64748b;padding:8px 0;">
+                                No product details found.
+                            </div>
+                        `}
+
+                        ${messages.length ? `
+                            <div style="margin-top:10px;font-weight:800;color:#0f172a;font-size:13px;">
+                                Messages
+                            </div>
+
+                            ${messages.map(msg => `
+                                <div style="
+                                    margin-top:6px;
+                                    padding:8px;
+                                    border-radius:6px;
+                                    background:${msg.sender === "Owner" ? "#dbeafe" : "#e2e8f0"};
+                                    font-size:12px;
+                                    color:#334155;
+                                ">
+                                    <b>${escapeHtml(msg.sender || "Message")}:</b>
+                                    ${escapeHtml(msg.text || "")}
+                                </div>
+                            `).join("")}
+                        ` : ""}
+                    </div>
+                </details>
+            `;
+        }).join("");
+    }
+
+    window.clearOldOrder = function(){
+        archiveCurrentOrdersBeforeClear();
+
+        localStorage.removeItem("activeOrderId");
+        localStorage.removeItem("allOrdersData");
+        localStorage.removeItem("allOrders");
+        localStorage.removeItem("activeOrder");
+        localStorage.removeItem("systemApplicationState");
+
+        try {
+            allOrders = [];
+        } catch(error) {}
+
+        try {
+            activeOrderId = null;
+        } catch(error) {}
+
+        try {
+            currentOrderId = null;
+        } catch(error) {}
+
+        window.systemApplicationState = {
+            currentPhase: 1,
+            currentRole: "Customer",
+            chatLedgerHistory: [],
+            isVoiceRecording: false,
+            isDeliveryFinalized: false,
+            paymentTimestamp: "",
+            dispatchTimestamp: "",
+            deliveryTimestamp: "",
+            timeline: []
+        };
+
+        localStorage.setItem(
+            "systemApplicationState",
+            JSON.stringify(window.systemApplicationState)
+        );
+
+        document.querySelectorAll("#panel-phase-1").forEach(panel => {
+            panel.style.display = "block";
+            panel.classList.add("active");
+        });
+
+        document.querySelectorAll("#panel-phase-2").forEach(panel => {
+            panel.style.display = "block";
+            panel.classList.add("active");
+        });
+
+        document.querySelectorAll("#panel-phase-3").forEach(panel => {
+            panel.style.display = "none";
+            panel.classList.remove("active");
+        });
+
+        const chatBox = document.getElementById("chat-history-scroll-box");
+        if(chatBox){
+            chatBox.innerHTML = "";
+        }
+
+        const chatInput = document.getElementById("chat-text-message-field");
+        if(chatInput){
+            chatInput.value = "";
+        }
+
+        if(typeof displayCartProductsOnOrderPage === "function"){
+            displayCartProductsOnOrderPage();
+        }
+
+        if(typeof applyOrderRoleSecurity === "function"){
+            applyOrderRoleSecurity();
+        }
+
+        renderOrderHistoryWindow();
+    };
+
+    document.addEventListener("DOMContentLoaded", function(){
+        createHistoryButtonAndWindow();
+    });
+
+    createHistoryButtonAndWindow();
+})();
+
+// ======================================================
+// DELETE BUTTON BESIDE EACH ORDER PRODUCT
+// Paste at bottom of order.html before
+// ======================================================
+
+(function(){
+    const RUPEE = "\u20B9";
+
+    function readJson(key){
+        try {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        } catch(error) {
+            return [];
+        }
+    }
+
+    function saveJson(key, value){
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function moneyNumber(value){
+        const cleaned = String(value || "0").replace(/[^\d.]/g, "");
+        const numberValue = Number(cleaned);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    }
+
+    function escapeHtml(value){
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function calculateCheckoutTotal(items){
+        return items.reduce((sum, item) => {
+            return sum + (moneyNumber(item.price) * moneyNumber(item.qty || 1));
+        }, 0);
+    }
+
+    // 🟢 FLOATING WINDOW TOGGLE CONTROLLER
+    window.toggleSettlementFloatingWindow = function(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const tooltip = document.getElementById("settlement-floating-window");
+        if (!tooltip) return;
+        
+        tooltip.style.display = (tooltip.style.display === "none") ? "block" : "none";
+    };
+
+    // 🟢 INLINE TOOLTIP INJECTOR (WITH YOUR EXACT 4-LINE DESIGN)
+    function injectSettlementInfoButtonGlobally() {
+        if (document.getElementById("settlement-info-container")) return;
+
+        // Scan the active document text trees to safely isolate "Settlement Amount Due:"
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let targetTextNode = null;
+
+        while (node = walk.nextNode()) {
+            if (node.nodeValue.includes("Settlement Amount Due:")) {
+                targetTextNode = node;
+                break;
+            }
+        }
+
+        // Anchor layout directly next to the typography element block
+        if (targetTextNode && targetTextNode.parentElement) {
+            const parentEl = targetTextNode.parentElement;
+            
+            if (window.getComputedStyle(parentEl).position === "static") {
+                parentEl.style.position = "relative";
+            }
+
+            const container = document.createElement("span");
+            container.id = "settlement-info-container";
+            container.style.cssText = "position: relative; display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle;";
+
+            container.innerHTML = `
+                <button id="settlement-info-btn" 
+                        type="button"
+                        onclick="toggleSettlementFloatingWindow(event)"
+                        style="width: 15px; height: 15px; border-radius: 50% !important; border: 1px solid #94a3b8 !important; background: #ffffff !important; color: #94a3b8 !important; font-size: 11px !important; font-family: sans-serif !important; font-weight: bold !important; font-style: normal !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; padding: 0 !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; -moz-appearance: none; appearance: none; line-height: 1; margin: 0;">
+                    i
+                </button>
+                <div id="settlement-floating-window" 
+                     style="display: none; position: absolute; bottom: 28px; left: 0; background: #1e293b; color: #ffffff; padding: 12px 14px; border-radius: 6px; font-size: 12px; line-height: 1.5; max-width: 340px; width: max-content; z-index: 99999; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); text-align: left; white-space: normal;">
+                    <strong style="font-weight: 700; display: block; margin-bottom: 4px;">We are so sorry for the confusion!</strong>
+                    <span style="font-weight: 500; color: #f1f5f9;">
+                        The current total doesn't show the exact breakdown for discounts, extra charges, or delivery fees just yet. However, you'll be able to see the complete adjustment breakdown on the printed bill that comes with your package. Thank you for your patience!
+                    </span>
+                    <div style="position: absolute; bottom: -4px; left: 6px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #1e293b;"></div>
+                </div>
+            `;
+
+            parentEl.appendChild(container);
+        }
+    }
+
+    function updateSettlementTotal(total){
+        localStorage.setItem("pendingOrderTotal", String(total));
+
+        document.querySelectorAll("#gatewaySettlementTotal").forEach(totalBox => {
+            totalBox.innerText = RUPEE + total;
+        });
+
+        // Safe async call to match rendering pipeline
+        setTimeout(injectSettlementInfoButtonGlobally, 50);
+    }
+
+    window.deleteOrderProduct = function(index){
+        const items = readJson("checkoutProducts");
+
+        if(index < 0 || index >= items.length) return;
+
+        items.splice(index, 1);
+
+        const newTotal = calculateCheckoutTotal(items);
+
+        saveJson("checkoutProducts", items);
+        saveJson("pendingOrderItems", items);
+        updateSettlementTotal(newTotal);
+
+        const activeOrderId = localStorage.getItem("activeOrderId");
+        const orders = readJson("allOrdersData");
+        const activeOrder = orders.find(order => order.orderId === activeOrderId);
+
+        if(activeOrder){
+            activeOrder.purchasedItems = items;
+            activeOrder.baseTotal = newTotal;
+            activeOrder.total = newTotal + moneyNumber(activeOrder.ownerAddedAmount || 0);
+            activeOrder.finalTotal = activeOrder.total;
+            saveJson("allOrdersData", orders);
+        }
+
+        displayCartProductsOnOrderPage();
+    };
+
+    window.displayCartProductsOnOrderPage = function(){
+        const orderedItems = readJson("checkoutProducts");
+        const total = calculateCheckoutTotal(orderedItems);
+
+        updateSettlementTotal(total);
+
+        document.querySelectorAll("#orderItemsContainer").forEach(container => {
+            if(orderedItems.length === 0){
+                container.innerHTML = `
+                    <p style="padding:15px;color:#888;font-size:13px;text-align:center;">
+                        No active items found in this pending settlement payload.
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = orderedItems.map((item, index) => {
+                const colorValue = item.color || item.answer2 || item.selectedColor || "";
+
+                const detailsHtml = `
+                    ${item.material ? `<div><b>Material:</b> ${escapeHtml(item.material)}</div>` : ""}
+                    ${colorValue ? `
+                        <div>
+                            <b>Color:</b>
+                            <span style="
+                                width:12px;
+                                height:12px;
+                                border-radius:50%;
+                                display:inline-block;
+                                border:1px solid #bbb;
+                                background:${escapeHtml(colorValue)};
+                                vertical-align:middle;
+                            "></span>
+                        </div>
+                    ` : ""}
+                    ${item.size ? `<div><b>Size:</b> ${escapeHtml(item.size)}</div>` : ""}
+                    ${item.notes ? `<div><b>Notes:</b> ${escapeHtml(item.notes)}</div>` : ""}
+                    <div><b>Qty:</b> ${escapeHtml(item.qty || 1)}</div>
+                `;
+
+                if (item.isBlouseCombo) {
+                    return `
+                        <div style="display:flex; gap:12px; padding:12px; margin-bottom:10px; background:#fff; border:1px solid #f0f0f0; border-radius:6px; align-items:center;">
+                            <div style="display:flex; gap:6px; flex-shrink:0;">
+                                <div style="position:relative;">
+                                    <img src="${escapeHtml(item.imgFront || "")}" style="width:65px;height:65px;object-fit:cover;border-radius:4px;border:1px solid #eee;" onerror="this.style.display='none'">
+                                    <span style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; font-size:8px; text-align:center; padding:1px 0; border-bottom-left-radius:4px; border-bottom-right-radius:4px;">Front</span>
+                                </div>
+                                <div style="position:relative;">
+                                    <img src="${escapeHtml(item.imgBack || "")}" style="width:65px;height:65px;object-fit:cover;border-radius:4px;border:1px solid #eee;" onerror="this.style.display='none'">
+                                    <span style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; font-size:8px; text-align:center; padding:1px 0; border-bottom-left-radius:4px; border-bottom-right-radius:4px;">Back</span>
+                                </div>
+                            </div>
+                            <div style="flex:1; min-w-0;">
+                                <h5 style="margin:0 0 5px 0;font-size:13px;font-weight:700;color:#222;line-height:1.3;">
+                                    ${escapeHtml(item.nameFront || "Blouse Front")}<br>
+                                    <span style="color:#aaa; font-weight:400; font-size:11px;">&amp;</span> ${escapeHtml(item.nameBack || "Blouse Back")}
+                                </h5>
+                                <div style="font-size:12px;color:#555;line-height:1.6;">
+                                    ${detailsHtml}
+                                </div>
+                            </div>
+                            <button type="button" onclick="deleteOrderProduct(${index})" title="Delete product" style="width:34px; height:34px; border-radius:50%; border:1px solid #fecaca; background:#fff1f2; color:#dc2626; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fa fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div style="display:flex; gap:12px; padding:12px; margin-bottom:10px; background:#fff; border:1px solid #f0f0f0; border-radius:6px; align-items:center;">
+                            <img src="${escapeHtml(item.img || item.image || "")}" style="width:70px;height:70px;object-fit:cover;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'">
+                            <div style="flex:1; min-w-0;">
+                                <h5 style="margin:0 0 5px 0;font-size:14px;font-weight:700;color:#222;">
+                                    ${escapeHtml(item.displayName || item.name || "Product")}
+                                </h5>
+                                <div style="font-size:12px;color:#555;line-height:1.6;">
+                                    ${detailsHtml}
+                                </div>
+                            </div>
+                            <button type="button" onclick="deleteOrderProduct(${index})" title="Delete product" style="width:34px; height:34px; border-radius:50%; border:1px solid #fecaca; background:#fff1f2; color:#dc2626; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fa fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            }).join("");
+        });
+    };
+
+    // Global outside click-closer layer
+    document.addEventListener("click", function(e) {
+        const tooltip = document.getElementById("settlement-floating-window");
+        const btn = document.getElementById("settlement-info-btn");
+        if (tooltip && btn && !btn.contains(e.target) && !tooltip.contains(e.target)) {
+            tooltip.style.display = "none";
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function(){
+        displayCartProductsOnOrderPage();
+    });
+
+    displayCartProductsOnOrderPage();
+})();
+
+</script>
+
+</body>
+</html>

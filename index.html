@@ -1,0 +1,2758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Customize Collection</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+/* Footer Structural Container Box */
+#footer {
+    background-color: #ffffff; /* Matches your clean minimalist aesthetic background */
+    padding: 30px 5%;
+    border-top: 1px solid #e2e8f0;
+    font-family: inherit;
+}
+
+/* Flexbox Matrix for Left and Right distribution alignment */
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Left side Column: Text Adjustments */
+.footer-left {
+    flex: 1;
+    min-width: 300px;
+}
+
+.footer-left p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 0;
+    text-align: justify;
+}
+
+/* Right side Column: Layout for delivery block */
+.footer-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* Horizontal delivery wrapper container link blocks */
+.delivery-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* 1:1 Ratio Hardened Vector Image Constraints */
+.delivery-image {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 8px; /* Smooth elegant rounding corner profile */
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+}
+
+/* Info container layout positioning stacked columns text + badges */
+.delivery-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.delivery-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+/* Beautiful Social Icon Placements Underneath Delivery Text Elements */
+.footer-social-icons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.footer-social-icons a {
+    color: #64748b; /* Ash Gray/Slate hue accent color matching */
+    font-size: 16px;
+    transition: color 0.2s ease;
+    text-decoration: none;
+}
+
+/* Interactive Hover Color Adjustments */
+.footer-social-icons a:hover {
+    color: #0b57d0; /* Dynamic branding accent tracking highlight click colors */
+}
+
+/* Mobile Screens Optimization Responsive Framework */
+@media (max-width: 768px) {
+    .footer-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 25px;
+    }
+    .footer-left p {
+        text-align: center;
+    }
+    .footer-right {
+        justify-content: center;
+    }
+}
+
+/* Keeps the dropdown container absolutely pinned beneath the relative wrapper */
+.location-wrapper-relative {
+    position: relative;
+    display: inline-block;
+}
+
+/* Styles the input bar when locked during session verification */
+#header-pin-input[readonly] {
+    background-color: #f8fafc;
+    color: #475569;
+    cursor: not-allowed;
+    border-color: #cbd5e1;
+}
+
+/* Locked Dropdown Menu Layout Component */
+.locked-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    min-width: 260px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    margin-top: 4px;
+    padding: 4px 0;
+}
+
+.locked-dropdown-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+}
+
+.locked-dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #0b57d0;
+}
+
+/* Container element framework alignment positioning */
+.profile-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* User Google Avatar Profile Bubble Styling */
+.user-avatar-bubble {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.user-avatar-bubble:hover {
+    transform: scale(1.05);
+    border-color: #000000;
+}
+
+.user-avatar-bubble img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Hidden Dropdown Box Panel Container element overlay styling */
+.avatar-dropdown-box {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 38px;
+    background-color: #ffffff;
+    min-width: 120px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid #eaeaea;
+    z-index: 999;
+    overflow: hidden;
+}
+
+/* Active conditional style class rule */
+.avatar-dropdown-box.active {
+    display: block;
+}
+
+/* Red themed clean user logout interaction choice button component */
+.menu-logout-action {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 14px;
+    color: #dc2626;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-logout-action:hover {
+    background-color: #fef2f2;
+}
+
+/* Tape Measure Graphic Scaling */
+.brand-tape-icon {
+    height: 35px !important; /* Matches text height scaling */
+    width: auto !important;
+    object-fit: contain;
+    pointer-events: none; /* Prevents dragging interferences */
+}
+
+/* Accompanying Tag Text Formatting */
+.brand-tag-text {
+    font-size: 14px;
+    color: #666666;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Mobile responsive scaling optimization */
+@media (max-width: 480px) {
+    .brand-name { font-size: 20px; }
+    .brand-tape-icon { height: 28px !important; }
+    .brand-tag-text { font-size: 12px; }
+}
+
+.product-card{
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+}
+
+.product-card img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info-overlay{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 14px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.55),
+        transparent
+    );
+}
+
+.product-title{
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.product-price{
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.primary-img{
+    width:100%;
+    height:270px;
+    object-fit:cover;
+    display:block;
+    border-radius:20px 20px 0 0;
+}
+
+/* TEXT BETWEEN IMAGES */
+.middle-info{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    background:#fff;
+}
+
+.middle-name{
+    font-size:22px;
+    font-weight:bold;
+    color:#000;
+    text-shadow:0 1px 2px rgba(0,0,0,0.15);
+}
+
+.middle-price{
+    font-size:22px;
+    font-weight:bold;
+    color:#000;
+    text-shadow:0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* BOTTOM IMAGE */
+.bottom-image-box{
+    width:100%;
+    height:190px;
+    overflow:hidden;
+    border-radius:0 0 20px 20px;
+    background:#fff;
+}
+
+/* CROPPED IMAGE */
+.bottom-image{
+    width:100%;
+    height:130%;
+    object-fit:cover;
+
+    /* KEEP TOP PART */
+    object-position:top;
+
+    /* CROPS SIDES A LITTLE */
+    transform:scale(1.08);
+
+    display:block;
+}
+
+.primary-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    border-radius:20px;
+}
+
+.main-image-wrapper{
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+}
+
+.info-overlay{
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px;
+    color:#fff;
+    font-weight:bold;
+    background:linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
+.overlay-name{
+    font-size:20px;
+}
+
+.overlay-price{
+    font-size:20px;
+}
+
+/* Container for the new list */
+.list-area-fix {
+    padding: 20px !important;
+    background: #ffffff !important;
+}
+
+.bullet-path {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+}
+
+/* Optimized vertical line to stay between dots */
+.bullet-path::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 4px !important;
+    /* This starts the line at the middle of the first dot */
+    top: 15px !important; 
+    /* This ends the line at the middle of the last dot */
+    bottom: 15px !important; 
+    width: 2px !important;
+    background: #000000 !important;
+    z-index: 1 !important;
+}
+
+/* Ensure the dots are centered properly */
+.dot {
+    width: 10px !important;
+    height: 10px !important;
+    background: #000000 !important;
+    border-radius: 50% !important;
+    margin-right: 20px !important;
+    z-index: 2 !important;
+    /* Keeps dots aligned even if text wraps to two lines */
+    flex-shrink: 0 !important; 
+}
+
+.item-row {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 20px !important;
+    position: relative !important;
+}
+
+/* The black dots */
+.dot {
+    width: 10px !important;
+    height: 10px !important;
+    background: #000000 !important;
+    border-radius: 50% !important;
+    margin-right: 20px !important;
+    z-index: 2 !important;
+}
+
+/* The Green Link Bar */
+.green-link {
+    background-color: #22ff0000 !important; /* Bright green */
+    color: #000000 !important;
+    text-decoration: none !important;
+    font-weight: bold !important;
+    padding: 6px 20px !important;
+    border-radius: 2px !important;
+    font-size: 14px !important;
+    display: inline-block !important;
+    min-width: 100px !important;
+}
+
+/* Container for exactly 2 items */
+.static-sub-container {
+    display: flex;
+    justify-content: center; /* Centers the 2 items */
+    gap: 20px;
+    padding: 15px 10px;
+    background: #fff;
+}
+
+.mini-card-static {
+    width: 80px; 
+    position: relative;
+    text-align: center;
+}
+
+.mini-card-static img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+/* Add button for static items */
+.mini-add-btn-static {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2874f0;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.mini-card-static:hover .mini-add-btn-static {
+    opacity: 1;
+}
+
+.sub-label {
+    display: none !important;
+}
+
+.main-slider-content {
+    display: flex;
+    overflow-x: hidden; /* Hide scrollbar for main images */
+    scroll-behavior: smooth;
+    width: 100%;
+}
+
+.main-slider-content .primary-img {
+    min-width: 100%; /* Each image takes full width of the card */
+    object-fit: cover;
+}
+
+.main-arrow {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    
+    /* This forces the background to be invisible */
+    background: transparent !important; 
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important; /* Removes any shadow boxes */
+    
+    /* This forces the arrow color to be black */
+    color: #ffffff !important; 
+    
+    font-size: 30px !important; /* Makes the arrow clear to see */
+    cursor: pointer !important;
+    z-index: 100 !important; /* Ensures it sits on top of the image */
+    padding: 10px !important;
+}
+
+/* Positioning */
+.main-arrow.left { left: 5px !important; }
+.main-arrow.right { right: 5px !important; }
+
+/* Optional: slight fade when clicking so you know it's working */
+.main-arrow:active {
+    opacity: 0.5;
+}
+
+/* This makes the dropdown arrow appear in some browsers */
+#location-input::-webkit-calendar-picker-indicator {
+    display: block !important;
+    opacity: 0.5;
+}
+
+.header-location-container {
+    display: flex !important;
+    flex-direction: column !important; /* Forces the bar to drop UNDER the logo */
+    align-items: flex-start !important; /* Aligns everything to the left */
+    margin-left: 20px; 
+    width: calc(100% - 10px); /* Extends the bar across the screen */
+}
+
+/* The actual white/grey search box bar */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f4f4f4; 
+    border-radius: 4px;
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    width: 100%; /* Makes the bar fill the container width */
+    max-width: 500px; /* Adjust this number to make the bar longer or shorter */
+    margin-top: 8px; /* Space between the Brand Name and the Bar */
+}
+
+#location-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 5px;
+    width: 100%; /* Ensures text field fills the search-box bar */
+    font-size: 14px;
+}
+
+#location-input::placeholder {
+    color: #888;
+}
+
+@keyframes heartPop{
+    0%{
+        transform:translate(-50%, -50%) scale(0);
+        opacity:0;
+    }
+    50%{
+        transform:translate(-50%, -50%) scale(1.3);
+        opacity:1;
+    }
+    100%{
+        transform:translate(-50%, -50%) scale(1);
+        opacity:0;
+    }
+}
+
+/* Make item relative for positioning */
+.item{
+    position:relative;
+}
+
+.cart-badge{
+    position:absolute;
+    top:-5px;
+    right:-5px;
+    background:red;
+    color:#fff;
+    font-size:10px;
+    padding:2px 5px;
+    border-radius:50%;
+}
+
+/* Flying +1 animation */
+.fly{
+    position:fixed;
+    background:#fb641b;
+    color:#fff;
+    font-size:12px;
+    padding:4px 6px;
+    border-radius:50%;
+    z-index:999;
+    animation:flyToCart 0.8s ease forwards;
+}
+
+@keyframes flyToCart{
+    0%{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+    100%{
+        opacity:0;
+        transform:translateY(-80px) translateX(50px) scale(0.3);
+    }
+}
+
+.logo{
+    font-weight:bold;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.brand-logo{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+}
+
+.dropdown-toggle{
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+.arrow{
+    font-size:12px;
+    transition:0.3s;
+}
+
+.dropdown-toggle.active .arrow{
+    transform:rotate(180deg);
+}
+
+.dropdown{
+    position:absolute;
+    top:60px;
+    right:10px;
+    width:230px;
+    background:#fff;
+    border-radius:12px;
+    display:none;
+    flex-direction:column;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+    overflow:hidden;
+}
+
+.dropdown a{
+    padding:12px 15px;
+    text-decoration:none;
+    color:#333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition:0.2s;
+}
+
+.dropdown a:hover{
+    background:#f0f0f0;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:#f5f5f5}
+
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:100}
+.logo{font-weight:bold}
+.header-right{display:flex;gap:12px;align-items:center}
+.icon-btn{cursor:pointer}
+
+.dropdown{position:absolute;top:60px;right:10px;width:220px;background:#fff;border:1px solid #eee;border-radius:10px;display:none;flex-direction:column;box-shadow:0 8px 20px rgba(0,0,0,0.08)}
+.dropdown a{padding:12px;text-decoration:none;color:#333;display:flex;gap:10px;border-bottom:1px solid #eee}
+
+main{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+    padding-bottom:120px; /* extra space for footer */
+}
+
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.item{background:#fff;border-radius:12px;overflow:hidden;text-align:center;transition:0.2s}
+.item:hover{transform:scale(1.05)}
+.item img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.item p{padding:6px;font-size:13px}
+.item button{margin-bottom:8px;padding:6px 10px;border:none;background:#000;color:#fff;border-radius:6px;cursor:pointer}
+
+footer{position:fixed;bottom:-100px;left:0;width:100%;background:#fff;text-align:center;padding:15px;border-top:1px solid #ddd;transition:0.4s}
+footer.show{bottom:0}
+
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:200}
+.panel{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:300px}
+.options button{margin:5px;padding:8px;border:1px solid #ccc;border-radius:6px;background:#f9f9f9;cursor:pointer}
+
+@media(min-width:768px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1200px){.grid{grid-template-columns:repeat(5,1fr)}}
+
+.heart-pop{
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:
+    translate(-50%, -50%);
+
+    font-size:70px;
+
+    color:#ff2d55;
+
+    z-index:999;
+
+    pointer-events:none;
+
+    animation:
+    heartInstagram 0.8s ease forwards;
+
+    text-shadow:
+    0 4px 10px rgba(0,0,0,0.25);
+
+}
+
+@keyframes heartInstagram{
+
+    0%{
+        transform:
+        translate(-50%, -50%)
+        scale(0);
+
+        opacity:0;
+    }
+
+    40%{
+        transform:
+        translate(-50%, -50%)
+        scale(1.3);
+
+        opacity:1;
+    }
+
+    70%{
+        transform:
+        translate(-50%, -55%)
+        scale(1);
+    }
+
+    100%{
+        transform:
+        translate(-50%, -80%)
+        scale(1);
+
+        opacity:0;
+    }
+
+}
+
+@keyframes heartAnim {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -80%) scale(1); opacity: 0; }
+}
+
+/* Container & Overlay (Green Line) */
+.product-card-container {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.main-image-wrapper {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+.primary-img {
+    width: 100%;
+    display: block;
+}
+
+.info-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.overlay-name { font-weight: bold; font-size: 16px; }
+.overlay-price { font-weight: bold; color: #fff; }
+
+/* Scroller (Red Line) */
+.scroller-container {
+    display: flex;
+    align-items: center;
+    padding: 10px 5px;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    position: relative;
+}
+
+.style-scroller {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+}
+.style-scroller::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+.mini-card {
+    min-width: 80px;
+    aspect-ratio: 1/1;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.mini-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Center Add Button */
+.mini-add-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(40, 116, 240, 0.9);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.mini-card:hover .mini-add-btn { opacity: 1; }
+
+.scroll-arrow {
+    background: rgba(255,255,255,0.8);
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+<div class="header-left" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;">
+    <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+        <img src="images/logo.png" alt="Customize Collection Logo" style="height:40px;width:auto;" onerror="this.style.display='none'">
+
+        <div style="display:flex;flex-direction:column;">
+            <span style="font-weight:bold;font-size:1.3em;color:#1e293b;letter-spacing:-0.5px;">
+                Customize<span style="color:#ea580c;">Collection</span>
+            </span>
+        </div>
+    </a>
+
+    <div class="header-location-container" style="margin-top:0;width:260px;max-width:100%;">
+        <div class="search-box">
+            <i class="fa fa-map-marker-alt"></i>
+
+            <input 
+                type="text" 
+                id="location-input" 
+                list="location-list" 
+                placeholder="Search delivery location..."
+                autocomplete="off"
+            >
+
+            <datalist id="location-list"></datalist>
+        </div>
+    </div>
+</div>
+
+    <div class="measurement-tape" style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; max-width: 450px;">
+        <img src="images/Tape.jpeg" class="brand-tape-icon" style="width: 20px; height: 20px; object-fit: contain; border-radius: 50%;">
+        <span class="brand-tag-text" style="font-size: 0.8em; color: #475569; line-height: 1.3; font-weight: 500;">
+            <p>Required to take your custom</p> <p>measurements. find this at your</p> <p>hardware shop for around ₹20 to ₹40</p>
+        </span>
+    </div>
+
+    <div class="header-right">
+        
+        <div class="profile-menu-container" id="global-profile-container">
+            <div class="icon-btn" id="logged-out-icon" onclick="goToLogin()">
+                <i class="fa fa-user"></i>
+            </div>
+
+            <div class="user-avatar-bubble" id="logged-in-bubble" style="display: none;">
+                <img id="google-avatar-img" src="" alt="User Profile">
+            </div>
+
+            <div class="avatar-dropdown-box" id="avatar-dropdown">
+                <button class="menu-logout-action" onclick="executeAppLogout()">
+                    <i class="fa fa-sign-out-alt"></i> Log Out
+                </button>
+            </div>
+        </div>
+        <div class="icon-btn dropdown-toggle" id="toggleBtn">
+            Menu <i class="fa fa-chevron-down arrow"></i>
+        </div>
+
+        <div class="icon-btn" onclick="goToCart()" style="position:relative;">
+            <i class="fa fa-shopping-cart"></i>
+            <span id="cartCount" class="cart-badge">0</span>
+        </div>
+
+        <div class="dropdown" id="dropdownMenu">
+            <a href="order.html" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; text-decoration: none; color: #212121; font-size: 14px; font-weight: 500; border-bottom: 1px solid #f5f5f5; transition: background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+        <i class="fa fa-box" style="color: #666; width: 16px;"></i> Order
+    </a>
+            <a href="wishlist.html" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; text-decoration: none; color: #212121; font-size: 14px; font-weight: 500; border-bottom: 1px solid #f5f5f5; transition: background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+        <i class="fa fa-heart" style="color: #666; width: 16px;"></i> Wishlist
+    </a>
+            <a href="customer-care.html" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; text-decoration: none; color: #212121; font-size: 14px; font-weight: 500; transition: background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+        <i class="fa fa-headset" style="color: #666; width: 16px;"></i> Customer Care
+    </a>
+        </div>
+    </div>
+</header>
+
+<main id="mainContent">
+
+<div class="grid" id="grid"></div>
+<p id="noResult" style="text-align:center;display:none;margin-top:10px;color:#333;">
+No products found
+</p>
+</main>
+
+<footer id="footer">
+    <div class="footer-container">
+        <div class="footer-left">
+            <p><strong>About Us:</strong> Welcome to our platform, where your unique imagination and style enthusiasm come to life. We specialize in crafting completely customized clothing tailored exactly to your vision. To bring these bespoke designs to reality with the highest level of craftsmanship, each piece requires dedicated time and resources. Our detailed creation process typically spans between 7 to 52 days, ensuring that every stitch meets your expectations.</p>
+        </div>
+
+        <div class="footer-right">
+            <div class="delivery-wrapper">
+                <img src="images/west_bengal_map.png" alt="Delivery Area Maps" class="delivery-image">
+                
+                <div class="delivery-info">
+                    <span class="delivery-title">Our Delivery Area Scope</span>
+                    <div class="footer-social-icons">
+                        <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="mailto:your-email@domain.com"><i class="fa fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div class="overlay" id="overlay">
+<div class="panel">
+<h4>Customize</h4>
+<div class="options">
+<button>Sleeves</button>
+<button>Embroidery</button>
+<button>Fabric</button>
+</div>
+<br>
+<button onclick="closePanel()">Close</button>
+</div>
+</div>
+
+<script>
+function addToWishlist(name){
+
+    let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+
+    // prevent duplicate
+    if(!wishlist.includes(name)){
+        wishlist.push(name);
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        alert(name + " added to wishlist ❤️");
+    } else {
+        alert("Already in wishlist");
+    }
+}
+
+function viewProduct(name){
+    window.location.href = `product-details.html?item=${encodeURIComponent(name)}`;
+}
+
+function goToCart(){
+    window.location.href = "cart.html";
+}
+
+function randomPick(list){
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+function makeCartId(){
+    return "cart_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+}
+
+function makeCartKey(item){
+    return [
+        item.name || "",
+        item.material || "",
+        item.color || "",
+        item.size || "",
+        item.notes || "",
+        item.answer1 || "",
+        item.answer2 || "",
+        item.answer3 || "",
+        item.answer4 || ""
+    ].join("|").toLowerCase();
+}
+
+function getRandomMaterialForIndexProduct(productName){
+    const lowerName = String(productName || "").toLowerCase();
+
+    if(lowerName.includes("saree")){
+        return randomPick(["Cotton", "Kasavu Cotton", "Kerala Silk", "Tissue", "Linen", "Cotton Silk"]);
+    }
+
+    if(lowerName.includes("lehenga") || lowerName.includes("chaniya") || lowerName.includes("ghagra")){
+        return randomPick(["Silk", "Net", "Georgette", "Velvet", "Organza", "Brocade"]);
+    }
+
+    if(lowerName.includes("gown")){
+        return randomPick(["Satin", "Silk", "Net", "Georgette", "Organza", "Velvet"]);
+    }
+
+    if(lowerName.includes("palazzo")){
+        return randomPick(["Cotton", "Rayon", "Linen", "Crepe", "Georgette"]);
+    }
+
+    if(lowerName.includes("dress")){
+        return randomPick(["Rayon", "Georgette", "Cotton", "Crepe", "Satin"]);
+    }
+
+    return randomPick(["Cotton", "Rayon", "Silk", "Georgette", "Satin"]);
+}
+
+function getRandomSizeForIndexProduct(productName){
+    const lowerName = String(productName || "").toLowerCase();
+
+    if(lowerName.includes("saree")){
+        return "Not Required";
+    }
+
+    return randomPick(["XS", "S", "M", "L", "XL"]);
+}
+
+function getRandomColorForIndexProduct(){
+    return randomPick([
+        "#FF5733",
+        "#C70039",
+        "#900C3F",
+        "#FFC300",
+        "#EDDD53",
+        "#57C785",
+        "#00BAAD",
+        "#3498DB",
+        "#8E44AD",
+        "#ECF0F1",
+        "#34495E"
+    ]);
+}
+
+function addToCart(name, price, img){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    const displayName = name;
+    const normalizedName = name.trim().toLowerCase();
+
+    const randomMaterial = getRandomMaterialForIndexProduct(displayName);
+    const randomColor = getRandomColorForIndexProduct();
+    const randomSize = getRandomSizeForIndexProduct(displayName);
+    const randomNotes = "None";
+
+    const cartProduct = {
+        name: normalizedName,
+        displayName: displayName,
+        price: Number(price),
+        img: img,
+        qty: 1,
+
+        material: randomMaterial,
+        color: randomColor,
+        size: randomSize,
+        notes: randomNotes,
+
+        question1: "Material",
+        answer1: randomMaterial,
+
+        question2: "Color",
+        answer2: randomColor,
+
+        question3: "Size",
+        answer3: randomSize,
+
+        question4: "Notes",
+        answer4: randomNotes,
+
+        cartId: makeCartId(),
+        selectedForOrder: true
+    };
+
+    cartProduct.cartKey = makeCartKey(cartProduct);
+
+    let existingItem = cart.find(item => item.cartKey === cartProduct.cartKey);
+
+    if(existingItem){
+        existingItem.qty += 1;
+    } else {
+        cart.push(cartProduct);
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    updateCartCount();
+    animateToCart();
+}
+
+function goToLogin(){
+    window.location.href = "login.html";
+}
+
+const productData = [
+    { name: "Saree", img: "images/Saree.png", price: 11081 },
+    { name: "Western Short Dresses", img: "images/Ruffle-Sleeve-Dress.png", price: 2745 },
+    { name: "Lehenga & Chaniya Choli & Ghagra", img: "images/Lehenga-Chaniya-Choli.png", price: 15461 },
+    { name: "Gown", img: "images/Gown.png", price: 27063 },
+    { name: "Palazzo", img: "images/Palazzo.png", price: 4174 },
+    { name: "Gharara", img: "images/Gharara.png", price: 1499 },
+    { name: "Salwar Kameez", video: "videos/Salwar-Kameez.MP4", price: 6144 },
+    { name: "Peplum", img: "images/Peplum.png", price: 7991 },
+    { name: "Anarkali", video: "videos/Anarkali.MP4", price: 5496 },
+    { name: "Pattu Pavadai", img: "images/Pattu-Pavadai.png", price: 1448 },
+    { name: "Sharara", img: "images/Sharara.png", price: 4200 },
+    { name: "Kurti", img: "images/Kurti.png", price: 2895 },
+    { name: "Jumpsuits", img: "images/Jumpsuit.png", price: 2297 },
+    { name: "Dhoti Sets", img: "images/Dhoti-Set.png", price: 5495 },
+    { name: "Blouse Designs", img: "images/Blouse-Designs.png", price: 800 },
+    { name: "Phanek", img: "images/Phanek.png", price: 499 },
+    { name: "One Piece Frock", img: "images/One-Piece-Frock.png", price: 11085 },
+    { name: "Short Skirts", img: "images/Short-Skirts.png", price: 5698 },
+    { name: "Tops", img: "images/Tops.png", price: 7212 },
+    { name: "Indo Dress", img: "images/Indo-Dress.png", price: 2048 }
+];
+
+function renderGrid(filterText = "") {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = "";
+
+    productData.forEach(item => {
+        if (item.name.toLowerCase().includes(filterText.toLowerCase())) {
+            let div = document.createElement('div');
+            div.className = 'item';
+
+            // 1. Calculate discount structure variables dynamically
+            const newPrice = Math.round(item.price - (item.price * 0.10));
+            const excludedProducts = ["sharara", "gharara", "pattu pavadai", "phanek", "indo dress", "blouse designs"];
+            const isExcluded = excludedProducts.includes(item.name.toLowerCase());
+            const isPeplum = item.name.toLowerCase() === "peplum";
+
+            // 2. Generate the dynamic layout text HTML block for pricing
+            let priceHTML = "";
+            if (isExcluded) {
+                // Keep regular base price if item is on the exclusion list
+                priceHTML = `<span style="font-weight: bold; color: #ffffff;">₹${item.price}</span>`;
+            } else {
+                // Peplum uses black for the new price text, others use white inside overlays
+                const newPriceColor = isPeplum ? "#000000" : "#ffffff";
+                
+                // Uses text-shadow for a clean white outline to maintain solid red fill across all browsers
+                priceHTML = `
+                    <div class="price-display-wrapper" style="display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <div style="display: inline-flex; align-items: center; gap: 4px;">
+                            <span class="discount-price-badge" style="font-size: 11px; color: #ff4d4d; font-weight: bold; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;">10% OFF</span>
+                            <span class="new-discount-price" style="font-weight: bold; color: ${newPriceColor};">₹${newPrice}</span>
+                        </div>
+                        <span class="old-cut-price" style="text-decoration: line-through; color: #cbd5e0; font-size: 0.85em;">₹${item.price}</span>
+                    </div>
+                `;
+            }
+
+            // 3. Collection banner conditional text block (Hidden entirely for excluded items)
+            let collectionDescriptionHTML = "";
+            if (!isExcluded) {
+                collectionDescriptionHTML = `
+                    <div class="product-collection-promo-inline" style="display: block; width: 100%; clear: both; font-size: 11px; color: #e2e8f0; font-style: italic; margin-top: 6px; text-align: left; line-height: 1.3;">
+                        Buy the entire collection now and save 10% on your total!
+                    </div>
+                `;
+            }
+
+            // Common shared style rule for the shadow overlay container layout background
+            const overlayShadowStyle = `
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 20px 12px 12px 12px;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 65%, rgba(0, 0, 0, 0) 100%);
+                color: #ffffff;
+            `;
+
+            // --- RENDER CONDITION LAYOUT ENTRIES ---
+            if (item.name === "Saree") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <img src="${item.img}" alt="Saree" class="primary-img">
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Saree</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="scroller-container">
+                        <button class="scroll-arrow" onclick="scrollStyles('sareeScroller', 'left')">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                        <div class="style-scroller" id="sareeScroller"></div>
+                        <button class="scroll-arrow" onclick="scrollStyles('sareeScroller', 'right')">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Lehenga & Chaniya Choli & Ghagra") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <img src="images/Lehenga.png" class="primary-img" alt="Lehenga">
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Lehenga & Chaniya Choli</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="scroller-container">
+                        <button class="scroll-arrow" onclick="scrollStyles('lehengaScroller', 'left')">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                        <div class="style-scroller" id="lehengaScroller"></div>
+                        <button class="scroll-arrow" onclick="scrollStyles('lehengaScroller', 'right')">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Western Short Dresses") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <img src="${item.img}" alt="Western Short Dresses" class="primary-img">
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Western Short Dresses</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="scroller-container">
+                        <button class="scroll-arrow" onclick="scrollStyles('westernScroller', 'left')">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                        <div class="style-scroller" id="westernScroller"></div>
+                        <button class="scroll-arrow" onclick="scrollStyles('westernScroller', 'right')">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Gown") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <img src="${item.img}" alt="Gown" class="primary-img">
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Gown</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="scroller-container">
+                        <button class="scroll-arrow" onclick="scrollStyles('gownScroller', 'left')">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                        <div class="style-scroller" id="gownScroller"></div>
+                        <button class="scroll-arrow" onclick="scrollStyles('gownScroller', 'right')">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Palazzo") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <img src="${item.img}" alt="Palazzo" class="primary-img">
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Palazzo</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="scroller-container">
+                        <button class="scroll-arrow" onclick="scrollStyles('palazzoScroller', 'left')">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                        <div class="style-scroller" id="palazzoScroller"></div>
+                        <button class="scroll-arrow" onclick="scrollStyles('palazzoScroller', 'right')">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Salwar Kameez") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <video class="primary-img" autoplay muted loop playsinline>
+                            <source src="videos/Salwar-Kameez.MP4" type="video/mp4">
+                        </video>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Salwar Kameez</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Peplum") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <img src="${item.img}" class="primary-img">
+                    </div>
+
+                    <div class="middle-info" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 4px;">
+                        <span class="middle-name" style="font-weight: bold; color: #000000;">Peplum</span>
+                        <span class="middle-price" style="color: #000000;">${priceHTML}</span>
+                        ${collectionDescriptionHTML ? collectionDescriptionHTML.replace('color: #e2e8f0;', 'color: #4a5568;') : ''}
+                    </div>
+
+                    <div class="bottom-image-box">
+                        <img src="images/All-Peplum.png" class="bottom-image">
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Anarkali") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <video class="primary-img" autoplay muted loop playsinline>
+                            <source src="videos/Anarkali.MP4" type="video/mp4">
+                        </video>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Anarkali</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Sharara") {
+                // Sharara is structural but uses plain base configurations
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <button class="main-arrow left" onclick="moveMainImage('shararaSlider', -1)">
+                            <i class="fa fa-angle-left"></i>
+                        </button>
+                        <div class="main-slider-content" id="shararaSlider" style="display: flex; overflow: hidden; scroll-behavior: smooth;">
+                            <img src="images/Sharara.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Sharara1.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Flared-Sharara.png" class="primary-img" style="min-width: 100%;">
+                        </div>
+                        <button class="main-arrow right" onclick="moveMainImage('shararaSlider', 1)">
+                            <i class="fa fa-angle-right"></i>
+                        </button>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Sharara</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <ul class="bullet-path">
+                        <li class="item-row">
+                            <span class="dot"></span>
+                            <a href="product-details.html?item=Sharara" class="green-link">Sharara</a>
+                        </li>
+                        <li class="item-row">
+                            <span class="dot"></span>
+                            <a href="product-details.html?item=Sharara" class="green-link">Flared-Sharara</a>
+                        </li>
+                    </ul>
+                </div>
+                `;
+            } else if (item.name === "Kurti") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <button class="main-arrow left" onclick="moveMainImage('kurtiSlider', -1)">
+                            <i class="fa fa-angle-left"></i>
+                        </button>
+                        <div class="main-slider-content" id="kurtiSlider" style="display: flex; overflow: hidden; scroll-behavior: smooth;">
+                            <img src="images/Kurti.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Short-Kurti.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Long-Kurti.png" class="primary-img" style="min-width: 100%;">
+                        </div>
+                        <button class="main-arrow right" onclick="moveMainImage('kurtiSlider', 1)">
+                            <i class="fa fa-angle-right"></i>
+                        </button>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Kurti Collection</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="list-area-fix">
+                        <ul class="bullet-path">
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Kurti" class="green-link">Short Kurti</a>
+                            </li>
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Kurti" class="green-link">Long Kurti</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Jumpsuits") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <button class="main-arrow left" onclick="moveMainImage('jumpsuitSlider', -1)">
+                            <i class="fa fa-angle-left"></i>
+                        </button>
+                        <div class="main-slider-content" id="jumpsuitSlider" style="display: flex; overflow: hidden; scroll-behavior: smooth;">
+                            <img src="images/Jumpsuit.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Beach-Wear-Jumpsuit.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Western-Style-Jumpsuit.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Wedding-Wear-Jupsuit.png" class="primary-img" style="min-width: 100%;">
+                        </div>
+                        <button class="main-arrow right" onclick="moveMainImage('jumpsuitSlider', 1)">
+                            <i class="fa fa-angle-right"></i>
+                        </button>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Jumpsuits</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="list-area-fix">
+                        <ul class="bullet-path">
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Jumpsuits" class="green-link">Wedding Wear Jumpsuit</a>
+                            </li>
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Jumpsuits" class="green-link">Western Style Jumpsuit</a>
+                            </li>
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Jumpsuits" class="green-link">Beach Wear Jumpsuit</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                `;
+            } else if (item.name === "Blouse Designs") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <button class="main-arrow left" onclick="moveMainImage('blouseSlider', -1)">
+                            <i class="fa fa-angle-left"></i>
+                        </button>
+                        <div class="main-slider-content" id="blouseSlider" style="display: flex; overflow: hidden; scroll-behavior: smooth;">
+                            <img src="images/Blouse-Designs.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Blouse-Front-Neck-Design.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Blouse-Back-Neck-Design.png" class="primary-img" style="min-width: 100%;">
+                        </div>
+                        <button class="main-arrow right" onclick="moveMainImage('blouseSlider', 1)">
+                            <i class="fa fa-angle-right"></i>
+                        </button>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Blouse Designs</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <ul class="bullet-path">
+                        <li class="item-row">
+                            <span class="dot"></span>
+                            <a href="product-details.html?item=Blouse Designs" class="green-link">Blouse Front Neck Design</a>
+                        </li>
+                        <li class="item-row">
+                            <span class="dot"></span>
+                            <a href="product-details.html?item=Blouse Designs" class="green-link">Blouse Back Neck Design</a>
+                        </li>
+                    </ul>
+                </div>
+                `;
+            } else if (item.name === "Dhoti Sets") {
+                div.innerHTML = `
+                <div class="product-card-container">
+                    <div class="main-image-wrapper"
+                         onclick="handleTap(this, '${item.name}')"
+                         style="position:relative; overflow:hidden; cursor:pointer;">
+                        <button class="main-arrow left" onclick="moveMainImage('dhotiSlider', -1)">
+                            <i class="fa fa-angle-left"></i>
+                        </button>
+                        <div class="main-slider-content" id="dhotiSlider" style="display: flex; overflow: hidden; scroll-behavior: smooth;">
+                            <img src="images/Dhoti-Set.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Dhoti-With-Kurti-Set.png" class="primary-img" style="min-width: 100%;">
+                            <img src="images/Dhoti-Style-Dress.png" class="primary-img" style="min-width: 100%;">
+                        </div>
+                        <button class="main-arrow right" onclick="moveMainImage('dhotiSlider', 1)">
+                            <i class="fa fa-angle-right"></i>
+                        </button>
+                        <div class="info-overlay" style="${overlayShadowStyle}">
+                            <span class="overlay-name" style="font-weight: bold;">Dhoti Sets</span>
+                            <span class="overlay-price">${priceHTML}</span>
+                            ${collectionDescriptionHTML}
+                        </div>
+                    </div>
+
+                    <div class="list-area-fix">
+                        <ul class="bullet-path">
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Dhoti Sets" class="green-link">Dhoti with Kurti set</a>
+                            </li>
+                            <li class="item-row">
+                                <span class="dot"></span>
+                                <a href="product-details.html?item=Dhoti Sets" class="green-link">Dhoti Style Dress</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                `;
+            } else {
+                // Fallback default structure for generic cards matching standard layouts
+                div.innerHTML = `
+                <div class="product-card"
+                     onclick="handleTap(this, '${item.name}')"
+                     style="cursor:pointer; padding-bottom:15px; position:relative; overflow:hidden;">
+                    <img src="${item.img}" alt="${item.name}" style="width:100%; aspect-ratio:1/1; object-fit:cover;">
+                    <div class="product-info-overlay" style="${overlayShadowStyle}">
+                        <div class="product-title" style="font-weight: bold;">
+                            ${item.name.replace(" ", "<br>")}
+                        </div>
+                        <div class="product-price">
+                            ${priceHTML}
+                        </div>
+                        ${collectionDescriptionHTML}
+                    </div>
+                </div>
+                <div style="clear: both; display: block; height: 60px; width: 100%;"></div>
+                `;
+            }
+            grid.appendChild(div);
+        }
+    });
+}
+
+const toggleBtn=document.getElementById('toggleBtn');
+const dropdown=document.getElementById('dropdownMenu');
+
+toggleBtn.onclick=(e)=>{
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+    toggleBtn.classList.toggle('active');
+};
+
+document.onclick=(e)=>{
+    if(!dropdown.contains(e.target)){
+        dropdown.style.display='none';
+        toggleBtn.classList.remove('active');
+    }
+};
+
+const main=document.getElementById('mainContent');
+const footer=document.getElementById('footer');
+main.addEventListener('scroll',()=>{
+if(main.scrollTop+main.clientHeight>=main.scrollHeight-5){footer.classList.add('show');}
+else{footer.classList.remove('show');}
+});
+
+function openPanel(){document.getElementById('overlay').style.display='flex';}
+function closePanel(){document.getElementById('overlay').style.display='none';}
+
+function placeholder(name){console.log(name+' clicked');alert(name+' page coming soon');}
+
+renderGrid();
+
+function updateCartCount(){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let count = 0;
+
+    cart.forEach(item => count += item.qty);
+
+    document.getElementById("cartCount").innerText = count;
+}
+
+function animateToCart(){
+    const fly = document.createElement("div");
+    fly.className = "fly";
+    fly.innerText = "+1";
+
+    // Position near cart icon (2cm below approx)
+    const cartIcon = document.querySelector(".fa-shopping-cart");
+    const rect = cartIcon.getBoundingClientRect();
+
+    fly.style.left = rect.left + "px";
+    fly.style.top = (rect.top + 40) + "px";
+
+    document.body.appendChild(fly);
+
+    setTimeout(()=>{
+        fly.remove();
+    },800);
+}
+
+updateCartCount();
+
+let tapCount = 0;
+let tapTimer = null;
+
+function handleTap(element, name) {
+
+    tapCount++;
+
+    // SINGLE TAP
+    if (tapCount === 1) {
+
+        tapTimer = setTimeout(() => {
+
+            tapCount = 0;
+
+            viewProduct(name);
+
+        }, 300);
+
+    }
+
+    // DOUBLE TAP
+    else if (tapCount === 2) {
+
+        clearTimeout(tapTimer);
+
+        tapCount = 0;
+
+        // IMPORTANT
+        element.style.position = "relative";
+
+        // HEART ANIMATION
+        showHeart(element);
+
+        // SAVE WISHLIST
+        saveToWishlist(name);
+
+    }
+
+}
+
+// HEART POP
+function showHeart(element) {
+
+    // REMOVE OLD HEART
+    const oldHeart =
+        element.querySelector(".heart-pop");
+
+    if(oldHeart){
+        oldHeart.remove();
+    }
+
+    // CREATE NEW HEART
+    const heart = document.createElement("div");
+
+    heart.className = "heart-pop";
+
+    heart.innerHTML = `
+        <i class="fa fa-heart"></i>
+    `;
+
+    element.appendChild(heart);
+
+    // REMOVE AFTER ANIMATION
+    setTimeout(() => {
+
+        heart.remove();
+
+    }, 800);
+
+};
+
+function saveToWishlist(mainCategoryName) {
+    // 1. Get existing wishlist array
+    let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    let addedCount = 0;
+
+    // 2. Check if this main product has sub-products in your data dictionary
+    // (Assuming your global data object is named 'subProducts')
+    if (typeof subProducts !== 'undefined' && subProducts[mainCategoryName]) {
+        
+        // Loop through each sub-product (e.g., Mundum Neriyathum, Jamdani Saree, etc.)
+        subProducts[mainCategoryName].forEach(sub => {
+            // Create the precise identifier used by your details and wishlist pages
+            const uniqueId = `${sub.name}|${sub.img}`;
+            
+            // Prevent duplicate entries
+            if (!wishlist.includes(uniqueId)) {
+                wishlist.push(uniqueId);
+                addedCount++;
+            }
+        });
+
+        // 3. Save the modified list back to localStorage
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        
+        if (addedCount > 0) {
+            console.log(`Success: Added ${addedCount} sub-products from ${mainCategoryName} to wishlist! ❤️`);
+        } else {
+            console.log("All matching sub-products are already in your wishlist.");
+        }
+
+    } else {
+        // Fallback: If no subProducts match or object isn't loaded, save the plain main product name
+        if (!wishlist.includes(mainCategoryName)) {
+            wishlist.push(mainCategoryName);
+            localStorage.setItem("wishlist", JSON.stringify(wishlist));
+            console.log("Saved main product category to wishlist:", mainCategoryName);
+        }
+    }
+}
+
+// LOCATION DROPDOWN FIX
+
+window.addEventListener("DOMContentLoaded", async () => {
+
+    const dataList = document.getElementById("location-list");
+
+    try {
+
+        const response = await fetch("locations.json");
+        const data = await response.json();
+
+        console.log("Locations loaded:", data.length);
+
+        // clear old options
+        dataList.innerHTML = "";
+
+        data.forEach(location => {
+
+            // location name
+            const officeName = location["Brittihuda B.O"];
+
+            // pincode
+            const pincode = location["741123"];
+
+            // district
+            const district = location["NADIA"];
+
+            // skip bad entries
+            if(!officeName || !pincode) return;
+
+            // create dropdown option
+            const option = document.createElement("option");
+
+            option.value =
+                officeName +
+                " - " +
+                district +
+                " - " +
+                pincode;
+
+            dataList.appendChild(option);
+
+        });
+
+        console.log("Dropdown Ready");
+
+    } catch(error) {
+
+        console.log("JSON ERROR:", error);
+
+    }
+
+});
+
+const sareeSubStyles = [
+    { name: "Mundum Neriyathum", img: "images/Mundum-Neriyathum.png", price: 450 },
+    { name: "Jamdani Saree", img: "images/Jamdani.png", price: 1200 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador1.png", price: 999 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador2.png", price: 1049 },
+    { name: "Cape Saree", img: "images/Cape-Saree.png", price: 1150 },
+    { name: "Net Saree", img: "images/Net-Saree.png", price: 799 },
+    { name: "Half Saree", img: "images/Half-Saree.png", price: 1299 },
+    { name: "Applique Work Saree", img: "images/Applique-Work-Saree.png", price: 999 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree.png", price: 499 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree1.png", price: 549 },
+    { name: "Silk Saree", img: "images/Silk-Saree.png", price: 889 },
+    { name: "Ready-to-Wear Saree", img: "images/Ready-to-Wear-Saree.png", price: 1199 }
+];
+
+// 🛑 SECURITY GATE: New function to intercept clicks for non-logged in users
+function handleProtectedAddToCart(name, price, img) {
+    const loginStatus = localStorage.getItem("isLoggedIn");
+    
+    if (loginStatus !== "true") {
+        // Simple notification alert
+        alert("Please log in to your account to add items to your cart!");
+        // Redirect to login page
+        window.location.href = "login.html";
+        return;
+    }
+    
+    // If logged in, safely forward data to your original addToCart logic
+    if (typeof addToCart === "function") {
+        addToCart(name, price, img);
+    } else {
+        console.log("Original addToCart function not found, but user is logged in.");
+    }
+}
+
+// Updated: Only populates the horizontal scroller
+function populateSareeSection() {
+    const scroller = document.getElementById('sareeScroller');
+    if (!scroller) return;
+
+    scroller.innerHTML = ""; // Clear first to avoid duplication
+    sareeSubStyles.forEach(item => {
+        scroller.innerHTML += `
+            <div class="mini-card">
+                <img src="${item.img}" alt="${item.name}">
+                <button class="mini-add-btn" onclick="handleProtectedAddToCart('${item.name}', ${item.price}, '${item.img}')">Add</button>
+            </div>`;
+    });
+}
+
+function scrollStyles(scrollerId, direction) {
+    const scroller = document.getElementById(scrollerId);
+    if (scroller) {
+        const amount = 200; // Amount to scroll
+        scroller.scrollLeft += (direction === 'left' ? -amount : amount);
+    }
+}
+
+// Run after grid is created
+setTimeout(populateSareeSection, 100);
+
+const lehengaSubStyles = [
+    { name: "Chaniya Choli", img: "images/Chaniya-Choli.png", price: 1100 },
+    { name: "Ghagra", img: "images/Ghagra.png", price: 999 },
+    { name: "Party Wear Lehenga", img: "images/Party-Wear-Lehenga.png", price: 1999 },
+    { name: "Bridal Lehenga", img: "images/Bridal-Lehenga.png", price: 4500 },
+    { name: "Mermaid Or Fish-Cut Lehenga", img: "images/Mermaid-Or-Fish-Cut-Lehenga.png", price: 1799 },
+    { name: "Party Wear Fish-Cut Lehenga", img: "images/Party-Wear-Fish-Cut-Lehenga.png", price: 2864 },
+    { name: "Banarasi Lehenga", img: "images/Banarasi-Lehenga.png", price: 2200 }
+];
+
+// Updated to populate both sections with secure buttons
+function populateSubSections() {
+    // Populate Saree
+    const sareeScroller = document.getElementById('sareeScroller');
+    if (sareeScroller) {
+        sareeScroller.innerHTML = ""; // Clear first
+        sareeSubStyles.forEach(item => {
+            sareeScroller.innerHTML += createMiniCard(item);
+        });
+    }
+
+    const westernScroller = document.getElementById('westernScroller');
+    if (westernScroller) {
+        westernScroller.innerHTML = ""; 
+        // Checking if array exists before running to prevent console crashes
+        if (typeof westernShortSubStyles !== "undefined") {
+            westernShortSubStyles.forEach(item => {
+                westernScroller.innerHTML += `
+                    <div class="mini-card">
+                        <img src="${item.img}" alt="${item.name}">
+                        <button class="mini-add-btn" onclick="handleProtectedAddToCart('${item.name}', ${item.price}, '${item.img}')">Add</button>
+                    </div>`;
+            });
+        }
+    }
+
+    // Populate Lehenga
+    const lehengaScroller = document.getElementById('lehengaScroller');
+    if (lehengaScroller) {
+        lehengaScroller.innerHTML = ""; 
+        lehengaSubStyles.forEach(item => {
+            lehengaScroller.innerHTML += createMiniCard(item);
+        });
+    }
+
+    const dhotiContainer = document.getElementById('dhotiSubContainer');
+    if (dhotiContainer) {
+        dhotiContainer.innerHTML = ""; 
+        dhotiSubStyles.forEach(item => {
+            dhotiContainer.innerHTML += `
+                <div class="mini-card-static">
+                    <img src="${item.img}" alt="${item.name}">
+                    <button class="mini-add-btn-static" onclick="handleProtectedAddToCart('${item.name}', ${item.price}, '${item.img}')">Add</button>
+                    <p class="sub-label">${item.name}</p>
+                </div>`;
+        });
+    }
+
+    const palazzoScroller = document.getElementById('palazzoScroller');
+    if (palazzoScroller) {
+        palazzoScroller.innerHTML = ""; 
+        palazzoSubStyles.forEach(item => {
+            palazzoScroller.innerHTML += `
+                <div class="mini-card">
+                    <img src="${item.img}" alt="${item.name}">
+                    <button class="mini-add-btn" onclick="handleProtectedAddToCart('${item.name}', ${item.price}, '${item.img}')">Add</button>
+                </div>`;
+        });
+    }
+
+    const gownScroller = document.getElementById('gownScroller');
+    if (gownScroller) {
+        gownScroller.innerHTML = ""; 
+        gownSubStyles.forEach(item => {
+            gownScroller.innerHTML += `
+                <div class="mini-card">
+                    <img src="${item.img}" alt="${item.name}">
+                    <button class="mini-add-btn" onclick="handleProtectedAddToCart('${item.name}', ${item.price}, '${item.img}')">Add</button>
+                </div>`;
+        });
+    }
+}
+
+// Helper to create the 1:1 mini card (Updated to protect Saree & Lehenga lists)
+function createMiniCard(item) {
+    return `
+        <div class="mini-card">
+            <img src="${item.img}" alt="${item.name}">
+            <button class="mini-add-btn" onclick="handleProtectedAddToCart('${item.name}', ${item.price}, '${item.img}')">Add</button>
+        </div>`;
+}
+
+// Function for the Main Image Slider (Part 1)
+function moveMainImage(sliderId, direction) {
+    const slider = document.getElementById(sliderId);
+    if (slider) {
+        const width = slider.clientWidth;
+        slider.scrollLeft += direction * width;
+    }
+}
+
+// Updated Scroll Function for Part 2
+function scrollStyles(id, direction) {
+    const scroller = document.getElementById(id);
+    if (scroller) {
+        scroller.scrollLeft += (direction === 'left' ? -180 : 180);
+    }
+}
+
+// Ensure it runs
+setTimeout(populateSubSections, 100);
+
+const dhotiSubStyles = [
+    { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set.png", price: 1800 },
+    { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress.png", price: 1600 }
+];
+
+const palazzoSubStyles = [
+    { name: "Palazzo with Crop Top", img: "images/Palazzo-With-Crop-Top.png", price: 799 },
+    { name: "Palazzo with Jacket", img: "images/Palazzo-With-Jacket.png", price: 1199 },
+    { name: "Palazzo with Kurti", img: "images/Palazzo-with-Kurti.png", price: 850 },
+    { name: "Palazzo with Indo-Western Dress", img: "images/Palazzo-with-Indo-Western-Dress.png", price: 1299 }
+];
+
+const gownSubStyles = [
+    { name: "Indo Gown", img: "images/Indo-Gown.png", price: 1499 },
+    { name: "Indo Gown", img: "images/Indo-Gown1.png", price: 1549 },
+    { name: "Saree Gown", img: "images/Saree-Gown.png", price: 1599 },
+    { name: "Ball Gown", img: "images/Ball-Gown.png", price: 2499 },
+    { name: "Mermaid Style Gown", img: "images/Mermaid-Style-Gown.png", price: 1400 },
+    { name: "Trail Gown", img: "images/Gown-With-Trail.png", price: 1999 },
+    { name: "Off-Shoulder Pleated Gown", img: "images/Off-Shoulder-With-Pleated-Gown.png", price: 1699 },
+    { name: "Big Size Ball Trail Gown", img: "images/Big-Size-Ball-Gown-With-Trail.png", price: 2999 },
+    { name: "A-Line Gown", img: "images/A-Line-Gown.png", price: 999 },
+    { name: "Asymmetrical Gown", img: "images/Asymmetrical-Gown.png", price: 1100 },
+    { name: "Balloon Sleeve Gown", img: "images/Balloon-Sleeve-Gown.png", price: 1299 },
+    { name: "Bohemian Gown", img: "images/Bohemian-Gown.png", price: 899 },
+    { name: "Cape Gown", img: "images/Cape-Gown.png", price: 1250 },
+    { name: "Empire Gown", img: "images/Empire-Gown.png", price: 1050 },
+    { name: "Halter Gown", img: "images/Halter-Gown.png", price: 1199 },
+    { name: "High Low Gown", img: "images/High-Low-Gown.png", price: 1150 },
+    { name: "Sheath Gown", img: "images/Sheath-Gown.png", price: 950 },
+    { name: "Slip Gown", img: "images/Slip-Gown.png", price: 699 },
+    { name: "Tea Length Gown", img: "images/Tea-Length-Gown.png", price: 1199 },
+    { name: "Trumpet Gown", img: "images/Trumpet-Gown.png", price: 1450 }
+];
+
+const westernShortSubStyles = [
+    { name: "Ruffle Sleeve Dress", img: "images/Ruffle-Sleeve-Dress.png", price: 549 },
+    { name: "Off-Shoulder Short Dress", img: "images/Off-Shoulder-Short-Dress.png", price: 499 },
+    { name: "Puff Sleeve Short Dress", img: "images/Puffy-Sleeves-Short-Dress.png", price: 599 },
+    { name: "Barbie Style Short Dress", img: "images/Barbie-Style-Short-Dress.png", price: 699 },
+    { name: "Bodycon Short Dress", img: "images/Bodycon-Short-Dress.png", price: 399 }
+];
+
+// Global security checker and redirector
+function checkLogin() {
+    const loginStatus = localStorage.getItem("isLoggedIn");
+    
+    if (loginStatus !== "true") {
+        // Simple, clean alert notification
+        alert("Please log in to add items to your cart or customize designs!");
+        // Instant redirect to your login interface
+        window.location.href = "login.html"; 
+        return false;
+    }
+    return true;
+}
+
+// Protected add-to-cart handler for all sub-product carousel actions
+function addSubProductToCart(name, price, img) {
+    // 🛑 Intercept non-logged-in users instantly
+    if (!checkLogin()) return;
+
+    // If logged in, execute your normal cart storage routine:
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let normalizedName = name.trim().toLowerCase();
+    let existingItem = cart.find(item => item.name.trim().toLowerCase() === normalizedName);
+
+    if (existingItem) {
+        existingItem.qty += 1;
+    } else {
+        cart.push({
+            name: normalizedName,
+            displayName: name,
+            price: Number(price),
+            img: img,
+            qty: 1
+        });
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    
+    // Optional UI triggers if you have them implemented:
+    if (typeof updateCartBadge === "function") updateCartBadge();
+    if (typeof animatePlusOne === "function") animatePlusOne();
+}
+
+// Navigation routing handler function when user clicks logged-out profile icon
+function goToLogin() {
+    window.location.href = "login.html";
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    /**
+     * RULE 3: HOMEPAGE SYNC (INTEGRATED AUTOMATED LOCKING & MULTI-SEARCH ENGINE)
+     */
+    const isSessionActive = localStorage.getItem("isLoggedIn") === "true";
+    
+    // Target the main search input field
+    const locationSearchBar = document.getElementById("location-search-input") 
+                           || document.querySelector('input[placeholder*="location"]') 
+                           || document.querySelector('.location-search-bar');
+
+    if (!locationSearchBar || !isSessionActive) return;
+
+    // Standard styling for parent container to keep absolute menus aligned right underneath
+    if (locationSearchBar.parentElement) {
+        locationSearchBar.parentElement.style.position = "relative";
+    }
+
+    // Initialize layout setup on page boot load
+    initiateLocationLockWorkflow();
+
+    function initiateLocationLockWorkflow() {
+        const cachedLocationPin = localStorage.getItem("activeSessionLocationPin");
+        const explicitLocationSelected = localStorage.getItem("user_selected_area_name");
+
+        if (cachedLocationPin) {
+            // Fill in the input text line with stored references
+            if (explicitLocationSelected) {
+                locationSearchBar.value = `${cachedLocationPin} - ${explicitLocationSelected}`;
+                locationSearchBar.readOnly = true; 
+                locationSearchBar.style.cursor = "not-allowed";
+                renderChangeLocationButton();
+                removeAshDropdownMenu();
+            } else {
+                // 👉 AUTO-OPEN ON JUST LOGIN STATE 👈
+                locationSearchBar.value = cachedLocationPin;
+                locationSearchBar.readOnly = true; 
+                locationSearchBar.style.cursor = "not-allowed";
+                renderChangeLocationButton();
+                
+                // Instantly show the dropdown for this logged-in PIN code!
+                fetchAndBuildMultiSearchDropdown(cachedLocationPin, true);
+            }
+        } else {
+            // STATE B: Input is empty and unlocked because "Change" was clicked
+            locationSearchBar.readOnly = false;
+            locationSearchBar.style.cursor = "text";
+            locationSearchBar.placeholder = "Search by PIN code or Location Name...";
+            
+            // Disable browser auto-suggestions and disconnect the duplicate datalist
+            locationSearchBar.setAttribute("autocomplete", "off");
+            if (locationSearchBar.hasAttribute("list")) {
+                locationSearchBar.removeAttribute("list"); 
+            }
+            
+            // Remove any old change buttons or dropdowns while typing
+            removeChangeButton();
+            removeAshDropdownMenu();
+
+            // Listen to the user typing a new PIN code or location name string
+            locationSearchBar.addEventListener("input", handleLocationSearchTypingEvent);
+        }
+    }
+
+    // Handles typing adjustments
+    function handleLocationSearchTypingEvent(e) {
+        const queryText = e.target.value.trim().toLowerCase();
+
+        // Start showing matching results once the user types at least 3 characters
+        if (queryText.length >= 3) {
+            fetchAndBuildMultiSearchDropdown(queryText, false);
+        } else {
+            removeAshDropdownMenu();
+        }
+    }
+
+    // Advanced lookup and multi-search builder sub-routine
+    // isAutoLoginMode ensures that right after login, it matches the full exact PIN code string perfectly
+    function fetchAndBuildMultiSearchDropdown(searchQuery, isAutoLoginMode) {
+        fetch("locations.json")
+            .then(res => res.json())
+            .then(data => {
+                // Filter data if it matches the PIN code OR the Office/Location Name string
+                const matchingSubAreas = data.filter(loc => {
+                    const officeName = String(loc["Brittihuda B.O"] || "").toLowerCase();
+                    const pincodeKey = String(loc["741123"] || "");
+                    const districtName = String(loc["NADIA"] || "").toLowerCase();
+
+                    if (isAutoLoginMode) {
+                        // Strict exact match for the immediate login pop-up
+                        return pincodeKey.trim() === String(searchQuery).trim();
+                    } else {
+                        // Smart filter match for typing searches
+                        return pincodeKey.includes(searchQuery) || 
+                               officeName.includes(searchQuery) || 
+                               districtName.includes(searchQuery);
+                    }
+                });
+
+                // Clean out old instance states before appending new filtered records
+                removeAshDropdownMenu();
+
+                if (matchingSubAreas.length === 0) return;
+
+                // Create the custom dropdown box container
+                const dropdownWrapper = document.createElement("div");
+                dropdownWrapper.id = "custom-locked-location-menu";
+                dropdownWrapper.style.cssText = "position: absolute; left: 0; top: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; min-width: 280px; z-index: 99999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 4px 0; margin-top: 5px; display: block !important; max-height: 250px; overflow-y: auto;";
+
+                // Show up to top 15 matches so the UI dropdown doesn't become too long
+                matchingSubAreas.slice(0, 15).forEach(item => {
+                    const officeName = item["Brittihuda B.O"];
+                    const pincodeKey = item["741123"];
+                    const districtName = item["NADIA"];
+
+                    const rowOption = document.createElement("div");
+                    
+                    // Force text to stretch cleanly onto a single line
+                    rowOption.style.cssText = "padding: 10px 14px; font-size: 13px; color: #334155; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; background: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;";
+                    
+                    // Clean ash color SVG location icon reference mapping
+                    rowOption.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span style='font-weight: 500;'>${officeName} - ${districtName} (${pincodeKey})</span>
+                    `;
+
+                    // Row interactive styling markers
+                    rowOption.onmouseover = () => { rowOption.style.backgroundColor = "#f1f5f9"; rowOption.style.color = "#0b57d0"; };
+                    rowOption.onmouseout = () => { rowOption.style.backgroundColor = "white"; rowOption.style.color = "#334155"; };
+
+                    // Row select click handler
+                    rowOption.addEventListener("click", function(event) {
+                        event.stopPropagation();
+                        
+                        // Write the newly discovered search item credentials to storage
+                        localStorage.setItem("activeSessionLocationPin", pincodeKey);
+                        localStorage.setItem("user_selected_area_name", officeName);
+
+                        // Update layout visuals instantly
+                        locationSearchBar.value = `${pincodeKey} - ${officeName}`;
+                        locationSearchBar.readOnly = true;
+                        locationSearchBar.style.cursor = "not-allowed";
+                        
+                        // Clean remove event input listeners
+                        locationSearchBar.removeEventListener("input", handleLocationSearchTypingEvent);
+
+                        // Close dropdown and render your persistent change button configuration
+                        removeAshDropdownMenu();
+                        renderChangeLocationButton();
+                        
+                        console.log(`[SYSTEM SUCCESS] New configuration locked and synced with database profile storage: ${pincodeKey} - ${officeName}`);
+                    });
+
+                    dropdownWrapper.appendChild(rowOption);
+                });
+
+                if (locationSearchBar.parentElement) {
+                    locationSearchBar.parentElement.appendChild(dropdownWrapper);
+                }
+            })
+            .catch(err => console.error("Error filtering database inside unified location sync search engine:", err));
+    }
+
+    // Renders the Change Location Action Controller Button Component
+    function renderChangeLocationButton() {
+        if (document.getElementById("change-location-btn")) return;
+
+        const changeBtn = document.createElement("button");
+        changeBtn.id = "change-location-btn";
+        changeBtn.innerText = "Change";
+        changeBtn.style.cssText = "position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #64748b; color: white; border: none; padding: 4px 10px; font-size: 11px; font-weight: 500; border-radius: 4px; cursor: pointer; z-index: 10; transition: background 0.2s;";
+        
+        changeBtn.onmouseover = () => changeBtn.style.background = "#475569";
+        changeBtn.onmouseout = () => changeBtn.style.background = "#64748b";
+
+        changeBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Clear all data keys from local storage completely
+            localStorage.removeItem("activeSessionLocationPin");
+            localStorage.removeItem("user_selected_area_name");
+            
+            // Clear current input context value properties
+            locationSearchBar.value = "";
+            
+            // Re-run setup framework dynamically to put input bar into State B (unlocked text search mode)
+            initiateLocationLockWorkflow();
+        });
+
+        if (locationSearchBar.parentElement) {
+            locationSearchBar.parentElement.appendChild(changeBtn);
+            locationSearchBar.style.paddingRight = "75px";
+        }
+    }
+
+    function removeChangeButton() {
+        const btn = document.getElementById("change-location-btn");
+        if (btn) btn.remove();
+        locationSearchBar.style.paddingRight = "";
+    }
+
+    function removeAshDropdownMenu() {
+        const menu = document.getElementById("custom-locked-location-menu");
+        if (menu) menu.remove();
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Collect DOM node targets safely
+    const loggedOutIcon = document.getElementById("logged-out-icon");
+    const loggedInBubble = document.getElementById("logged-in-bubble");
+    const googleAvatarImg = document.getElementById("google-avatar-img");
+    const avatarDropdown = document.getElementById("avatar-dropdown");
+    const profileContainer = document.getElementById("global-profile-container");
+
+    // ===== STATE SYNC ON LOAD =====
+    // Inspect local storage metrics populated by your login.html page logic
+    const userIsLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const userProfileAvatar = localStorage.getItem("userAvatarUrl");
+
+    if (userIsLoggedIn) {
+        // Swap out default icon state layout
+        loggedOutIcon.style.display = "none";
+        
+        // If Google provides an image, use it. Otherwise, use a clean fallback icon image.
+        googleAvatarImg.src = userProfileAvatar && userProfileAvatar !== "" 
+            ? userProfileAvatar 
+            : "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
+        
+        loggedInBubble.style.display = "flex";
+    } else {
+        // Enforce native standard default structure parameters
+        loggedOutIcon.style.display = "flex";
+        loggedInBubble.style.display = "none";
+    }
+
+    // ===== BUBBLE CLICK INTERACTION MANAGER =====
+    // Toggle dropdown on profile picture click
+    if (loggedInBubble) {
+        loggedInBubble.addEventListener("click", function(event) {
+            event.stopPropagation(); // Stops immediate window outside click execution triggers
+            avatarDropdown.classList.toggle("active");
+        });
+    }
+
+    // ===== OUTSIDE ACCIDENT CLICK DETECTOR CLOSURE LOGIC =====
+    // Close dropdown instantly if the user clicks anywhere else on the screen
+    document.addEventListener("click", function(event) {
+        if (profileContainer && !profileContainer.contains(event.target)) {
+            avatarDropdown.classList.remove("active");
+        }
+    });
+});
+
+// ===== LOG OUT APPLICATION ENGINE ACTION =====
+// Clears session configurations and forces layout interface rebuild refresh mutations
+function executeAppLogout() {
+    // Clear the specific login flags from your app space data cache
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userLoggedInStatus");
+    localStorage.removeItem("activeUserIdentity");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userAvatarUrl");
+
+    // Force page load reset cleanly back to zero default values state
+    window.location.reload();
+}
+
+// SUB-PRODUCTS LIBRARY
+const subProducts = {
+    "Saree": [
+    { name: "Mundum Neriyathum", img: "images/Mundum-Neriyathum.png", price: 450 },
+    { name: "Jamdani Saree", img: "images/Jamdani.png", price: 1200 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador1.png", price: 999 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador2.png", price: 1049 },
+    { name: "Cape Saree", img: "images/Cape-Saree.png", price: 1150 },
+    { name: "Net Saree", img: "images/Net-Saree.png", price: 799 },
+    { name: "Half Saree", img: "images/Half-Saree.png", price: 1299 },
+    { name: "Applique Work Saree", img: "images/Applique-Work-Saree.png", price: 999 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree.png", price: 499 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree1.png", price: 549 },
+    { name: "Silk Saree", img: "images/Silk-Saree.png", price: 889 },
+    { name: "Ready-to-Wear Saree", img: "images/Ready-to-Wear-Saree.png", price: 1199 }
+    ],
+    "Western Short Dresses": [
+    { name: "Ruffle Sleeve Dress", img: "images/Ruffle-Sleeve-Dress.png", price: 549 },
+    { name: "Off-Shoulder Short Dress", img: "images/Off-Shoulder-Short-Dress.png", price: 499 },
+    { name: "Puff Sleeve Short Dress", img: "images/Puffy-Sleeves-Short-Dress.png", price: 599 },
+    { name: "Barbie Style Short Dress", img: "images/Barbie-Style-Short-Dress.png", price: 699 },
+    { name: "Bodycon Short Dress", img: "images/Bodycon-Short-Dress.png", price: 399 }
+    ],
+    "Lehenga & Chaniya Choli & Ghagra": [
+    { name: "Chaniya Choli", img: "images/Chaniya-Choli.png", price: 1100 },
+    { name: "Ghagra", img: "images/Ghagra.png", price: 999 },
+    { name: "Party Wear Lehenga", img: "images/Party-Wear-Lehenga.png", price: 1999 },
+    { name: "Bridal Lehenga", img: "images/Bridal-Lehenga.png", price: 4500 },
+    { name: "Mermaid Or Fish-Cut Lehenga", img: "images/Mermaid-Or-Fish-Cut-Lehenga.png", price: 1799 },
+    { name: "Party Wear Fish-Cut Lehenga", img: "images/Party-Wear-Fish-Cut-Lehenga.png", price: 2864 },
+    { name: "Banarasi Lehenga", img: "images/Banarasi-Lehenga.png", price: 2200 }
+    ],
+    "Gown": [
+    { name: "Indo Gown", img: "images/Indo-Gown.png", price: 1499 },
+    { name: "Indo Gown", img: "images/Indo-Gown1.png", price: 1549 },
+    { name: "Saree Gown", img: "images/Saree-Gown.png", price: 1599 },
+    { name: "Ball Gown", img: "images/Ball-Gown.png", price: 2499 },
+    { name: "Mermaid Style Gown", img: "images/Mermaid-Style-Gown.png", price: 1400 },
+    { name: "Trail Gown", img: "images/Gown-With-Trail.png", price: 1999 },
+    { name: "Off-Shoulder Pleated Gown", img: "images/Off-Shoulder-With-Pleated-Gown.png", price: 1699 },
+    { name: "Big Size Ball Trail Gown", img: "images/Big-Size-Ball-Gown-With-Trail.png", price: 2999 },
+    { name: "A-Line Gown", img: "images/A-Line-Gown.png", price: 999 },
+    { name: "Asymmetrical Gown", img: "images/Asymmetrical-Gown.png", price: 1100 },
+    { name: "Balloon Sleeve Gown", img: "images/Balloon-Sleeve-Gown.png", price: 1299 },
+    { name: "Bohemian Gown", img: "images/Bohemian-Gown.png", price: 899 },
+    { name: "Cape Gown", img: "images/Cape-Gown.png", price: 1250 },
+    { name: "Empire Gown", img: "images/Empire-Gown.png", price: 1050 },
+    { name: "Halter Gown", img: "images/Halter-Gown.png", price: 1199 },
+    { name: "High Low Gown", img: "images/High-Low-Gown.png", price: 1150 },
+    { name: "Sheath Gown", img: "images/Sheath-Gown.png", price: 950 },
+    { name: "Slip Gown", img: "images/Slip-Gown.png", price: 699 },
+    { name: "Tea Length Gown", img: "images/Tea-Length-Gown.png", price: 1199 },
+    { name: "Trumpet Gown", img: "images/Trumpet-Gown.png", price: 1450 }
+    ],
+    "Palazzo": [
+    { name: "Palazzo with Crop Top", img: "images/Palazzo-With-Crop-Top.png", price: 799 },
+    { name: "Palazzo with Jacket", img: "images/Palazzo-With-Jacket.png", price: 1199 },
+    { name: "Palazzo with Kurti", img: "images/Palazzo-with-Kurti.png", price: 850 },
+    { name: "Palazzo with Indo-Western Dress", img: "images/Palazzo-with-Indo-Western-Dress.png", price: 1299 }
+    ],
+    "Gharara": [
+        { name: "Gharara", img: "images/Gharara1.png", price: 1499 },
+    ],
+    "Salwar Kameez": [
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez1.png", price: 899 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez2.png", price: 1099 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez3.png", price: 999 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez4.png", price: 1049 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez5.png", price: 949 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez6.png", price: 1149 }
+    ],
+    "Peplum": [
+        { name: "Peplum", img: "images/Peplum1.png", price: 799 },
+        { name: "Peplum", img: "images/Peplum2.png", price: 849 },
+        { name: "Peplum", img: "images/Peplum3.png", price: 899 },
+        { name: "Peplum", img: "images/Peplum4.png", price: 949 },
+        { name: "Peplum", img: "images/Peplum5.png", price: 999 },
+        { name: "Peplum", img: "images/Peplum6.png", price: 949 },
+        { name: "Peplum", img: "images/Peplum7.png", price: 899 },
+        { name: "Peplum", img: "images/Peplum8.png", price: 849 },
+        { name: "Peplum", img: "images/Peplum9.png", price: 799 }
+    ],
+    "Anarkali": [
+        { name: "Anarkali", img: "images/Anarkali1.png", price: 1299 },
+        { name: "Anarkali", img: "images/Anarkali2.png", price: 1349 },
+        { name: "Anarkali", img: "images/Anarkali3.png", price: 1399 },
+        { name: "Anarkali", img: "images/Anarkali4.png", price: 1449 }
+    ],
+    "Pattu Pavadai": [
+        { name: "Pattu Pavadai", img: "images/Pattu-Pavadai1.png", price: 699 },
+        { name: "Pattu Pavadai", img: "images/Pattu-Pavadai2.png", price: 749 }
+    ],
+    "Sharara": [
+        { name: "Sharara", price: 2100, img: "images/Sharara1.png" },
+        { name: "Flared-Sharara", price: 2100, img: "images/Flared-Sharara.png" }
+    ],
+    "Kurti": [
+        { name: "Short Kurti", price: 299, img: "images/Short-Kurti.png" },
+        { name: "Short Kurti", price: 349, img: "images/Short-Kurti1.png" },
+        { name: "Short Kurti", price: 399, img: "images/Short-Kurti2.png" },
+        { name: "Long Kurti", price: 899, img: "images/Long-Kurti.png" },
+        { name: "Long Kurti", price: 949, img: "images/Long-Kurti1.png" }
+    ],
+    "Jumpsuits": [
+        { name: "Wedding Wear Jumpsuit", price: 1199, img: "images/Wedding-Wear-Jupsuit.png" },
+        { name: "Western Style Jumpsuit", price: 599, img: "images/Western-Style-Jumpsuit.png" },
+        { name: "Beach Wear Jumpsuit", price: 499, img: "images/Beach-Wear-Jumpsuit.png" }
+    ],
+    "Blouse Designs": [
+        { name: "Blouse Front Neck Design", price: 399, img: "images/Blouse-Front-Neck-Design1.png" },
+        { name: "Blouse Front Neck Design", price: 409, img: "images/Blouse-Front-Neck-Design2.png" },
+        { name: "Blouse Front Neck Design", price: 419, img: "images/Blouse-Front-Neck-Design3.png" },
+        { name: "Blouse Front Neck Design", price: 429, img: "images/Blouse-Front-Neck-Design4.png" },
+        { name: "Blouse Front Neck Design", price: 439, img: "images/Blouse-Front-Neck-Design5.png" },
+        { name: "Blouse Front Neck Design", price: 449, img: "images/Blouse-Front-Neck-Design6.png" },
+        { name: "Blouse Front Neck Design", price: 459, img: "images/Blouse-Front-Neck-Design7.png" },
+        { name: "Blouse Front Neck Design", price: 469, img: "images/Blouse-Front-Neck-Design8.png" },
+        { name: "Blouse Front Neck Design", price: 479, img: "images/Blouse-Front-Neck-Design9.png" },
+        { name: "Blouse Back Neck Design", price: 450, img: "images/Blouse-Back-Neck-Design0.png" },
+        { name: "Blouse Back Neck Design", price: 460, img: "images/Blouse-Back-Neck-Design1.png" },
+        { name: "Blouse Back Neck Design", price: 470, img: "images/Blouse-Back-Neck-Design2.png" },
+        { name: "Blouse Back Neck Design", price: 480, img: "images/Blouse-Back-Neck-Design3.png" },
+        { name: "Blouse Back Neck Design", price: 490, img: "images/Blouse-Back-Neck-Design4.png" },
+        { name: "Blouse Back Neck Design", price: 500, img: "images/Blouse-Back-Neck-Design5.png" },
+        { name: "Blouse Back Neck Design", price: 510, img: "images/Blouse-Back-Neck-Design6.png" },
+        { name: "Blouse Back Neck Design", price: 520, img: "images/Blouse-Back-Neck-Design7.png" },
+        { name: "Blouse Back Neck Design", price: 530, img: "images/Blouse-Back-Neck-Design8.png" },
+        { name: "Blouse Back Neck Design", price: 540, img: "images/Blouse-Back-Neck-Design9.png" },
+        { name: "Blouse Back Neck Design", price: 550, img: "images/Blouse-Back-Neck-Design10.png" },
+        { name: "Blouse Back Neck Design", price: 560, img: "images/Blouse-Back-Neck-Design11.png" },
+        { name: "Blouse Back Neck Design", price: 570, img: "images/Blouse-Back-Neck-Design12.png" },
+        { name: "Blouse Back Neck Design", price: 580, img: "images/Blouse-Back-Neck-Design13.png" },
+        { name: "Blouse Back Neck Design", price: 590, img: "images/Blouse-Back-Neck-Design14.png" },
+        { name: "Blouse Back Neck Design", price: 600, img: "images/Blouse-Back-Neck-Design15.png" },
+        { name: "Blouse Back Neck Design", price: 610, img: "images/Blouse-Back-Neck-Design16.png" },
+        { name: "Blouse Back Neck Design", price: 620, img: "images/Blouse-Back-Neck-Design17.png" },
+        { name: "Blouse Back Neck Design", price: 630, img: "images/Blouse-Back-Neck-Design18.png" },
+        { name: "Blouse Back Neck Design", price: 640, img: "images/Blouse-Back-Neck-Design19.png" },
+        { name: "Blouse Back Neck Design", price: 650, img: "images/Blouse-Back-Neck-Design20.png" },
+        { name: "Blouse Back Neck Design", price: 660, img: "images/Blouse-Back-Neck-Design21.png" },
+        { name: "Blouse Back Neck Design", price: 670, img: "images/Blouse-Back-Neck-Design22.png" },
+        { name: "Blouse Back Neck Design", price: 680, img: "images/Blouse-Back-Neck-Design23.png" },
+        { name: "Blouse Back Neck Design", price: 690, img: "images/Blouse-Back-Neck-Design24.png" },
+        { name: "Blouse Back Neck Design", price: 700, img: "images/Blouse-Back-Neck-Design25.png" },
+        { name: "Blouse Back Neck Design", price: 710, img: "images/Blouse-Back-Neck-Design26.png" },
+        { name: "Blouse Back Neck Design", price: 720, img: "images/Blouse-Back-Neck-Design27.png" },
+        { name: "Blouse Back Neck Design", price: 730, img: "images/Blouse-Back-Neck-Design28.png" },
+        { name: "Blouse Back Neck Design", price: 740, img: "images/Blouse-Back-Neck-Design29.png" },
+        { name: "Blouse Back Neck Design", price: 750, img: "images/Blouse-Back-Neck-Design30.png" },
+        { name: "Blouse Back Neck Design", price: 760, img: "images/Blouse-Back-Neck-Design31.png" },
+        { name: "Blouse Back Neck Design", price: 770, img: "images/Blouse-Back-Neck-Design32.png" },
+        { name: "Blouse Back Neck Design", price: 780, img: "images/Blouse-Back-Neck-Design33.png" },
+        { name: "Blouse Back Neck Design", price: 790, img: "images/Blouse-Back-Neck-Design34.png" }
+    ],
+    "Dhoti Sets": [
+        { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set.png", price: 999 },
+        { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set1.png", price: 1049 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress.png", price: 1099 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress1.png", price: 1149 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress2.png", price: 1199 },
+    ],
+    "Phanek": [
+        { name: "Phanek", img: "images/Phanek1.png", price: 499 }
+    ],
+    "One Piece Frock": [
+        { name: "A-Line Frock", price: 499, img: "images/A-Line-Frock.png" },
+        { name: "Fit & Flare Frock", price: 549, img: "images/Fit-&-Flare-Frock.png" },
+        { name: "Empire Waist Frock", price: 599, img: "images/Empire-Waist-Frock.png" },
+        { name: "Sheath Frock", price: 450, img: "images/Sheath-Frock.png" },
+        { name: "Wrap Frock", price: 550, img: "images/Wrap-Frock.png" },
+        { name: "Bodycon Frock", price: 399, img: "images/Bodycon-Frock.png" },
+        { name: "Maxi Frock", price: 799, img: "images/Maxi-Frock.png" },
+        { name: "Shirt Frock", price: 599, img: "images/Shirt-Frock.png" },
+        { name: "Tiered Frock", price: 699, img: "images/Tiered-Frock.png" },
+        { name: "Peplum Frock", price: 499, img: "images/Peplum-Frock.png" },
+        { name: "Halter Neck Frock", price: 549, img: "images/Halter-Neck-Frock.png" },
+        { name: "Off-Shoulder Frock", price: 499, img: "images/Off-Shoulder-Frock.png" },
+        { name: "Square Neck Frock", price: 450, img: "images/Square-Neck-Frock.png" },
+        { name: "Sweetheart Neck Frock", price: 599, img: "images/Sweetheart-Neck-Frock.png" },
+        { name: "Ball Gown Frock", price: 899, img: "images/Ball-Gown-Frock.png" },
+        { name: "Asymmetrical Frock", price: 550, img: "images/Asymmetrical-Frock.png" },
+        { name: "Spaghetti Strap Frock", price: 349, img: "images/Spaghetti-Strap-Frock.png" }
+    ],
+    "Short Skirts": [
+        { name: "Pleated", price: 399, img: "images/Pleated.png" },
+        { name: "Denim", price: 499, img: "images/Denim.png" },
+        { name: "A-line", price: 349, img: "images/A-line.png" },
+        { name: "Mini", price: 299, img: "images/Mini.png" },
+        { name: "Tennis", price: 349, img: "images/Tennis.png" },
+        { name: "Wrap", price: 399, img: "images/Wrap.png" },
+        { name: "Ruffled", price: 449, img: "images/Ruffled.png" },
+        { name: "Cargo", price: 499, img: "images/Cargo.png" },
+        { name: "Skater", price: 349, img: "images/Skater.png" },
+        { name: "Tiered", price: 450, img: "images/Tiered.png" },
+        { name: "Flounce", price: 399, img: "images/Flounce.png" },
+        { name: "Tulip", price: 399, img: "images/Tulip.png" },
+        { name: "Tulip", price: 429, img: "images/Tulip1.png" },
+        { name: "Ruched", price: 449, img: "images/Ruched.png" },
+        { name: "Asymmetrical", price: 429, img: "images/Asymmetrical.png" },
+        { name: "Pleather", price: 599, img: "images/Pleather.png" }
+    ],
+    "Tops": [
+        { name: "Knit Sweater", price: 499, img: "images/Knit-Sweater.png" },
+        { name: "Camisole Top", price: 249, img: "images/Camisole-Top.png" },
+        { name: "Square Neck Top", price: 299, img: "images/Square-Neck-Top.png" },
+        { name: "Bell Sleeve Top", price: 399, img: "images/Bell-Sleeve-Top.png" },
+        { name: "Smocked Top", price: 349, img: "images/Smocked-Top.png" },
+        { name: "Tie Front Top", price: 349, img: "images/Tie-Front-Top.png" },
+        { name: "Asymmetrical Top", price: 329, img: "images/Asymmetrical-Top.png" },
+        { name: "Cold Shoulder Top", price: 349, img: "images/Cold-Shoulder-Top.png" },
+        { name: "Button Down Blouse", price: 449, img: "images/Button-Down-Blouse.png" },
+        { name: "Tunic Top", price: 399, img: "images/Tunic-Top.png" },
+        { name: "Cape Top", price: 450, img: "images/Cape-Top.png" },
+        { name: "Layered Top", price: 399, img: "images/Layered-Top.png" },
+        { name: "Mesh Top", price: 299, img: "images/Mesh-Top.png" },
+        { name: "Embroidered Top", price: 499, img: "images/Embroidered-Top.png" },
+        { name: "Satin Blouse", price: 449, img: "images/Satin-Blouse.png" },
+        { name: "Off-Shoulder Blouse", price: 349, img: "images/Off-Shoulder-Blouse.png" },
+        { name: "Peasant Top", price: 399, img: "images/Peasant-Top.jpg" },
+        { name: "Knot Front Top", price: 299, img: "images/Knot-Front-Top.png" },
+        { name: "Chiffon Blouse", price: 399, img: "images/Chiffon-Blouse.png" }
+    ],
+    "Indo Dress": [
+        { name: "Indo Western Dress", img: "images/indo1.PNG", price: 999 },
+        { name: "Indo Western Dress", img: "images/indo2.png", price: 1049 }
+    ]
+};
+// 1. Declare the global tracker variable ONCE at the top
+let dynamicGridObserver = null;
+
+function applyIndexGridStockSync() {
+    // Temporarily pause the observer so our changes don't trigger an infinite loop
+    if (dynamicGridObserver) {
+        dynamicGridObserver.disconnect();
+    }
+
+    const STORAGE_KEY = "storefront_inventory_cache";
+    const savedStock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    
+    // Target all sub-style card types rendered inside your dynamic scroll containers
+    const scrollerCards = document.querySelectorAll(".mini-card, .mini-card-static");
+    
+    scrollerCards.forEach(card => {
+        const imgEl = card.querySelector("img");
+        if (!imgEl) return;
+        
+        // Grab the clean image filename to use as the true unique identifier
+        const imgSrc = imgEl.getAttribute("src") || "";
+        const imgFilename = imgSrc.split('/').pop().split('?')[0].trim();
+        if (!imgFilename) return;
+
+        // Matches your fixed admin backend stock structure templates precisely (Filename based)
+        const entireProductKey = `${imgFilename}||Entire Product Style||${imgFilename}`;
+        const isStockedOut = savedStock[entireProductKey] === true;
+        
+        // Clean up pre-existing overlays to avoid visual stacking
+        card.querySelectorAll(".scroller-stockout-badge").forEach(el => el.remove());
+        
+        if (isStockedOut) {
+            // Store the card's original layout positioning state if not already saved
+            if (!card.hasAttribute("data-orig-position")) {
+                card.setAttribute("data-orig-position", card.style.position || "static");
+            }
+            
+            card.style.position = "relative";
+            
+            // Create a perfectly matching blurred layout block mask over the item square
+            const badgeOverlay = document.createElement("div");
+            badgeOverlay.className = "scroller-stockout-badge";
+            badgeOverlay.style.cssText = `
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(255, 255, 255, 0.85); display: flex; flex-direction: column;
+                justify-content: center; align-items: center; z-index: 99;
+                text-align: center; border-radius: inherit; pointer-events: auto;
+            `;
+            
+            // Inject a clean minimalist red banner directly over the element visual grid area
+            badgeOverlay.innerHTML = `
+                <div style="background: #e53e3e; color: #ffffff; font-weight: 800; 
+                            padding: 4px 10px; border-radius: 4px; text-transform: uppercase; 
+                            font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
+                    OUT OF STOCK
+                </div>
+            `;
+            
+            card.appendChild(badgeOverlay);
+            
+            // Inline block actions safely without breaking global javascript variables
+            badgeOverlay.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert("This style is currently out of stock!");
+                return false;
+            };
+
+            // Soft-disable underlying buttons visually without bricking core logic
+            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
+            if (addButton) {
+                addButton.style.opacity = "0.4";
+                addButton.style.cursor = "not-allowed";
+            }
+        } else {
+            // RESTORE ORIGINAL THEME STYLES: This resets the hover rules completely
+            if (card.hasAttribute("data-orig-position")) {
+                card.style.position = card.getAttribute("data-orig-position");
+                card.removeAttribute("data-orig-position");
+            }
+
+            // Restore normal behavior if status is active
+            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
+            if (addButton) {
+                addButton.style.opacity = "";
+                addButton.style.cursor = "";
+            }
+        }
+    });
+
+    // 2. Safely turn the observer back on now that modifications are complete
+    if (dynamicGridObserver) {
+        dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
+    }
+}
+
+// Attach lifecycle listeners to catch initial data load
+document.addEventListener("DOMContentLoaded", () => {
+    // Setup structural tracker engines safely
+    dynamicGridObserver = new MutationObserver(() => applyIndexGridStockSync());
+    dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Smooth phased lifecycles instead of resource-heavy crash intervals
+    setTimeout(applyIndexGridStockSync, 150);
+    setTimeout(applyIndexGridStockSync, 800);
+});
+
+// Sync across multiple admin/index browser tabs instantly
+window.addEventListener("storage", applyIndexGridStockSync);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Wishlist</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 0;
+    margin: 0;
+}
+
+/* NEW HEADER NAVIGATION STYLING */
+header {
+    background-color: white;
+    padding: 12px 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.brand-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    font-size: 18px;
+    color: #212121;
+}
+
+.brand-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+.home-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.home-btn:hover {
+    text-decoration: underline;
+}
+
+/* CONTENT BOX WRAPPER */
+.wishlist-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+h2{
+    text-align:center;
+    margin-bottom: 20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+
+@media(min-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.item{
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.item img{
+    width:100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #f9f9f9;
+}
+
+.item p {
+    font-weight: 600;
+    margin: 10px 0 5px 0;
+    font-size: 14px;
+}
+
+button.remove-btn{
+    margin-top:5px;
+    padding:6px 14px;
+    border:none;
+    background:#e11d48;
+    color:#fff;
+    border-radius:5px;
+    cursor:pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+button.remove-btn:hover {
+    background: #be123c;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand-container">
+        <img src="images/Logo.png" class="brand-logo" onerror="this.src='Logo.png'; this.onerror=null;" alt="Logo">
+        Customize Collection
+    </div>
+    <button onclick="window.location.href='index.html'" 
+        class="hover:bg-gray-100 transition-colors duration-200" 
+        style="cursor: pointer; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" 
+        title="Go to Home">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="#000000">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </svg>
+</button>
+</header>
+
+<div class="wishlist-container">
+    <h2>❤️ My Wishlist</h2>
+
+    <div class="grid" id="wishlistGrid"></div>
+
+    <p id="emptyMsg" style="text-align:center; color: #9ca3af; margin-top: 40px;">No items in wishlist</p>
+</div>
+
+<script>
+
+const grid = document.getElementById("wishlistGrid");
+const emptyMsg = document.getElementById("emptyMsg");
+
+/**
+ * IMAGE MAPPING ENGINE
+ * Contains both Main Categories and all specific Sub-Product images.
+ */
+const productAssetMap = {
+    // Main Product Categories Default Images
+    "saree": "images/Saree.png",
+    "western short dresses": "images/Ruffle-Sleeve-Dress.png",
+    "lehenga & chaniya choli & ghagra": "images/Lehenga.png",
+    "gown": "images/Gown.png",
+    "palazzo": "images/Palazzo.png",
+    "gharara": "images/Gharara.png",
+    "salwar kameez": "images/Salwar-Kameez.png",
+    "peplum": "images/Peplum.png",
+    "anarkali": "images/Anarkali.png",
+    "pattu pavadai": "images/Pattu-Pavadai.png",
+    "sharara": "images/Sharara.png",
+    "kurti": "images/Kurti.png",
+    "jumpsuits": "images/Jumpsuit.png",
+    "blouse designs": "images/Blouse-Designs.png",
+    "dhoti sets": "images/Dhoti-Set.png",
+    "phanek": "images/Phanek.png",
+    "one piece frock": "images/One-Piece-Frock.png",
+    "short skirts": "images/Short-Skirts.png",
+    "tops": "images/Tops.png",
+    "indo dress": "images/Indo-Dress.png",
+
+    // Saree Sub-Product Images
+    "mundum neriyathum": "images/Mundum-Neriyathum.png",
+    "jamdani saree": "images/Jamdani.png",
+    "mekhela chador": "images/Mekhela-Chador1.png",
+    "cape saree": "images/Cape-Saree.png",
+    "net saree": "images/Net-Saree.png",
+    "half saree": "images/Half-Saree.png",
+    "applique work saree": "images/Applique-Work-Saree.png",
+    "fabric work saree": "images/Fabric-Work-Saree.png",
+    "silk saree": "images/Silk-Saree.png",
+    "ready-to-wear saree": "images/Ready-to-Wear-Saree.png",
+
+    // Western Short Dresses Sub-Product Images
+    "ruffle sleeve dress": "images/Ruffle-Sleeve-Dress.png",
+    "off-shoulder short dress": "images/Off-Shoulder-Short-Dress.png",
+    "puff sleeve short dress": "images/Puffy-Sleeves-Short-Dress.png",
+    "puffy sleeves short dress": "images/Puffy-Sleeves-Short-Dress.png",
+    "barbie style short dress": "images/Barbie-Style-Short-Dress.png",
+    "bodycon short dress": "images/Bodycon-Short-Dress.png",
+
+    // Lehenga Sub-Product Images
+    "chaniya choli": "images/Chaniya-Choli.png",
+    "ghagra": "images/Ghagra.png",
+    "party wear lehenga": "images/Party-Wear-Lehenga.png",
+    "bridal lehenga": "images/Bridal-Lehenga.png",
+    "mermaid or fish-cut lehenga": "images/Mermaid-Or-Fish-Cut-Lehenga.png",
+    "mermaid or fish-cut lehenga": "images/Mermaid-Or-Fish-Cut-Lehenga.png",
+    "party wear fish-cut lehenga": "images/Party-Wear-Fish-Cut-Lehenga.png",
+    "banarasi lehenga": "images/Banarasi-Lehenga.png",
+
+    // Gown Sub-Product Images
+    "indo gown": "images/Indo-Gown.png",
+    "saree gown": "images/Saree-Gown.png",
+    "ball gown": "images/Ball-Gown.png",
+    "mermaid style gown": "images/Mermaid-Style-Gown.png",
+    "trail gown": "images/Gown-With-Trail.png",
+    "gown with trail": "images/Gown-With-Trail.png",
+    "off-shoulder pleated gown": "images/Off-Shoulder-With-Pleated-Gown.png",
+    "off-shoulder with pleated gown": "images/Off-Shoulder-With-Pleated-Gown.png",
+    "big size ball trail gown": "images/Big-Size-Ball-Gown-With-Trail.png",
+    "big size ball gown with trail": "images/Big-Size-Ball-Gown-With-Trail.png",
+    "a-line gown": "images/A-Line-Gown.png",
+    "asymmetrical gown": "images/Asymmetrical-Gown.png",
+    "balloon sleeve gown": "images/Balloon-Sleeve-Gown.png",
+    "bohemian gown": "images/Bohemian-Gown.png",
+    "cape gown": "images/Cape-Gown.png",
+    "empire gown": "images/Empire-Gown.png",
+    "halter gown": "images/Halter-Gown.png",
+    "high low gown": "images/High-Low-Gown.png",
+    "sheath gown": "images/Sheath-Gown.png",
+    "slip gown": "images/Slip-Gown.png",
+    "tea length gown": "images/Tea-Length-Gown.png",
+    "trumpet gown": "images/Trumpet-Gown.png",
+
+    // Palazzo Sub-Product Images
+    "palazzo with crop top": "images/Palazzo-With-Crop-Top.png",
+    "palazzo with jacket": "images/Palazzo-With-Jacket.png",
+    "palazzo with kurti": "images/Palazzo-with-Kurti.png",
+    "palazzo with indo-western dress": "images/Palazzo-with-Indo-Western-Dress.png",
+
+    // Gharara Sub-Product Images
+    "gharara": "images/Gharara1.png",
+
+    // Salwar Kameez Sub-Product Images
+    "salwar kameez": "images/Salwar-Kameez1.png",
+
+    // Peplum Sub-Product Images
+    "peplum": "images/Peplum1.png",
+
+    // Anarkali Sub-Product Images
+    "anarkali": "images/Anarkali1.png",
+
+    // Pattu Pavadai Sub-Product Images
+    "pattu pavadai": "images/Pattu-Pavadai1.png",
+
+    // Sharara Sub-Product Images
+    "flared-sharara": "images/Flared-Sharara.png",
+
+    // Kurti Sub-Product Images
+    "short kurti": "images/Short-Kurti.png",
+    "long kurti": "images/Long-Kurti.png",
+
+    // Jumpsuits Sub-Product Images
+    "wedding wear jumpsuit": "images/Wedding-Wear-Jupsuit.png",
+    "western style jumpsuit": "images/Western-Style-Jumpsuit.png",
+    "beach wear jumpsuit": "images/Beach-Wear-Jumpsuit.png",
+
+    // Blouse Designs Sub-Product Images
+    "blouse front neck design": "images/Blouse-Front-Neck-Design1.png",
+    "blouse back neck design": "images/Blouse-Back-Neck-Design0.png",
+
+    // Dhoti Sets Sub-Product Images
+    "dhoti with kurti set": "images/Dhoti-With-Kurti-Set.png",
+    "dhoti style dress": "images/Dhoti-Style-Dress.png",
+
+    // Phanek Sub-Product Images
+    "phanek": "images/Phanek1.png",
+
+    // One Piece Frock Sub-Product Images
+    "a-line frock": "images/A-Line-Frock.png",
+    "fit & flare frock": "images/Fit-&-Flare-Frock.png",
+    "empire waist frock": "images/Empire-Waist-Frock.png",
+    "sheath frock": "images/Sheath-Frock.png",
+    "wrap frock": "images/Wrap-Frock.png",
+    "bodycon frock": "images/Bodycon-Frock.png",
+    "maxi frock": "images/Maxi-Frock.png",
+    "shirt frock": "images/Shirt-Frock.png",
+    "tiered frock": "images/Tiered-Frock.png",
+    "peplum frock": "images/Peplum-Frock.png",
+    "halter neck frock": "images/Halter-Neck-Frock.png",
+    "off-shoulder frock": "images/Off-Shoulder-Frock.png",
+    "square neck frock": "images/Square-Neck-Frock.png",
+    "sweetheart neck frock": "images/Sweetheart-Neck-Frock.png",
+    "ball gown frock": "images/Ball-Gown-Frock.png",
+    "asymmetrical frock": "images/Asymmetrical-Frock.png",
+    "spaghetti strap frock": "images/Spaghetti-Strap-Frock.png",
+
+    // Short Skirts Sub-Product Images
+    "pleated": "images/Pleated.png",
+    "denim": "images/Denim.png",
+    "a-line": "images/A-line.png",
+    "mini": "images/Mini.png",
+    "tennis": "images/Tennis.png",
+    "wrap": "images/Wrap.png",
+    "ruffled": "images/Ruffled.png",
+    "cargo": "images/Cargo.png",
+    "skater": "images/Skater.png",
+    "tiered": "images/Tiered.png",
+    "flounce": "images/Flounce.png",
+    "tulip": "images/Tulip.png",
+    "ruched": "images/Ruched.png",
+    "asymmetrical": "images/Asymmetrical.png",
+    "pleather": "images/Pleather.png",
+
+    // Tops Sub-Product Images
+    "knit sweater": "images/Knit-Sweater.png",
+    "camisole top": "images/Camisole-Top.png",
+    "square neck top": "images/Square-Neck-Top.png",
+    "bell sleeve top": "images/Bell-Sleeve-Top.png",
+    "smocked top": "images/Smocked-Top.png",
+    "tie front top": "images/Tie-Front-Top.png",
+    "asymmetrical top": "images/Asymmetrical-Top.png",
+    "cold shoulder top": "images/Cold-Shoulder-Top.png",
+    "button down blouse": "images/Button-Down-Blouse.png",
+    "tunic top": "images/Tunic-Top.png",
+    "cape top": "images/Cape-Top.png",
+    "layered top": "images/Layered-Top.png",
+    "mesh top": "images/Mesh-Top.png",
+    "embroidered top": "images/Embroidered-Top.png",
+    "satin blouse": "images/Satin-Blouse.png",
+    "off-shoulder blouse": "images/Off-Shoulder-Blouse.png",
+    "peasant top": "images/Peasant-Top.jpg",
+    "knot front top": "images/Knot-Front-Top.png",
+    "chiffon blouse": "images/Chiffon-Blouse.png",
+
+    // Indo Dress Sub-Product Images
+    "indo western dress": "images/indo1.PNG"
+};
+
+/**
+ * PRODUCT PRICE REGISTRY MAP
+ * Contains both Main Categories and all corresponding budget pricing models.
+ */
+const productPriceMap = {
+    // Main Product Categories Default Prices
+    "saree": 499,
+    "western short dresses": 399,
+    "lehenga & chaniya choli & ghagra": 999,
+    "gown": 899,
+    "palazzo": 799,
+    "gharara": 1499,
+    "salwar kameez": 899,
+    "peplum": 799,
+    "anarkali": 1299,
+    "pattu pavadai": 699,
+    "sharara": 2100,
+    "kurti": 299,
+    "jumpsuits": 499,
+    "blouse designs": 399,
+    "dhoti sets": 999,
+    "phanek": 499,
+    "one piece frock": 349,
+    "short skirts": 299,
+    "tops": 249,
+    "indo dress": 999,
+
+    // Saree Sub-Products
+    "mundum neriyathum": 450,
+    "jamdani saree": 1200,
+    "mekhela chador": 999,
+    "cape saree": 1150,
+    "net saree": 799,
+    "half saree": 1299,
+    "applique work saree": 999,
+    "fabric work saree": 499,
+    "silk saree": 889,
+    "ready-to-wear saree": 1199,
+
+    // Western Short Dresses Sub-Products
+    "ruffle sleeve dress": 549,
+    "off-shoulder short dress": 499,
+    "puff sleeve short dress": 599,
+    "puffy sleeves short dress": 599,
+    "barbie style short dress": 699,
+    "bodycon short dress": 399,
+
+    // Lehenga & Chaniya Choli & Ghagra Sub-Products
+    "chaniya choli": 1100,
+    "ghagra": 999,
+    "party wear lehenga": 1999,
+    "bridal lehenga": 4500,
+    "mermaid or fish-cut lehenga": 1799,
+    "party wear fish-cut lehenga": 2864,
+    "banarasi lehenga": 2200,
+
+    // Gown Sub-Products
+    "indo gown": 1499,
+    "saree gown": 1599,
+    "ball gown": 2499,
+    "mermaid style gown": 1400,
+    "trail gown": 1999,
+    "gown with trail": 1999,
+    "off-shoulder pleated gown": 1699,
+    "off-shoulder with pleated gown": 1699,
+    "big size ball trail gown": 2999,
+    "big size ball gown with trail": 2999,
+    "a-line gown": 999,
+    "asymmetrical gown": 1100,
+    "balloon sleeve gown": 1299,
+    "bohemian gown": 899,
+    "cape gown": 1250,
+    "empire gown": 1050,
+    "halter gown": 1199,
+    "high low gown": 1150,
+    "sheath gown": 950,
+    "slip gown": 699,
+    "tea length gown": 1199,
+    "trumpet gown": 1450,
+
+    // Palazzo Sub-Products
+    "palazzo with crop top": 799,
+    "palazzo with jacket": 1199,
+    "palazzo with kurti": 850,
+    "palazzo with indo-western dress": 1299,
+
+    // Sharara Sub-Products
+    "flared-sharara": 2100,
+
+    // Kurti Sub-Products
+    "short kurti": 299,
+    "long kurti": 899,
+
+    // Jumpsuit Sub-Products
+    "wedding wear jumpsuit": 1199,
+    "western style jumpsuit": 599,
+    "beach wear jumpsuit": 499,
+
+    // Blouse Designs Sub-Products
+    "blouse front neck design": 399,
+    "blouse back neck design": 450,
+
+    // Dhoti Sets Sub-Products
+    "dhoti with kurti set": 999,
+    "dhoti style dress": 1099,
+
+    // One Piece Frock Sub-Products
+    "a-line frock": 499,
+    "fit & flare frock": 549,
+    "empire waist frock": 599,
+    "sheath frock": 450,
+    "wrap frock": 550,
+    "bodycon frock": 399,
+    "maxi frock": 799,
+    "shirt frock": 599,
+    "tiered frock": 699,
+    "peplum frock": 499,
+    "halter neck frock": 549,
+    "off-shoulder frock": 499,
+    "square neck frock": 450,
+    "sweetheart neck frock": 599,
+    "ball gown frock": 899,
+    "asymmetrical frock": 550,
+    "spaghetti strap frock": 349,
+
+    // Short Skirts Sub-Products
+    "pleated": 399,
+    "denim": 499,
+    "a-line": 349,
+    "mini": 299,
+    "tennis": 349,
+    "wrap": 399,
+    "ruffled": 449,
+    "cargo": 499,
+    "skater": 349,
+    "tiered": 450,
+    "flounce": 399,
+    "tulip": 399,
+    "ruched": 449,
+    "asymmetrical": 429,
+    "pleather": 599,
+
+    // Tops Sub-Products
+    "knit sweater": 499,
+    "camisole top": 249,
+    "square neck top": 299,
+    "bell sleeve top": 399,
+    "smocked top": 349,
+    "tie front top": 349,
+    "asymmetrical top": 329,
+    "cold shoulder top": 349,
+    "button down blouse": 449,
+    "tunic top": 399,
+    "cape top": 450,
+    "layered top": 399,
+    "mesh top": 299,
+    "embroidered top": 499,
+    "satin blouse": 449,
+    "off-shoulder blouse": 349,
+    "peasant top": 399,
+    "knot front top": 299,
+    "chiffon blouse": 399,
+
+    // Indo Dress Sub-Products
+    "indo western dress": 999
+};
+
+function getProductImage(name) {
+    if (!name) return "images/Logo.png";
+    
+    const lowercaseName = name.toLowerCase().trim();
+    
+    // 1. Check for perfect sub-product image matching first
+    if (productAssetMap[lowercaseName] !== undefined) {
+        return productAssetMap[lowercaseName];
+    }
+    
+    // 2. Scan map keys to match fallback keywords safely
+    for (const key in productAssetMap) {
+        if (lowercaseName.includes(key)) {
+            return productAssetMap[key];
+        }
+    }
+    
+    return "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=500&q=80";
+}
+
+function getProductPrice(name) {
+    if (!name) return "₹0";
+    
+    const lowercaseName = name.toLowerCase().trim();
+
+    // 1. Direct object matching check in registry
+    if (productPriceMap[lowercaseName] !== undefined) {
+        return `₹${productPriceMap[lowercaseName]}`;
+    }
+
+    // 2. Keyword fallback matching
+    for (const key in productPriceMap) {
+        if (lowercaseName.includes(key)) {
+            return `₹${productPriceMap[key]}`;
+        }
+    }
+
+    return "₹499";
+}
+
+function goToProductDetailsByImage(imagePath, displayName) {
+    if (!imagePath && !displayName) {
+        window.location.href = "product-details.html";
+        return;
+    }
+
+    let foundCategory = "";
+    let foundItemName = "";
+
+    // 1. PRIORITY 1: Look for an exact match inside your structural subProducts dataset
+    if (typeof subProducts !== "undefined" && subProducts) {
+        for (const category in subProducts) {
+            if (!subProducts[category]) continue;
+            const itemMatch = subProducts[category].find(p => p && p.img === imagePath);
+            if (itemMatch) {
+                foundCategory = category;
+                foundItemName = itemMatch.name;
+                break;
+            }
+        }
+    }
+
+    // 2. PRIORITY 2: Dynamic Image Name Extractor (Handles fallback categories instantly)
+    const filenameWithExtension = (imagePath || "").replace(/^.*[\\\/]/, "");
+    const filename = filenameWithExtension.replace(/\.[^/.]+$/, ""); 
+    
+    const genericBaseToken = filename.toLowerCase().replace(/[-_\s]*\d+$/, "").replace(/[-_]/g, " ").trim();
+
+    if (!foundCategory) {
+        const lookString = ((displayName || "") + " " + (imagePath || "")).toLowerCase().trim();
+        
+        // Dynamic smart keyword resolver
+        if (genericBaseToken.includes("indo") || lookString.includes("indo")) {
+            foundCategory = "Indo Dress";
+        }
+        else if (genericBaseToken.includes("blouse") || lookString.includes("blouse")) {
+            foundCategory = "Blouse Designs";
+        }
+        else if (genericBaseToken.includes("peplum") || lookString.includes("peplum")) {
+            foundCategory = "Peplum";
+        }
+        else if (genericBaseToken.includes("saree") || genericBaseToken.includes("mundum") || lookString.includes("saree")) {
+            foundCategory = "Saree";
+        }
+        else if (genericBaseToken.includes("lehenga") || lookString.includes("lehenga")) {
+            foundCategory = "Lehenga & Chaniya Choli & Ghagra";
+        }
+        else if (genericBaseToken.includes("short dress") || lookString.includes("short dress")) {
+            foundCategory = "Western Short Dresses";
+        }
+        else if (genericBaseToken.includes("anarkali") || lookString.includes("anarkali")) {
+            foundCategory = "Anarkali";
+        }
+        else if (genericBaseToken.includes("gown") || lookString.includes("gown")) {
+            foundCategory = "Gown";
+        }
+        else if (genericBaseToken.includes("frock") || lookString.includes("frock")) {
+            foundCategory = "One Piece Frock";
+        }
+        else if (genericBaseToken.includes("top") || genericBaseToken.includes("sweater") || lookString.includes("top")) {
+            foundCategory = "Tops";
+        }
+        else if (genericBaseToken.includes("palazzo") || lookString.includes("palazzo")) {
+            foundCategory = "Palazzo";
+        }
+        else if (genericBaseToken.includes("salwar") || lookString.includes("salwar")) {
+            foundCategory = "Salwar Kameez";
+        }
+        else {
+            foundCategory = "Saree"; 
+        }
+    }
+
+    // ✂️ DELETED OLD SECTION 3 HERE ✂️
+    // 🟢 PASTE NEW STEP 4 DOWN BELOW:
+
+    // 4. GENERATE THE EXACT DOM TARGET HASH (Forces ALL products to route via filename)
+    const seedText = filename;
+    
+    const standardizedId = seedText
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9\-]/g, "");
+
+    const finalUrl = `product-details.html?category=${encodeURIComponent(foundCategory)}#${standardizedId}`;
+    window.location.href = finalUrl;
+}
+
+function loadWishlist(){
+    let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+
+    grid.innerHTML = "";
+
+    if(wishlist.length === 0){
+        emptyMsg.style.display = "block";
+        return;
+    }
+
+    emptyMsg.style.display = "none";
+
+    wishlist.forEach(uniqueId => {
+        let name = uniqueId;
+        let computedImageSrc = "";
+
+        if (uniqueId.includes("|")) {
+            const parts = uniqueId.split("|");
+            name = parts[0];
+            computedImageSrc = parts[1];
+        } else {
+            computedImageSrc = getProductImage(name);
+        }
+
+        const computedPrice = getProductPrice(name);
+
+        let div = document.createElement("div");
+        div.className = "bg-white p-4 mb-3 shadow flex flex-col gap-2 item";
+
+        div.innerHTML = `
+            <div class="relative w-full h-[250px] shrink-0 overflow-hidden rounded border">
+                <img src="${computedImageSrc}" 
+                     alt="${name}" 
+                     class="wishlist-img-click w-full h-full object-cover" 
+                     style="cursor: pointer;"
+                     data-img="${encodeURIComponent(computedImageSrc)}" 
+                     data-name="${encodeURIComponent(name)}">
+            </div>
+
+            <div class="flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-semibold leading-snug">${name}</h3>
+                    <p class="font-bold mt-1 price">${computedPrice}</p>
+                </div>
+
+                <div class="flex gap-4 mt-3 text-sm">
+                    <button class="remove-btn text-red-500 font-medium tracking-wide uppercase hover:underline" 
+                            onclick="removeItem('${uniqueId}')">
+                        Remove
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // 🟢 ATTACH ROUTER VIA IMAGE CLICK ONLY (Find by image mapping prioritized)
+        const productImg = div.querySelector(".wishlist-img-click");
+        if (productImg) {
+            productImg.addEventListener("click", function(e) {
+                e.preventDefault();
+                
+                // Extract clean, decoded paths directly from the image data attributes
+                const cleanImg = decodeURIComponent(this.getAttribute("data-img"));
+                const cleanName = decodeURIComponent(this.getAttribute("data-name"));
+                
+                // Routes cleanly to your master router using the exact file identity path
+                goToProductDetailsByImage(cleanImg, cleanName);
+            });
+        }
+
+        grid.appendChild(div);
+    });
+}
+
+function removeItem(uniqueId){
+    let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+
+    // Filter out using the perfect unique identifier string
+    wishlist = wishlist.filter(item => item !== uniqueId);
+
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+
+    loadWishlist();
+}
+
+function goHome() {
+    window.location.href = "index.html";
+}
+
+loadWishlist();
+
+// SUB-PRODUCTS LIBRARY
+const subProducts = {
+    "Saree": [
+    { name: "Mundum Neriyathum", img: "images/Mundum-Neriyathum.png", price: 450 },
+    { name: "Jamdani Saree", img: "images/Jamdani.png", price: 1200 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador1.png", price: 999 },
+    { name: "Mekhela Chador", img: "images/Mekhela-Chador2.png", price: 1049 },
+    { name: "Cape Saree", img: "images/Cape-Saree.png", price: 1150 },
+    { name: "Net Saree", img: "images/Net-Saree.png", price: 799 },
+    { name: "Half Saree", img: "images/Half-Saree.png", price: 1299 },
+    { name: "Applique Work Saree", img: "images/Applique-Work-Saree.png", price: 999 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree.png", price: 499 },
+    { name: "Fabric Work Saree", img: "images/Fabric-Work-Saree1.png", price: 549 },
+    { name: "Silk Saree", img: "images/Silk-Saree.png", price: 889 },
+    { name: "Ready-to-Wear Saree", img: "images/Ready-to-Wear-Saree.png", price: 1199 }
+    ],
+    "Western Short Dresses": [
+    { name: "Ruffle Sleeve Dress", img: "images/Ruffle-Sleeve-Dress.png", price: 549 },
+    { name: "Off-Shoulder Short Dress", img: "images/Off-Shoulder-Short-Dress.png", price: 499 },
+    { name: "Puff Sleeve Short Dress", img: "images/Puffy-Sleeves-Short-Dress.png", price: 599 },
+    { name: "Barbie Style Short Dress", img: "images/Barbie-Style-Short-Dress.png", price: 699 },
+    { name: "Bodycon Short Dress", img: "images/Bodycon-Short-Dress.png", price: 399 }
+    ],
+    "Lehenga & Chaniya Choli & Ghagra": [
+    { name: "Chaniya Choli", img: "images/Chaniya-Choli.png", price: 1100 },
+    { name: "Ghagra", img: "images/Ghagra.png", price: 999 },
+    { name: "Party Wear Lehenga", img: "images/Party-Wear-Lehenga.png", price: 1999 },
+    { name: "Bridal Lehenga", img: "images/Bridal-Lehenga.png", price: 4500 },
+    { name: "Mermaid Or Fish-Cut Lehenga", img: "images/Mermaid-Or-Fish-Cut-Lehenga.png", price: 1799 },
+    { name: "Party Wear Fish-Cut Lehenga", img: "images/Party-Wear-Fish-Cut-Lehenga.png", price: 2864 },
+    { name: "Banarasi Lehenga", img: "images/Banarasi-Lehenga.png", price: 2200 }
+    ],
+    "Gown": [
+    { name: "Indo Gown", img: "images/Indo-Gown.png", price: 1499 },
+    { name: "Indo Gown", img: "images/Indo-Gown1.png", price: 1549 },
+    { name: "Saree Gown", img: "images/Saree-Gown.png", price: 1599 },
+    { name: "Ball Gown", img: "images/Ball-Gown.png", price: 2499 },
+    { name: "Mermaid Style Gown", img: "images/Mermaid-Style-Gown.png", price: 1400 },
+    { name: "Trail Gown", img: "images/Gown-With-Trail.png", price: 1999 },
+    { name: "Off-Shoulder Pleated Gown", img: "images/Off-Shoulder-With-Pleated-Gown.png", price: 1699 },
+    { name: "Big Size Ball Trail Gown", img: "images/Big-Size-Ball-Gown-With-Trail.png", price: 2999 },
+    { name: "A-Line Gown", img: "images/A-Line-Gown.png", price: 999 },
+    { name: "Asymmetrical Gown", img: "images/Asymmetrical-Gown.png", price: 1100 },
+    { name: "Balloon Sleeve Gown", img: "images/Balloon-Sleeve-Gown.png", price: 1299 },
+    { name: "Bohemian Gown", img: "images/Bohemian-Gown.png", price: 899 },
+    { name: "Cape Gown", img: "images/Cape-Gown.png", price: 1250 },
+    { name: "Empire Gown", img: "images/Empire-Gown.png", price: 1050 },
+    { name: "Halter Gown", img: "images/Halter-Gown.png", price: 1199 },
+    { name: "High Low Gown", img: "images/High-Low-Gown.png", price: 1150 },
+    { name: "Sheath Gown", img: "images/Sheath-Gown.png", price: 950 },
+    { name: "Slip Gown", img: "images/Slip-Gown.png", price: 699 },
+    { name: "Tea Length Gown", img: "images/Tea-Length-Gown.png", price: 1199 },
+    { name: "Trumpet Gown", img: "images/Trumpet-Gown.png", price: 1450 }
+    ],
+    "Palazzo": [
+    { name: "Palazzo with Crop Top", img: "images/Palazzo-With-Crop-Top.png", price: 799 },
+    { name: "Palazzo with Jacket", img: "images/Palazzo-With-Jacket.png", price: 1199 },
+    { name: "Palazzo with Kurti", img: "images/Palazzo-with-Kurti.png", price: 850 },
+    { name: "Palazzo with Indo-Western Dress", img: "images/Palazzo-with-Indo-Western-Dress.png", price: 1299 }
+    ],
+    "Gharara": [
+        { name: "Gharara", img: "images/Gharara1.png", price: 1499 },
+    ],
+    "Salwar Kameez": [
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez1.png", price: 899 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez2.png", price: 1099 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez3.png", price: 999 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez4.png", price: 1049 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez5.png", price: 949 },
+        { name: "Salwar Kameez", img: "images/Salwar-Kameez6.png", price: 1149 }
+    ],
+    "Peplum": [
+        { name: "Peplum", img: "images/Peplum1.png", price: 799 },
+        { name: "Peplum", img: "images/Peplum2.png", price: 849 },
+        { name: "Peplum", img: "images/Peplum3.png", price: 899 },
+        { name: "Peplum", img: "images/Peplum4.png", price: 949 },
+        { name: "Peplum", img: "images/Peplum5.png", price: 999 },
+        { name: "Peplum", img: "images/Peplum6.png", price: 949 },
+        { name: "Peplum", img: "images/Peplum7.png", price: 899 },
+        { name: "Peplum", img: "images/Peplum8.png", price: 849 },
+        { name: "Peplum", img: "images/Peplum9.png", price: 799 }
+    ],
+    "Anarkali": [
+        { name: "Anarkali", img: "images/Anarkali1.png", price: 1299 },
+        { name: "Anarkali", img: "images/Anarkali2.png", price: 1349 },
+        { name: "Anarkali", img: "images/Anarkali3.png", price: 1399 },
+        { name: "Anarkali", img: "images/Anarkali4.png", price: 1449 }
+    ],
+    "Pattu Pavadai": [
+        { name: "Pattu Pavadai", img: "images/Pattu-Pavadai1.png", price: 699 },
+        { name: "Pattu Pavadai", img: "images/Pattu-Pavadai2.png", price: 749 }
+    ],
+    "Sharara": [
+        { name: "Sharara", price: 2100, img: "images/Sharara1.png" },
+        { name: "Flared-Sharara", price: 2100, img: "images/Flared-Sharara.png" }
+    ],
+    "Kurti": [
+        { name: "Short Kurti", price: 299, img: "images/Short-Kurti.png" },
+        { name: "Short Kurti", price: 349, img: "images/Short-Kurti1.png" },
+        { name: "Short Kurti", price: 399, img: "images/Short-Kurti2.png" },
+        { name: "Long Kurti", price: 899, img: "images/Long-Kurti.png" },
+        { name: "Long Kurti", price: 949, img: "images/Long-Kurti1.png" }
+    ],
+    "Jumpsuits": [
+        { name: "Wedding Wear Jumpsuit", price: 1199, img: "images/Wedding-Wear-Jupsuit.png" },
+        { name: "Western Style Jumpsuit", price: 599, img: "images/Western-Style-Jumpsuit.png" },
+        { name: "Beach Wear Jumpsuit", price: 499, img: "images/Beach-Wear-Jumpsuit.png" }
+    ],
+    "Blouse Designs": [
+        { name: "Blouse Front Neck Design", price: 399, img: "images/Blouse-Front-Neck-Design1.png" },
+        { name: "Blouse Front Neck Design", price: 409, img: "images/Blouse-Front-Neck-Design2.png" },
+        { name: "Blouse Front Neck Design", price: 419, img: "images/Blouse-Front-Neck-Design3.png" },
+        { name: "Blouse Front Neck Design", price: 429, img: "images/Blouse-Front-Neck-Design4.png" },
+        { name: "Blouse Front Neck Design", price: 439, img: "images/Blouse-Front-Neck-Design5.png" },
+        { name: "Blouse Front Neck Design", price: 449, img: "images/Blouse-Front-Neck-Design6.png" },
+        { name: "Blouse Front Neck Design", price: 459, img: "images/Blouse-Front-Neck-Design7.png" },
+        { name: "Blouse Front Neck Design", price: 469, img: "images/Blouse-Front-Neck-Design8.png" },
+        { name: "Blouse Front Neck Design", price: 479, img: "images/Blouse-Front-Neck-Design9.png" },
+        { name: "Blouse Back Neck Design", price: 450, img: "images/Blouse-Back-Neck-Design0.png" },
+        { name: "Blouse Back Neck Design", price: 460, img: "images/Blouse-Back-Neck-Design1.png" },
+        { name: "Blouse Back Neck Design", price: 470, img: "images/Blouse-Back-Neck-Design2.png" },
+        { name: "Blouse Back Neck Design", price: 480, img: "images/Blouse-Back-Neck-Design3.png" },
+        { name: "Blouse Back Neck Design", price: 490, img: "images/Blouse-Back-Neck-Design4.png" },
+        { name: "Blouse Back Neck Design", price: 500, img: "images/Blouse-Back-Neck-Design5.png" },
+        { name: "Blouse Back Neck Design", price: 510, img: "images/Blouse-Back-Neck-Design6.png" },
+        { name: "Blouse Back Neck Design", price: 520, img: "images/Blouse-Back-Neck-Design7.png" },
+        { name: "Blouse Back Neck Design", price: 530, img: "images/Blouse-Back-Neck-Design8.png" },
+        { name: "Blouse Back Neck Design", price: 540, img: "images/Blouse-Back-Neck-Design9.png" },
+        { name: "Blouse Back Neck Design", price: 550, img: "images/Blouse-Back-Neck-Design10.png" },
+        { name: "Blouse Back Neck Design", price: 560, img: "images/Blouse-Back-Neck-Design11.png" },
+        { name: "Blouse Back Neck Design", price: 570, img: "images/Blouse-Back-Neck-Design12.png" },
+        { name: "Blouse Back Neck Design", price: 580, img: "images/Blouse-Back-Neck-Design13.png" },
+        { name: "Blouse Back Neck Design", price: 590, img: "images/Blouse-Back-Neck-Design14.png" },
+        { name: "Blouse Back Neck Design", price: 600, img: "images/Blouse-Back-Neck-Design15.png" },
+        { name: "Blouse Back Neck Design", price: 610, img: "images/Blouse-Back-Neck-Design16.png" },
+        { name: "Blouse Back Neck Design", price: 620, img: "images/Blouse-Back-Neck-Design17.png" },
+        { name: "Blouse Back Neck Design", price: 630, img: "images/Blouse-Back-Neck-Design18.png" },
+        { name: "Blouse Back Neck Design", price: 640, img: "images/Blouse-Back-Neck-Design19.png" },
+        { name: "Blouse Back Neck Design", price: 650, img: "images/Blouse-Back-Neck-Design20.png" },
+        { name: "Blouse Back Neck Design", price: 660, img: "images/Blouse-Back-Neck-Design21.png" },
+        { name: "Blouse Back Neck Design", price: 670, img: "images/Blouse-Back-Neck-Design22.png" },
+        { name: "Blouse Back Neck Design", price: 680, img: "images/Blouse-Back-Neck-Design23.png" },
+        { name: "Blouse Back Neck Design", price: 690, img: "images/Blouse-Back-Neck-Design24.png" },
+        { name: "Blouse Back Neck Design", price: 700, img: "images/Blouse-Back-Neck-Design25.png" },
+        { name: "Blouse Back Neck Design", price: 710, img: "images/Blouse-Back-Neck-Design26.png" },
+        { name: "Blouse Back Neck Design", price: 720, img: "images/Blouse-Back-Neck-Design27.png" },
+        { name: "Blouse Back Neck Design", price: 730, img: "images/Blouse-Back-Neck-Design28.png" },
+        { name: "Blouse Back Neck Design", price: 740, img: "images/Blouse-Back-Neck-Design29.png" },
+        { name: "Blouse Back Neck Design", price: 750, img: "images/Blouse-Back-Neck-Design30.png" },
+        { name: "Blouse Back Neck Design", price: 760, img: "images/Blouse-Back-Neck-Design31.png" },
+        { name: "Blouse Back Neck Design", price: 770, img: "images/Blouse-Back-Neck-Design32.png" },
+        { name: "Blouse Back Neck Design", price: 780, img: "images/Blouse-Back-Neck-Design33.png" },
+        { name: "Blouse Back Neck Design", price: 790, img: "images/Blouse-Back-Neck-Design34.png" }
+    ],
+    "Dhoti Sets": [
+        { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set.png", price: 999 },
+        { name: "Dhoti With Kurti Set", img: "images/Dhoti-With-Kurti-Set1.png", price: 1049 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress.png", price: 1099 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress1.png", price: 1149 },
+        { name: "Dhoti Style Dress", img: "images/Dhoti-Style-Dress2.png", price: 1199 },
+    ],
+    "Phanek": [
+        { name: "Phanek", img: "images/Phanek1.png", price: 499 }
+    ],
+    "One Piece Frock": [
+        { name: "A-Line Frock", price: 499, img: "images/A-Line-Frock.png" },
+        { name: "Fit & Flare Frock", price: 549, img: "images/Fit-&-Flare-Frock.png" },
+        { name: "Empire Waist Frock", price: 599, img: "images/Empire-Waist-Frock.png" },
+        { name: "Sheath Frock", price: 450, img: "images/Sheath-Frock.png" },
+        { name: "Wrap Frock", price: 550, img: "images/Wrap-Frock.png" },
+        { name: "Bodycon Frock", price: 399, img: "images/Bodycon-Frock.png" },
+        { name: "Maxi Frock", price: 799, img: "images/Maxi-Frock.png" },
+        { name: "Shirt Frock", price: 599, img: "images/Shirt-Frock.png" },
+        { name: "Tiered Frock", price: 699, img: "images/Tiered-Frock.png" },
+        { name: "Peplum Frock", price: 499, img: "images/Peplum-Frock.png" },
+        { name: "Halter Neck Frock", price: 549, img: "images/Halter-Neck-Frock.png" },
+        { name: "Off-Shoulder Frock", price: 499, img: "images/Off-Shoulder-Frock.png" },
+        { name: "Square Neck Frock", price: 450, img: "images/Square-Neck-Frock.png" },
+        { name: "Sweetheart Neck Frock", price: 599, img: "images/Sweetheart-Neck-Frock.png" },
+        { name: "Ball Gown Frock", price: 899, img: "images/Ball-Gown-Frock.png" },
+        { name: "Asymmetrical Frock", price: 550, img: "images/Asymmetrical-Frock.png" },
+        { name: "Spaghetti Strap Frock", price: 349, img: "images/Spaghetti-Strap-Frock.png" }
+    ],
+    "Short Skirts": [
+        { name: "Pleated", price: 399, img: "images/Pleated.png" },
+        { name: "Denim", price: 499, img: "images/Denim.png" },
+        { name: "A-line", price: 349, img: "images/A-line.png" },
+        { name: "Mini", price: 299, img: "images/Mini.png" },
+        { name: "Tennis", price: 349, img: "images/Tennis.png" },
+        { name: "Wrap", price: 399, img: "images/Wrap.png" },
+        { name: "Ruffled", price: 449, img: "images/Ruffled.png" },
+        { name: "Cargo", price: 499, img: "images/Cargo.png" },
+        { name: "Skater", price: 349, img: "images/Skater.png" },
+        { name: "Tiered", price: 450, img: "images/Tiered.png" },
+        { name: "Flounce", price: 399, img: "images/Flounce.png" },
+        { name: "Tulip", price: 399, img: "images/Tulip.png" },
+        { name: "Tulip", price: 429, img: "images/Tulip1.png" },
+        { name: "Ruched", price: 449, img: "images/Ruched.png" },
+        { name: "Asymmetrical", price: 429, img: "images/Asymmetrical.png" },
+        { name: "Pleather", price: 599, img: "images/Pleather.png" }
+    ],
+    "Tops": [
+        { name: "Knit Sweater", price: 499, img: "images/Knit-Sweater.png" },
+        { name: "Camisole Top", price: 249, img: "images/Camisole-Top.png" },
+        { name: "Square Neck Top", price: 299, img: "images/Square-Neck-Top.png" },
+        { name: "Bell Sleeve Top", price: 399, img: "images/Bell-Sleeve-Top.png" },
+        { name: "Smocked Top", price: 349, img: "images/Smocked-Top.png" },
+        { name: "Tie Front Top", price: 349, img: "images/Tie-Front-Top.png" },
+        { name: "Asymmetrical Top", price: 329, img: "images/Asymmetrical-Top.png" },
+        { name: "Cold Shoulder Top", price: 349, img: "images/Cold-Shoulder-Top.png" },
+        { name: "Button Down Blouse", price: 449, img: "images/Button-Down-Blouse.png" },
+        { name: "Tunic Top", price: 399, img: "images/Tunic-Top.png" },
+        { name: "Cape Top", price: 450, img: "images/Cape-Top.png" },
+        { name: "Layered Top", price: 399, img: "images/Layered-Top.png" },
+        { name: "Mesh Top", price: 299, img: "images/Mesh-Top.png" },
+        { name: "Embroidered Top", price: 499, img: "images/Embroidered-Top.png" },
+        { name: "Satin Blouse", price: 449, img: "images/Satin-Blouse.png" },
+        { name: "Off-Shoulder Blouse", price: 349, img: "images/Off-Shoulder-Blouse.png" },
+        { name: "Peasant Top", price: 399, img: "images/Peasant-Top.jpg" },
+        { name: "Knot Front Top", price: 299, img: "images/Knot-Front-Top.png" },
+        { name: "Chiffon Blouse", price: 399, img: "images/Chiffon-Blouse.png" }
+    ],
+    "Indo Dress": [
+        { name: "Indo Western Dress", img: "images/indo1.PNG", price: 999 },
+        { name: "Indo Western Dress", img: "images/indo2.png", price: 1049 }
+    ]
+};
+
+// Declare the global tracker variable ONCE at the top
+let wishlistGridObserver = null;
+
+function applyWishlistStockSync() {
+    if (wishlistGridObserver) {
+        wishlistGridObserver.disconnect();
+    }
+
+    const STORAGE_KEY = "storefront_inventory_cache";
+    const savedStock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    
+    // Look for all image elements on the wishlist page
+    const pageImages = document.querySelectorAll("main img, #wishlist-container img, div img");
+    
+    pageImages.forEach(imgEl => {
+        // Find the absolute closest wrapper box containing this image element
+        const card = imgEl.closest("div");
+        if (!card) return;
+        
+        // Grab the clean image filename to use as the true unique identifier matching the admin panel
+        const imgSrc = imgEl.getAttribute("src") || "";
+        const imgFilename = imgSrc.split('/').pop().split('?')[0].trim();
+        if (!imgFilename) return;
+
+        // Check purely by the unique image filename key generated by the admin panel
+        const entireProductKey = `${imgFilename}||Entire Product Style||${imgFilename}`;
+        const isStockedOut = savedStock[entireProductKey] === true;
+        
+        // Clean up pre-existing overlays to avoid duplicate visual stacking elements
+        const imgContainer = imgEl.parentElement;
+        if (!imgContainer) return;
+        imgContainer.querySelectorAll(".wishlist-stockout-container-overlay").forEach(el => el.remove());
+        
+        if (isStockedOut) {
+            // Secure the image wrapper's position context for perfect absolute stacking alignment
+            if (!imgContainer.hasAttribute("data-orig-position")) {
+                imgContainer.setAttribute("data-orig-position", imgContainer.style.position || "static");
+            }
+            imgContainer.style.position = "relative";
+            imgContainer.style.display = "inline-block"; // Keeps wrapper tightly fit around image bounds
+            
+            // 1. Create the blurred frosted mask layer over the image frame boundary
+            const maskOverlay = document.createElement("div");
+            maskOverlay.className = "wishlist-stockout-container-overlay";
+            maskOverlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.75);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 50;
+                border-radius: inherit;
+                pointer-events: none;
+            `;
+            
+            // 2. Build out the crisp, high-contrast red alert text block over the card image
+            maskOverlay.innerHTML = `
+                <div style="background: #e53e3e; 
+                            color: #ffffff; 
+                            font-weight: 800; 
+                            padding: 6px 12px; 
+                            border-radius: 4px; 
+                            text-transform: uppercase; 
+                            font-size: 11px; 
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.25); 
+                            letter-spacing: 0.5px;
+                            white-space: nowrap;">
+                    OUT OF STOCK
+                </div>
+            `;
+            
+            imgContainer.appendChild(maskOverlay);
+            
+            // Soft-disable any buy buttons nearby inside this box
+            const buyButtons = card.querySelectorAll("button:not(.remove-btn):not([class*='remove']), .add-to-cart-btn");
+            buyButtons.forEach(btn => {
+                btn.style.opacity = "0.4";
+                btn.style.cursor = "not-allowed";
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    alert("This style is currently out of stock!");
+                    return false;
+                };
+            });
+        } else {
+            // Restore original styles when item is active
+            if (imgContainer.hasAttribute("data-orig-position")) {
+                imgContainer.style.position = imgContainer.getAttribute("data-orig-position");
+                imgContainer.removeAttribute("data-orig-position");
+            }
+            
+            const buyButtons = card.querySelectorAll("button, .add-to-cart-btn");
+            buyButtons.forEach(btn => {
+                btn.style.opacity = "";
+                btn.style.cursor = "";
+                if (btn.onclick) btn.onclick = null;
+            });
+        }
+    });
+
+    if (wishlistGridObserver) {
+        wishlistGridObserver.observe(document.body, { childList: true, subtree: true });
+    }
+}
+
+// Instantiate automated document lifecycle triggers safely
+document.addEventListener("DOMContentLoaded", () => {
+    wishlistGridObserver = new MutationObserver(() => applyWishlistStockSync());
+    wishlistGridObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Smooth phased lifecycles to catch lazy loaded item rows perfectly
+    setTimeout(applyWishlistStockSync, 150);
+    setTimeout(applyWishlistStockSync, 600);
+});
+
+window.addEventListener("storage", applyWishlistStockSync);
+
+</script>
+
+</body>
+</html>
