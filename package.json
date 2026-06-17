@@ -1,0 +1,19 @@
+{
+  "name": "customize-collection-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "qrcode": "^1.5.4",
+    "resend": "^6.12.4",
+    "socket.io": "^4.8.3",
+    "speakeasy": "^2.0.0",
+    "sqlite3": "^6.0.1"
+  }
+}
