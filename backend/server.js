@@ -104,8 +104,8 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'your-email@gmail.com',       // 👈 Put your real Gmail address here
-        pass: 'xxxx xxxx xxxx xxxx'         // 👈 Put your 16-character Google App Password here
+        user: 'customizecollectioncc@gmail.com',       // 👈 Put your real Gmail address here
+        pass: 'Ong2cc@namaha568'         // 👈 Put your 16-character Google App Password here
     }
 });
 
@@ -115,7 +115,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
     
     try {
         const mailOptions = {
-            from: '"Ge Mini Store" <your-email@gmail.com>', // 👈 Put your real Gmail address here too
+            from: '"Ge Mini Store" <your-customizecollectioncc@gmail.com>', // 👈 Put your real Gmail address here too
             to: email, // Uses the active variable coming from your form layout
             subject: 'Welcome to your account',
             text: `Hello ${name || 'there'}! Welcome to our store. Your standard access number is: ${code}`, // Plain text fallback
