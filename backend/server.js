@@ -100,13 +100,15 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 
 // ✅ REPLACE THE ENTIRE OLD METHOD WITH THIS NEW NODEMAILER CONFIGURATION:
 
-// 1. Configure the secure connection to Gmail's mail server
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // This forces the server to use SSL/TLS encryption instantly
     auth: {
-        user: 'customizecollectioncc@gmail.com',       // 👈 Put your real Gmail address here
-        pass: 'ecovslpgpethrxxb'         // 👈 Put your 16-character Google App Password here
-    }
+        user: 'customizecollectioncc@gmail.com',       // Your real Gmail address
+        pass: 'ecovslpgpethrxxb'         // Your 16-character Google App Password
+    },
+    connectionTimeout: 10000 // 10 seconds timeout limit
 });
 
 // 2. Updated Route handling the email dispatch safely
@@ -115,7 +117,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
     
     try {
         const mailOptions = {
-            from: '"Ge Mini Store" <your-customizecollectioncc@gmail.com>', // 👈 Put your real Gmail address here too
+            from: '"Ge Mini Store" <customizecollectioncc@gmail.com>', // 👈 Put your real Gmail address here too
             to: email, // Uses the active variable coming from your form layout
             subject: 'Welcome to your account',
             text: `Hello ${name || 'there'}! Welcome to our store. Your standard access number is: ${code}`, // Plain text fallback
