@@ -5,7 +5,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const sqlite3 = require('sqlite3').verbose();
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const session = require('express-session');
@@ -21,9 +21,6 @@ app.use(session({
     saveUninitialized: true,
     cookie: { maxAge: 600000 } // Session expires after 10 minutes of inactivity
 }));
-
-// Initialize Resend with your developer API token key
-const resend = new Resend('re_8MV9w32o_NgVFTFaLeWKiMRkq8dCwDuDN');
 
 // Initialize the SQLite local persistent database file
 const db = new sqlite3.Database('./data.db', (err) => {
@@ -101,33 +98,44 @@ app.get('/api/chat/history/:orderId', (req, res) => {
     });
 });
 
-// Optimized dynamic email verification processing system
-app.post('/api/send-welcome-verify', async (req, res) => {
-    const { email, code, name } = req.body;
-    try {
-const data = await resend.emails.send({
-  from: 'Ge Mini <otp@gemini.upgrade.com>',
-  to: userEmail,
-  subject: 'Your Account Verification Code',
-  // ✅ DO THIS: Add clear, professional layout text
-  html: `
-    <div style="font-family: sans-serif; padding: 20px; color: #333;">
-      <h2>Verify Your Account</h2>
-      <p>Thank you for registering. Please use the following 2-digit security verification code to complete your signup process:</p>
-      <div style="font-size: 24px; font-weight: bold; padding: 10px; background-color: #f4f4f4; display: inline-block; letter-spacing: 2px;">
-        ${verificationCode}
-      </div>
-      <p style="margin-top: 20px; font-size: 12px; color: #777;">
-        If you did not request this code, please safely ignore this email.
-      </p>
-    </div>
-  `
+// ✅ REPLACE THE ENTIRE OLD METHOD WITH THIS NEW NODEMAILER CONFIGURATION:
+
+// 1. Configure the secure connection to Gmail's mail server
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'your-email@gmail.com',       // 👈 Put your real Gmail address here
+        pass: 'xxxx xxxx xxxx xxxx'         // 👈 Put your 16-character Google App Password here
+    }
 });
 
-        if (response.error) {
-            console.error("Resend System API Warning:", response.error.message);
-            return res.status(400).json({ success: false, error: response.error.message });
-        }
+// 2. Updated Route handling the email dispatch safely
+app.post('/api/send-welcome-verify', async (req, res) => {
+    const { email, code, name } = req.body;
+    
+    try {
+        const mailOptions = {
+            from: '"Ge Mini Store" <your-email@gmail.com>', // 👈 Put your real Gmail address here too
+            to: email, // Uses the active variable coming from your form layout
+            subject: 'Welcome to your account',
+            text: `Hello ${name || 'there'}! Welcome to our store. Your standard access number is: ${code}`, // Plain text fallback
+            html: `
+                <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                    <h2>Verify Your Account</h2>
+                    <p>Hello ${name || 'there'}, thank you for joining us.</p>
+                    <p>Please use the following standard access number to complete your signup process:</p>
+                    <div style="font-size: 24px; font-weight: bold; padding: 10px 20px; background-color: #f4f4f4; display: inline-block; letter-spacing: 2px; border-radius: 4px;">
+                        ${code}
+                    </div>
+                    <p style="margin-top: 20px; font-size: 12px; color: #777;">
+                        If you did not request this, please safely ignore this email.
+                    </p>
+                </div>
+            `
+        };
+
+        // Fire the transmission sequence through Google's network systems
+        await transporter.sendMail(mailOptions);
 
         console.log(`Verification code successfully dispatched to target destination: ${email}`);
         res.json({ success: true });
