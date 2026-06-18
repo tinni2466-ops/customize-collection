@@ -105,22 +105,24 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 app.post('/api/send-welcome-verify', async (req, res) => {
     const { email, code, name } = req.body;
     try {
-        const response = await resend.emails.send({
-            from: 'Customize Collection <otp@customizecollection.publicvm.com>',
-            to: email,
-            subject: 'Welcome to Customize Collection! Confirm Your Code',
-            headers: { 'X-Priority': '1', 'Importance': 'high' }, 
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 25px; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                    <h2 style="color: #0b57d0; margin-top: 0;">Welcome to Customize Collection, ${name}!</h2>
-                    <p style="font-size: 15px; color: #333;">Thank you for registering an account on our platform.</p>
-                    <p style="font-size: 15px; color: #333; font-weight: bold;">Your 2-digit confirmation code validation marker is:</p>
-                    <div style="background: #f1f3f4; padding: 15px; font-size: 36px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #0b57d0; border-radius: 8px; margin: 15px 0;">
-                        ${code}
-                    </div>
-                    <p style="font-size: 12px; color: #666; margin-bottom: 0;">If you did not initiate this validation request, please safely disregard this email layout block.</p>
-                </div>`
-        });
+const data = await resend.emails.send({
+  from: 'Ge Mini <otp@gemini.upgrade.com>',
+  to: userEmail,
+  subject: 'Your Account Verification Code',
+  // ✅ DO THIS: Add clear, professional layout text
+  html: `
+    <div style="font-family: sans-serif; padding: 20px; color: #333;">
+      <h2>Verify Your Account</h2>
+      <p>Thank you for registering. Please use the following 2-digit security verification code to complete your signup process:</p>
+      <div style="font-size: 24px; font-weight: bold; padding: 10px; background-color: #f4f4f4; display: inline-block; letter-spacing: 2px;">
+        ${verificationCode}
+      </div>
+      <p style="margin-top: 20px; font-size: 12px; color: #777;">
+        If you did not request this code, please safely ignore this email.
+      </p>
+    </div>
+  `
+});
 
         if (response.error) {
             console.error("Resend System API Warning:", response.error.message);
