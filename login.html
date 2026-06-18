@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign in with Google - Customize Collection</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+    /* Reset and Core Layout Styles */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: #f0f4f9; 
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100vh;
+    }
+
+    .auth-screen-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+        padding: 20px;
+    }
+
+    /* Google Design Spec Blueprint Canvas Component */
+    .google-account-canvas {
+        background: #ffffff;
+        border-radius: 24px;
+        width: 100%;
+        max-width: 840px; 
+        min-height: 420px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        padding: 40px;
+        display: grid;
+        grid-template-columns: 1fr 1fr; 
+        gap: 40px;
+        position: relative;
+    }
+
+    /* Left Side: Brand Visual Context Identity Presentation */
+    .brand-identity-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .google-mini-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f1f1f;
+        margin-bottom: 30px;
+    }
+
+    .google-mini-header img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .brand-logo-img {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        margin-bottom: 20px;
+    }
+
+    .brand-title {
+        font-size: 32px; 
+        font-weight: 400;
+        color: #1f1f1f;
+        line-height: 1.25;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .brand-subtitle {
+        font-size: 16px;
+        color: #444746;
+        line-height: 1.5;
+    }
+
+    .brand-subtitle a {
+        color: #0b57d0;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .brand-subtitle a:hover {
+        text-decoration: underline;
+    }
+
+    /* Right Side Panel: Interactive Functional Form Controls */
+    .interaction-flow-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .account-chooser-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-bottom: 24px;
+    }
+
+    /* Target User Profile Wrapper row block items */
+    .google-account-row-wrapper {
+        position: relative;
+        width: 100%;
+        margin-bottom: 8px;
+        transition: all 0.25s ease;
+    }
+
+    .google-account-row {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        background: #ffffff;
+        border: 1px solid #c4c7c5;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s, border-color 0.2s;
+        width: 100%;
+        text-align: left;
+        padding-right: 50px; 
+    }
+
+    .google-account-row:hover {
+        background-color: #f7f9fc;
+        border-color: #a8cae6;
+    }
+
+    .avatar-circle-placeholder {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #1f1f1f; 
+        margin-right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 14px;
+        overflow: hidden;
+        font-weight: 600;
+    }
+
+    .avatar-circle-placeholder img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .account-details-text {
+        display: flex;
+        flex-direction: column;
+        max-width: 80%;
+    }
+
+    .profile-display-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f1f1f;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .profile-display-email {
+        font-size: 12px;
+        color: #444746;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Trash Action Interface Config Row Target */
+    .row-remove-account-btn {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: #444746;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+        z-index: 10;
+    }
+
+    .row-remove-account-btn:hover {
+        background-color: #f1f3f4;
+        color: #b3261e; 
+    }
+
+    /* Native Material App Forms Inputs Fields Style Components */
+    .google-text-input-field {
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
+        border: 1px solid #747775;
+        border-radius: 4px;
+        color: #1f1f1f;
+        outline: none;
+        margin-bottom: 8px;
+        background: #ffffff;
+        transition: border-color 0.2s;
+    }
+
+    .google-text-input-field:focus {
+        border-color: #0b57d0;
+        border-width: 2px;
+        padding: 15px; 
+    }
+
+    .utility-link-btn {
+        display: flex;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 14px 16px;
+        width: 100%;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f1f1f;
+        border-radius: 12px;
+        transition: background-color 0.2s;
+        text-align: left;
+    }
+
+    .utility-link-btn:hover {
+        background-color: #f1f3f4;
+    }
+
+    .utility-link-btn i, .utility-link-btn img {
+        margin-right: 16px;
+        width: 32px;
+        text-align: center;
+    }
+
+    .utility-link-btn i {
+        color: #444746;
+        font-size: 16px;
+    }
+
+    .utility-link-btn img {
+        height: 18px;
+        object-fit: contain;
+    }
+
+    .google-pill-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #ffffff;
+        color: #1f1f1f;
+        border: 1px solid #747775;
+        border-radius: 12px;
+        width: 100%;
+        padding: 16px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s, border-color 0.2s;
+        box-sizing: border-box;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .google-pill-action-btn:hover {
+        background-color: #f7f9fc;
+        border-color: #0b57d0;
+    }
+
+    .google-pill-action-btn img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .google-legal-notice {
+        font-size: 12px;
+        color: #5e5e5e;
+        line-height: 1.6;
+        margin-top: 10px;
+    }
+
+    .google-legal-notice a {
+        color: #0b57d0;
+        text-decoration: none;
+    }
+
+    .google-legal-notice a:hover {
+        text-decoration: underline;
+    }
+
+    /* Verification Validation Container Elements Rules */
+    #verification-digit-input {
+        width: 140px;
+        padding: 12px 0;
+        font-size: 36px;
+        text-align: center;
+        border: 1px solid #747775;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #1f1f1f;
+        outline: none;
+        margin: 20px 0 12px 0;
+        letter-spacing: 6px;
+        display: block;
+    }
+
+    #verification-digit-input:focus {
+        border-color: #0b57d0;
+        border-width: 2px;
+    }
+
+    #timer-display {
+        font-size: 13px;
+        color: #b3261e;
+        font-weight: 500;
+        margin-bottom: 24px;
+        background: #f9dedc;
+        padding: 6px 14px;
+        border-radius: 16px;
+        display: inline-block;
+    }
+
+    .google-action-row-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 16px;
+        margin-top: 24px;
+    }
+
+    .secondary-flat-btn {
+        background: none;
+        border: none;
+        color: #0b57d0;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px 24px;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+
+    .secondary-flat-btn:hover {
+        background-color: #f1f3f4;
+    }
+
+    .primary-pill-btn {
+        background: #0b57d0; 
+        color: #ffffff;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px 24px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .primary-pill-btn:hover {
+        background-color: #0842a0;
+    }
+
+    /* NEW STYLING REQUIRED FOR RULE 2 REGISTRATION INPUT GROUP */
+    .pin-input-group-container {
+        margin: 16px 0;
+        text-align: left;
+    }
+    
+    .pin-input-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f1f1f;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .google-minimal-footer {
+        display: flex;
+        justify-content: space-between;
+        padding: 24px 40px;
+        font-size: 12px;
+        color: #444746;
+    }
+
+    .google-footer-links {
+        display: flex;
+        gap: 24px;
+    }
+
+    .google-minimal-footer a, .google-minimal-footer span {
+        color: #444746;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+        .google-account-canvas {
+            grid-template-columns: 1fr;
+            padding: 24px;
+            gap: 24px;
+        }
+        .google-minimal-footer {
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            padding: 16px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="auth-screen-wrapper">
+    <div class="google-account-canvas">
+        
+        <div class="brand-identity-panel">
+            <div class="google-mini-header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+                <span>Sign in with Google</span>
+            </div>
+
+            <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711587/Logo_opegob.png" alt="Customize Collection Logo" class="brand-logo-img" onerror="this.src='https://placehold.co/140x140/000000/ffffff?text=C'">
+            
+            <h2 class="brand-title" id="dynamic-card-title">Choose an account</h2>
+            <p class="brand-subtitle" id="dynamic-card-subtitle">to continue to <a href="index.html">Customize Collection</a></p>
+        </div>
+
+        <div class="interaction-flow-panel">
+            
+            <div id="state-account-chooser">
+                <div class="account-chooser-list" id="chooser-injection-zone">
+                    
+                    <!-- DYNAMIC ACCOUNT QUICK-LOGIN ROW -->
+                    <div class="google-account-row-wrapper" id="profile-row-item-block" style="display: none;">
+                        <button type="button" class="google-account-row" id="remembered-account-row-btn">
+                            <div class="avatar-circle-placeholder" id="chooser-avatar-box">??</div>
+                            <div class="account-details-text">
+                                <span class="profile-display-name" id="chooser-display-name">Guest User</span>
+                                <span class="profile-display-email" id="chooser-display-email">example@gmail.com</span>
+                            </div>
+                        </button>
+                        
+                        <button type="button" class="row-remove-account-btn" title="Remove account from device" onclick="removeCachedGoogleAccount(event)">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+
+                    <button type="button" id="login-existing-btn" class="utility-link-btn" onclick="initiateAuthRouting('LOGIN')">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                        <span>Continue with Google</span>
+                    </button>
+
+                    <button type="button" id="create-account-btn" class="utility-link-btn" onclick="initiateAuthRouting('REGISTER')">
+                        <i class="fa fa-user-plus"></i>
+                        <span>Create Account</span>
+                    </button>
+                </div>
+
+                <p class="google-legal-notice">
+                    Before using this app, you can review Customize Collection's <a href="#">Privacy Policy</a> and <a href="#">Terms of Service</a>.
+                </p>
+            </div>
+
+            <div id="state-add-account-input" style="display: none;">
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <p style="font-size: 16px; color: #1f1f1f; margin-bottom: 12px;" id="input-field-context-label">Email or phone</p>
+                    <input type="email" id="new-account-email-field" class="google-text-input-field" placeholder="Enter your google email address" autocomplete="off">
+                    <a href="#" style="color: #0b57d0; font-size: 14px; font-weight: 500; text-decoration: none;">Forgot email?</a>
+                </div>
+
+                <p class="google-legal-notice" style="margin-bottom: 30px; color: #444746;">
+                    Not your computer? Use a Private browsing window to sign in. <a href="#">Learn more about using guest mode</a>
+                </p>
+
+                <div class="google-action-row-footer">
+                    <button type="button" class="secondary-flat-btn" onclick="backToChooserState()">Back</button>
+                    <button type="button" class="primary-pill-btn" onclick="evaluateAccountIdentifierStep()">Continue</button>
+                </div>
+            </div>
+
+            <div id="state-verification-portal" style="display: none;">
+                <div class="account-chooser-list" style="margin-bottom: 16px;">
+                    <div class="google-account-row" style="cursor: default; background: #f8fafc; padding-right: 16px;">
+                        <div class="avatar-circle-placeholder" id="verify-avatar-box">??</div>
+                        <div class="account-details-text">
+                            <span class="profile-display-name" id="verify-display-name">New User</span>
+                            <span class="profile-display-email" id="verify-display-email">example@gmail.com</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pin-input-group-container" id="registration-pin-injection-box">
+                    <label class="pin-input-label" for="setup-secure-location-pin">Choose 6-Digit PIN Code (Location Information)</label>
+                    <input type="text" id="setup-secure-location-pin" class="google-text-input-field" placeholder="Enter 6-digit location tracking PIN" maxlength="6" style="letter-spacing: 2px; font-weight: 600;">
+                </div>
+
+                <p class="google-legal-notice" id="verification-notice-text" style="margin-bottom: 12px; font-size: 14px; color: #1f1f1f; line-height: 1.5;">
+                    Google will allow **Customize Collection** to access this info about you: Name, profile picture, and email address. Check your browser's F12 console to read your 2-digit token.
+                </p>
+                
+                <input type="text" id="verification-digit-input" maxlength="2" placeholder="00">
+                <div id="timer-display">Time remaining: 05:00</div>
+                
+                <div class="google-action-row-footer" style="margin-top: 12px;">
+                    <button type="button" class="secondary-flat-btn" onclick="window.location.reload()">Cancel</button>
+                    <button type="button" class="primary-pill-btn" id="continue-verify-btn" onclick="verifyAndCommitRegistration()">Register Profile</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<footer class="google-minimal-footer">
+    <div class="language-selector">
+        <span>English (United States) <i class="fa fa-caret-down"></i></span>
+    </div>
+    <div class="google-footer-links">
+        <a href="#">Help</a>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+    </div>
+</footer>
+
+<script>
+  let generatedVerificationCode = "";
+  let countdownTimer = null;
+  let timeRemainingSeconds = 300; 
+  let activeAuthMode = "LOGIN"; 
+
+  document.addEventListener("DOMContentLoaded", function() {
+      // Check if a user session profile exists in browser cache memory
+      const storedName = localStorage.getItem("userName");
+      const storedEmail = localStorage.getItem("activeUserIdentity");
+      const isRemoved = localStorage.getItem("accountRemoved") === "true";
+
+      // Dynamically display the last signed-in user if available
+      if (storedName && storedEmail && !isRemoved) {
+          const targetCardBlock = document.getElementById("profile-row-item-block");
+          const rowButton = document.getElementById("remembered-account-row-btn");
+          
+          if (targetCardBlock && rowButton) {
+              document.getElementById("chooser-display-name").innerText = storedName;
+              document.getElementById("chooser-display-email").innerText = storedEmail;
+              document.getElementById("chooser-avatar-box").innerText = storedName.substring(0, 2).toUpperCase();
+              
+              // Set up the click handler to directly route this user to login
+              rowButton.onclick = function() {
+                  selectExistingAccount(storedName, storedEmail);
+              };
+              
+              targetCardBlock.style.display = "block";
+          }
+      }
+  });
+
+  function initiateAuthRouting(mode) {
+      activeAuthMode = mode; 
+      goToNewAccountFormState();
+  }
+
+  function removeCachedGoogleAccount(event) {
+      if (event) event.stopPropagation(); 
+      if (!confirm("Are you sure you want to remove this account from device storage memory?")) return;
+
+      localStorage.setItem("accountRemoved", "true");
+      
+      const targetCardBlock = document.getElementById("profile-row-item-block");
+      if (targetCardBlock) {
+          targetCardBlock.style.opacity = "0";
+          setTimeout(() => { targetCardBlock.style.display = "none"; }, 200);
+      }
+      alert("Google cached details unlinked.");
+  }
+
+  function goToNewAccountFormState() {
+      document.getElementById("state-account-chooser").style.display = "none";
+      document.getElementById("state-add-account-input").style.display = "block";
+      
+      if (activeAuthMode === "LOGIN") {
+          document.getElementById("dynamic-card-title").innerText = "Sign in";
+          document.getElementById("input-field-context-label").innerText = "Enter your account identifier";
+      } else {
+          document.getElementById("dynamic-card-title").innerText = "Create Account";
+          document.getElementById("input-field-context-label").innerText = "Choose an account identifier email";
+      }
+      document.getElementById("dynamic-card-subtitle").innerHTML = "with your Google Account";
+  }
+
+  function backToChooserState() {
+      clearInterval(countdownTimer); 
+      generatedVerificationCode = ""; 
+      
+      document.getElementById("state-add-account-input").style.display = "none";
+      document.getElementById("state-account-chooser").style.display = "block";
+      
+      document.getElementById("dynamic-card-title").innerText = "Choose an account";
+      document.getElementById("dynamic-card-subtitle").innerHTML = "to continue to <a href='index.html'>Customize Collection</a>";
+  }
+
+  function evaluateAccountIdentifierStep() {
+      const emailValue = document.getElementById("new-account-email-field").value.trim().toLowerCase();
+      
+      if (!emailValue || !emailValue.includes("@")) {
+          alert("Please enter a valid Google account address to proceed.");
+          return;
+      }
+
+      // Read from local storage database key dynamically based on user input
+      const databaseMatch = localStorage.getItem(`db_profile_${emailValue}`);
+
+      // LOGIN WORKFLOW
+      if (activeAuthMode === "LOGIN") {
+          if (!databaseMatch) {
+              alert("ACCESS DENIED: No registered profile found matching this account. Please use 'Create Account' first.");
+              return;
+          }
+
+          const userProfile = JSON.parse(databaseMatch);
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("userName", userProfile.name);
+          localStorage.setItem("activeUserIdentity", userProfile.email);
+          localStorage.setItem("activeSessionLocationPin", userProfile.locationPin);
+          localStorage.removeItem("accountRemoved");
+
+          alert(`Welcome back, ${userProfile.name}! Authorization authorized instantly.`);
+          window.location.href = "index.html";
+          return;
+      }
+
+      // REGISTRATION WORKFLOW
+      if (activeAuthMode === "REGISTER") {
+          if (databaseMatch) {
+              alert("Account already registered under this profile link identity. Please toggle back to standard Google Login.");
+              return;
+          }
+
+          let usernamePart = emailValue.split("@")[0];
+          let cleanDisplayName = usernamePart.charAt(0).toUpperCase() + usernamePart.slice(1);
+          let dynamicInitials = cleanDisplayName.substring(0, 2).toUpperCase();
+
+          document.getElementById("verify-display-name").innerText = cleanDisplayName;
+          document.getElementById("verify-display-email").innerText = emailValue;
+          document.getElementById("verify-avatar-box").innerText = dynamicInitials;
+
+          localStorage.setItem("temp_reg_email", emailValue);
+          localStorage.setItem("temp_reg_name", cleanDisplayName);
+
+          document.getElementById("state-add-account-input").style.display = "none";
+          document.getElementById("state-verification-portal").style.display = "block";
+          document.getElementById("dynamic-card-title").innerText = "Register Identity Security Keys";
+
+          generatedVerificationCode = Math.floor(10 + Math.random() * 90).toString();
+          console.log(`[SECURITY CODE SENT] Verification 2-digit string challenge is: [ ${generatedVerificationCode} ]`);
+
+          fetch('http://localhost:3000/api/send-welcome-verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  email: emailValue, 
+                  code: generatedVerificationCode, 
+                  name: cleanDisplayName
+              })
+          })
+          .then(res => res.json())
+          .then(data => {
+              if(data.success) {
+                  console.log("Custom 2-digit welcome layout code dispatched safely to Gmail target inbox.");
+              }
+          })
+          .catch(err => console.error("Could not communicate with backend server engine:", err));
+
+          startVerificationClock();
+      }
+  }
+
+  function selectExistingAccount(name, email) {
+      document.getElementById("new-account-email-field").value = email;
+      initiateAuthRouting("LOGIN");
+  }
+
+  function startVerificationClock() {
+      clearInterval(countdownTimer);
+      timeRemainingSeconds = 300; 
+      const displayNode = document.getElementById('timer-display');
+
+      countdownTimer = setInterval(() => {
+          timeRemainingSeconds--;
+          let minutes = Math.floor(timeRemainingSeconds / 60);
+          let seconds = timeRemainingSeconds % 60;
+          displayNode.innerText = `Time remaining: ${minutes < 10 ? "0" + minutes : minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+
+          if (timeRemainingSeconds <= 0) {
+              clearInterval(countdownTimer);
+              displayNode.innerText = "Code Expired!";
+              document.getElementById('verification-digit-input').disabled = true;
+          }
+      }, 1000);
+  }
+
+  function verifyAndCommitRegistration() {
+      const pinValue = document.getElementById("setup-secure-location-pin").value.trim();
+      const codeValue = document.getElementById("verification-digit-input").value.trim();
+
+      if (!/^\d{6}$/.test(pinValue)) {
+          alert("Validation Exception: You must configure a valid, numeric 6-digit Location Information PIN to create an account.");
+          return;
+  }
+
+      if (timeRemainingSeconds <= 0) {
+          alert("Registration execution timeframe expired. Please re-initialize connection process.");
+          return;
+      }
+
+      if (codeValue !== generatedVerificationCode) {
+          alert("Invalid 2-digit confirmation code challenge entry sequence.");
+          return;
+      }
+
+      clearInterval(countdownTimer);
+      const targetEmail = localStorage.getItem("temp_reg_email");
+      const targetName = localStorage.getItem("temp_reg_name");
+
+      const newUserPayload = {
+          email: targetEmail,
+          name: targetName,
+          locationPin: pinValue 
+      };
+
+      // Commits registration into a dynamic namespace key
+      localStorage.setItem(`db_profile_${targetEmail}`, JSON.stringify(newUserPayload));
+      
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userName", targetName);
+      localStorage.setItem("activeUserIdentity", targetEmail);
+      localStorage.setItem("activeSessionLocationPin", pinValue);
+
+      localStorage.removeItem("temp_reg_email");
+      localStorage.removeItem("temp_reg_name");
+      localStorage.removeItem("accountRemoved");
+
+      alert("Profile data initialized and saved successfully into secure storage mappings.");
+      window.location.href = "index.html";
+  }
+</script>
+
+</body>
+</html>
