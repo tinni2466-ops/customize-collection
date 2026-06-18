@@ -100,16 +100,13 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 
 // ✅ REPLACE THE ENTIRE OLD METHOD WITH THIS NEW NODEMAILER CONFIGURATION:
 
-// 1. Clean secure Gmail mail server connection channel
+// ✅ THE PERFECTSECURE PRODUCTION TRANSPORTER CONFIG
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Complete SSL encryption setup for Render environment compatibility
+    service: 'gmail', 
     auth: {
-        user: 'customizecollectioncc@gmail.com',       // 👈 Put your real Gmail address here
-        pass: 'ecovslpgpethrxxb'            // 👈 Put your 16-character Google App Password here (no spaces)
-    },
-    connectionTimeout: 10000
+        user: process.env.EMAIL_USER, // 🌟 Hidden secure variable
+        pass: process.env.EMAIL_PASS  // 🌟 Hidden secure variable
+    }
 });
 
 // 2. Repaired execution pathway for sending verification logs
