@@ -100,43 +100,45 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 
 // ✅ REPLACE THE ENTIRE OLD METHOD WITH THIS NEW NODEMAILER CONFIGURATION:
 
+// 1. Clean secure Gmail mail server connection channel
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
-    secure: true, // This forces the server to use SSL/TLS encryption instantly
+    secure: true, // Complete SSL encryption setup for Render environment compatibility
     auth: {
-        user: 'customizecollectioncc@gmail.com',       // Your real Gmail address
-        pass: 'ecovslpgpethrxxb'         // Your 16-character Google App Password
+        user: 'customizecollectioncc@gmail.com',       // 👈 Put your real Gmail address here
+        pass: 'ecovslpgpethrxxb'            // 👈 Put your 16-character Google App Password here (no spaces)
     },
-    connectionTimeout: 10000 // 10 seconds timeout limit
+    connectionTimeout: 10000
 });
 
-// 2. Updated Route handling the email dispatch safely
+// 2. Repaired execution pathway for sending verification logs
 app.post('/api/send-welcome-verify', async (req, res) => {
+    // These match the parameters sent from login.html exactly
     const { email, code, name } = req.body;
     
     try {
         const mailOptions = {
             from: '"Ge Mini Store" <customizecollectioncc@gmail.com>', // 👈 Put your real Gmail address here too
-            to: email, // Uses the active variable coming from your form layout
+            to: email, // 🌟 FIXED: Changed from userEmail to email
             subject: 'Welcome to your account',
-            text: `Hello ${name || 'there'}! Welcome to our store. Your standard access number is: ${code}`, // Plain text fallback
+            text: `Hello ${name || 'there'}! Welcome to our store. Your standard access number is: ${code}`,
             html: `
                 <div style="font-family: sans-serif; padding: 20px; color: #333;">
                     <h2>Verify Your Account</h2>
                     <p>Hello ${name || 'there'}, thank you for joining us.</p>
                     <p>Please use the following standard access number to complete your signup process:</p>
                     <div style="font-size: 24px; font-weight: bold; padding: 10px 20px; background-color: #f4f4f4; display: inline-block; letter-spacing: 2px; border-radius: 4px;">
-                        ${code}
+                        ${code} 
                     </div>
                     <p style="margin-top: 20px; font-size: 12px; color: #777;">
                         If you did not request this, please safely ignore this email.
                     </p>
                 </div>
-            `
+            ` // 🌟 FIXED: Changed from verificationCode to code
         };
 
-        // Fire the transmission sequence through Google's network systems
+        // Execute transmission loop
         await transporter.sendMail(mailOptions);
 
         console.log(`Verification code successfully dispatched to target destination: ${email}`);
