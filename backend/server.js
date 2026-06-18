@@ -105,7 +105,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'customizecollectioncc@gmail.com',       // 👈 Put your real Gmail address here
-        pass: 'ecov slpg peth rxxb'         // 👈 Put your 16-character Google App Password here
+        pass: 'ecovslpgpethrxxb'         // 👈 Put your 16-character Google App Password here
     }
 });
 
