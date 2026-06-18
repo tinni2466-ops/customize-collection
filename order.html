@@ -1473,7 +1473,7 @@ function handlePaymentSuccess(purchasedItems, orderTotal) {
 loadAppState(); 
 renderUI();
 
-    const socket = io('http://customize-collection.onrender.com');
+    const socket = io('https://customize-collection.onrender.com');
     const currentOrderId = "ORDER_1001"; // Dynamically update this based on your selected active tracking code order parameters
     const userRole = "customer"; // Identifies this window interface node as the client user instance
 
@@ -1481,7 +1481,7 @@ renderUI();
         socket.emit('join_order_channel', currentOrderId);
         
         // Fetch message logs upon window execution frame initialization
-        fetch(`http://customize-collection.onrender.com/api/chat/history/${currentOrderId}`)
+        fetch(`https://customize-collection.onrender.com/api/chat/history/${currentOrderId}`)
             .then(res => res.json())
             .then(history => {
                 history.forEach(msg => displayRenderedChatMessageNode(msg.sender_role, msg.message_content));
