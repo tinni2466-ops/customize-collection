@@ -106,7 +106,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
     const { email, code, name } = req.body;
     try {
         const response = await resend.emails.send({
-            from: 'Customize Collection <otp@customizecollection.publicvm.com>',
+            from: "customizecollection <otp@customizecollection.publicvm.com>",
             to: email,
             subject: 'Welcome to Customize Collection! Confirm Your Code',
             headers: { 'X-Priority': '1', 'Importance': 'high' }, 
