@@ -14,10 +14,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Resend email client — set RESEND_API_KEY in your Render environment variables
+// Resend client — RESEND_API_KEY must be set in Render environment variables
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Secure session so the server remembers your admin login
 app.use(session({
     secret: 'customize-collection-secret-key-123',
     resave: false,
@@ -25,7 +24,6 @@ app.use(session({
     cookie: { maxAge: 600000 }
 }));
 
-// SQLite local database
 const db = new sqlite3.Database('./data.db', (err) => {
     if (err) console.error("Database connection failure:", err.message);
     else console.log('SQLite database connected.');
@@ -61,46 +59,43 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 io.on('connection', (socket) => {
-    socket.on('join_order_channel', (orderId) => {
-        socket.join(orderId);
-    });
+    socket.on('join_order_channel', (orderId) => socket.join(orderId));
 
     socket.on('send_chat_message', (data) => {
         const { orderId, senderRole, message } = data;
         db.run(`INSERT INTO order_chats (order_id, sender_role, message_content) VALUES (?, ?, ?)`,
             [orderId, senderRole, message],
             function(err) {
-                if (!err) {
-                    io.to(orderId).emit('receive_chat_message', { orderId, senderRole, message });
-                }
+                if (!err) io.to(orderId).emit('receive_chat_message', { orderId, senderRole, message });
             }
         );
     });
 });
 
-// Inventory & chat API
 app.get('/api/inventory', (req, res) => {
-    db.all("SELECT * FROM inventory", [], (err, rows) => { res.json(rows); });
+    db.all("SELECT * FROM inventory", [], (err, rows) => res.json(rows));
 });
 
 app.post('/api/inventory/toggle', (req, res) => {
     const { id, status } = req.body;
-    db.run(`UPDATE inventory SET status = ? WHERE id = ?`, [status, id], () => {
-        res.json({ success: true });
-    });
+    db.run(`UPDATE inventory SET status = ? WHERE id = ?`, [status, id], () => res.json({ success: true }));
 });
 
 app.get('/api/chat/history/:orderId', (req, res) => {
-    db.all("SELECT * FROM order_chats WHERE order_id = ? ORDER BY logged_time ASC", [req.params.orderId], (err, rows) => {
-        res.json(rows);
-    });
+    db.all("SELECT * FROM order_chats WHERE order_id = ? ORDER BY logged_time ASC",
+        [req.params.orderId], (err, rows) => res.json(rows));
 });
 
 // =============================================================
-// VERIFICATION EMAIL  —  Plaid-style template via Resend
+// VERIFICATION EMAIL  —  Plaid-style layout, no inline SVG
+// Logo is served from your public website folder
 // =============================================================
 
-function buildVerificationEmail(code, name, websiteUrl) {
+function buildVerificationEmail(code, name, siteUrl) {
+    // Logo must be uploaded to your GitHub repo public root as "Logo.png"
+    // so it is reachable at https://customize-collection.onrender.com/Logo.png
+    const logoUrl = 'https://res.cloudinary.com/dnami0fsz/image/upload/v1781711587/Logo_opegob.png';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -109,95 +104,86 @@ function buildVerificationEmail(code, name, websiteUrl) {
 <title>Verify Your Identity</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
-    <tr>
-      <td align="center">
-        <table width="400" cellpadding="0" cellspacing="0"
-               style="background:#ffffff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);overflow:hidden;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+  <tr>
+    <td align="center">
+      <table width="400" cellpadding="0" cellspacing="0"
+             style="background:#ffffff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);overflow:hidden;">
 
-          <!-- MAIN CARD -->
-          <tr>
-            <td align="center" style="padding:40px 40px 28px;">
+        <!-- MAIN CARD -->
+        <tr>
+          <td align="center" style="padding:40px 40px 28px;">
 
-              <!-- Shield icon + blue dots -->
-              <table cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
-                <tr>
-                  <!-- left dots -->
-                  <td style="vertical-align:middle;padding-right:10px;">
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
-                  </td>
-                  <!-- shield SVG -->
-                  <td style="vertical-align:middle;">
-                    <svg width="52" height="58" viewBox="0 0 52 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M26 2L4 11V28C4 40.5 13.5 52.1 26 55.5C38.5 52.1 48 40.5 48 28V11L26 2Z"
-                            fill="white" stroke="#cccccc" stroke-width="1.5"/>
-                      <!-- grid lines clipped inside shield -->
-                      <line x1="14" y1="26" x2="38" y2="26" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="14" y1="32" x2="38" y2="32" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="14" y1="38" x2="38" y2="38" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="14" y1="20" x2="32" y2="38" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="20" y1="20" x2="38" y2="38" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="20" y1="20" x2="20" y2="44" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="26" y1="18" x2="26" y2="46" stroke="#2a2a2a" stroke-width="2.2"/>
-                      <line x1="32" y1="20" x2="32" y2="44" stroke="#2a2a2a" stroke-width="2.2"/>
-                    </svg>
-                  </td>
-                  <!-- right dots -->
-                  <td style="vertical-align:middle;padding-left:10px;">
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
-                  </td>
-                </tr>
-              </table>
+            <!-- Logo + blue dot decorations -->
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+              <tr>
+                <!-- left dots -->
+                <td style="vertical-align:middle;padding-right:10px;">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
+                </td>
+                <!-- logo image — NO inline SVG -->
+                <td style="vertical-align:middle;">
+                  <img src="${logoUrl}"
+                       alt="Customize Collection Logo"
+                       width="60" height="60"
+                       style="display:block;width:60px;height:60px;object-fit:contain;border-radius:50%;border:1px solid #eeeeee;">
+                </td>
+                <!-- right dots -->
+                <td style="vertical-align:middle;padding-left:10px;">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
+                </td>
+              </tr>
+            </table>
 
-              <!-- VERIFY YOUR IDENTITY -->
-              <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:2px;color:#3a7dc9;text-transform:uppercase;font-family:Arial,sans-serif;">
-                VERIFY YOUR IDENTITY
-              </p>
+            <!-- VERIFY YOUR IDENTITY label -->
+            <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:2px;color:#3a7dc9;text-transform:uppercase;font-family:Arial,sans-serif;">
+              VERIFY YOUR IDENTITY
+            </p>
 
-              <!-- Heading -->
-              <p style="margin:0 0 22px;font-size:19px;font-weight:400;color:#111111;line-height:1.45;text-align:center;font-family:Georgia,'Times New Roman',serif;">
-                Enter the following code to finish linking ${websiteUrl}.
-              </p>
+            <!-- Heading -->
+            <p style="margin:0 0 22px;font-size:19px;font-weight:400;color:#111111;line-height:1.45;text-align:center;font-family:Georgia,'Times New Roman',serif;">
+              Enter the following code to finish linking ${siteUrl}.
+            </p>
 
-              <!-- Code box -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
-                <tr>
-                  <td align="center"
-                      style="background:#f2f2f2;border-radius:4px;padding:18px 0;">
-                    <span style="font-size:38px;font-weight:700;letter-spacing:10px;color:#111111;font-family:Georgia,'Times New Roman',serif;">
-                      ${code}
-                    </span>
-                  </td>
-                </tr>
-              </table>
+            <!-- Code box -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+              <tr>
+                <td align="center"
+                    style="background:#f2f2f2;border-radius:4px;padding:18px 0;">
+                  <span style="font-size:38px;font-weight:700;letter-spacing:10px;color:#111111;font-family:Georgia,'Times New Roman',serif;">
+                    ${code}
+                  </span>
+                </td>
+              </tr>
+            </table>
 
-              <!-- Footer note -->
-              <p style="margin:0;font-size:13px;color:#555555;text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
-                Not expecting this email?<br>
-                Contact <a href="mailto:support@${websiteUrl}" style="color:#333333;text-decoration:underline;">${websiteUrl}</a> if you did not request this code.
-              </p>
+            <!-- Footer note -->
+            <p style="margin:0;font-size:13px;color:#555555;text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
+              Not expecting this email?<br>
+              Contact <a href="mailto:support@${siteUrl}" style="color:#333333;text-decoration:underline;">${siteUrl}</a> if you did not request this code.
+            </p>
 
-            </td>
-          </tr>
+          </td>
+        </tr>
 
-          <!-- BOTTOM BAR -->
-          <tr>
-            <td align="center"
-                style="background:#f0f0f0;border-top:1px solid #e0e0e0;padding:14px 40px;">
-              <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#333333;text-transform:uppercase;font-family:Arial,sans-serif;">
-                SECURELY POWERED BY ${websiteUrl.toUpperCase()}.
-              </p>
-            </td>
-          </tr>
+        <!-- BOTTOM BAR -->
+        <tr>
+          <td align="center"
+              style="background:#f0f0f0;border-top:1px solid #e0e0e0;padding:14px 40px;">
+            <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#333333;text-transform:uppercase;font-family:Arial,sans-serif;">
+              SECURELY POWERED BY ${siteUrl.toUpperCase()}.
+            </p>
+          </td>
+        </tr>
 
-        </table>
-      </td>
-    </tr>
-  </table>
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>`;
 }
@@ -213,7 +199,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Customize Collection <noreply@customizecollection.publicvm.com>',
+            from: 'Customize Collection <onboarding@resend.dev>',
             to: [email],
             subject: 'Your verification code',
             html: buildVerificationEmail(code, name || 'there', site)
