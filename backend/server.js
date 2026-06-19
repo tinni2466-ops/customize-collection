@@ -228,7 +228,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Customize Collection <hello@customizecollection.publicvm.com>', // ✅ Change to hello@customizecollection.publicvm.com after verifying domain on resend.com/domains
+            from: 'Customize Collection <hello@send.customizecollection.publicvm.com>', // ✅ Change to hello@customizecollection.publicvm.com after verifying domain on resend.com/domains
             to: [email],
             subject: 'Your verification code',
             html: buildVerificationEmail(code, name || 'there', site)
