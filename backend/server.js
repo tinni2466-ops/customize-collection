@@ -336,16 +336,18 @@ app.post('/api/verify-2fa', (req, res) => {
 
 app.get('/super-admin', (req, res) => {
     const secretKey = req.query.secret;
+    
+    // Check if the secret matches OR if they are already logged in
     if (secretKey === 'x99_SecureAdmin_p77!' || req.session.isAdminAuthenticated) {
+        
+        // ✅ CRITICAL FIX: Save the authentication state to the session so it remembers you!
+        req.session.isAdminAuthenticated = true; 
+        
         res.sendFile(path.resolve(__dirname, '../order/history.html'));
     } else {
         res.status(404).send('Cannot GET /super-admin');
     }
 });
-
-app.use(express.static(path.join(__dirname, '../')));
-
-server.listen(3000, () => console.log('Server running on https://customizecollection.publicvm.com'));
 
 // =============================================================
 // INBOUND EMAIL WEBHOOK (RECEIVING MAILS)
