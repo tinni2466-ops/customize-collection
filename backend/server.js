@@ -97,7 +97,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
         // 3. Send using Resend
         const { data, error } = await resend.emails.send({
             // Using the verified subdomain route we discussed to prevent immediate bounces
-            from: 'Customize Collection <hello@send.customizecollection.publicvm.com>', 
+            from: 'Customize Collection <hello@.customizecollection.publicvm.com>', 
             to: [email],
             subject: `Your identity verification code: ${code}`, // Puts it in the subject line too!
             html: buildVerificationEmail(code, name || 'there', site) // Passes the frontend code to the HTML template
