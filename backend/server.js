@@ -345,7 +345,7 @@ app.get('/super-admin', (req, res) => {
 
 app.use(express.static(path.join(__dirname, '../')));
 
-server.listen(3000, () => console.log('Server running on https://customizecollection.publicvm.com'));
+server.listen(3000, () => console.log('Server running on https://customize-collection.publicvm.com'));
 
 // =============================================================
 // INBOUND EMAIL WEBHOOK (RECEIVING MAILS)
