@@ -94,7 +94,7 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 function buildVerificationEmail(code, name, siteUrl) {
     // Logo must be uploaded to your GitHub repo public root as "Logo.png"
     // so it is reachable at https://customize-collection.onrender.com/Logo.png
-    const logoUrl = 'https://res.cloudinary.com/dnami0fsz/image/upload/v1781711587/Logo_opegob.png';
+    const logoUrl = 'https://www.customizecollection.publicvm.com/Logo.png';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -146,7 +146,7 @@ function buildVerificationEmail(code, name, siteUrl) {
 
             <!-- Heading -->
             <p style="margin:0 0 22px;font-size:19px;font-weight:400;color:#111111;line-height:1.45;text-align:center;font-family:Georgia,'Times New Roman',serif;">
-              Enter the following code to finish linking ${siteUrl}.
+              Enter the following code to finish linking CustomizeCollection.
             </p>
 
             <!-- Code box -->
@@ -164,7 +164,7 @@ function buildVerificationEmail(code, name, siteUrl) {
             <!-- Footer note -->
             <p style="margin:0;font-size:13px;color:#555555;text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
               Not expecting this email?<br>
-              Contact <a href="mailto:support@${siteUrl}" style="color:#333333;text-decoration:underline;">${siteUrl}</a> if you did not request this code.
+              Contact <a href="mailto:hello@customizecollection.publicvm.com" style="color:#333333;text-decoration:underline;">customizecollection.publicvm.com</a> if you did not request this code.
             </p>
 
           </td>
@@ -175,7 +175,7 @@ function buildVerificationEmail(code, name, siteUrl) {
           <td align="center"
               style="background:#f0f0f0;border-top:1px solid #e0e0e0;padding:14px 40px;">
             <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#333333;text-transform:uppercase;font-family:Arial,sans-serif;">
-              SECURELY POWERED BY ${siteUrl.toUpperCase()}.
+              SECURELY POWERED BY CUSTOMIZECOLLECTION.PUBLICVM.COM.
             </p>
           </td>
         </tr>
@@ -195,11 +195,11 @@ app.post('/api/send-welcome-verify', async (req, res) => {
         return res.status(400).json({ success: false, error: 'email and code are required' });
     }
 
-    const site = websiteUrl || 'customize-collection.onrender.com';
+    const site = websiteUrl || 'customizecollection.publicvm.com';
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Customize Collection <noreply@customizecollection.publicvm.com>',
+            from: 'Customize Collection <noreply@customizecollection.publicvm.com>', // ✅ Change to hello@customizecollection.publicvm.com after verifying domain on resend.com/domains
             to: [email],
             subject: 'Your verification code',
             html: buildVerificationEmail(code, name || 'there', site)
