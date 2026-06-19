@@ -76,9 +76,45 @@ app.get('/api/inventory', (req, res) => {
     db.all("SELECT * FROM inventory", [], (err, rows) => res.json(rows));
 });
 
-app.post('/api/inventory/toggle', (req, res) => {
-    const { id, status } = req.body;
-    db.run(`UPDATE inventory SET status = ? WHERE id = ?`, [status, id], () => res.json({ success: true }));
+app.post('/api/send-welcome-verify', async (req, res) => {
+    const { email, code, name, websiteUrl } = req.body;
+
+    // 1. Debug log: This checks if the frontend's 2-digit code is reaching the backend safely
+    console.log(`[BACKEND RECEIVED] Email: ${email} | Code From Frontend: ${code} | Name: ${name}`);
+
+    // 2. Safety Check: If code is missing, do not send a broken email
+    if (!code) {
+        return res.status(400).json({ success: false, error: 'Backend failed to collect the code from the frontend.' });
+    }
+
+    if (!email) {
+        return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+
+    const site = websiteUrl || 'customizecollection.publicvm.com';
+
+    try {
+        // 3. Send using Resend
+        const { data, error } = await resend.emails.send({
+            // Using the verified subdomain route we discussed to prevent immediate bounces
+            from: 'Customize Collection <hello@send.customizecollection.publicvm.com>', 
+            to: [email],
+            subject: `Your identity verification code: ${code}`, // Puts it in the subject line too!
+            html: buildVerificationEmail(code, name || 'there', site) // Passes the frontend code to the HTML template
+        });
+
+        if (error) {
+            console.error('Resend error:', error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+
+        console.log(`[SUCCESS] Email sent to ${email} with code: ${code}`);
+        res.json({ success: true, id: data.id });
+
+    } catch (err) {
+        console.error('Failed to send email:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 app.get('/api/chat/history/:orderId', (req, res) => {
