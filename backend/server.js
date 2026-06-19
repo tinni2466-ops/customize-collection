@@ -336,18 +336,20 @@ app.post('/api/verify-2fa', (req, res) => {
 
 app.get('/super-admin', (req, res) => {
     const secretKey = req.query.secret;
-    
-    // Check if the secret matches OR if they are already logged in
-    if (secretKey === 'x99_SecureAdmin_p77!' || req.session.isAdminAuthenticated) {
-        
-        // ✅ CRITICAL FIX: Save the authentication state to the session so it remembers you!
-        req.session.isAdminAuthenticated = true; 
-        
+
+    // Checks if you entered the secret link query OR if you have already logged in via your phone session
+    if (secretKey === 'x99_SecureAdmin_p77!' || req.session.isAdminAuthenticated) { 
         res.sendFile(path.resolve(__dirname, '../order/history.html'));
     } else {
         res.status(404).send('Cannot GET /super-admin');
     }
 });
+
+// Keep this line below the gateway so it handles generic public store assets safely
+app.use(express.static(path.join(__dirname, '../')));
+
+// Run unified backend app server container framework mapping layout pipelines
+server.listen(3000, () => console.log('Unified Server running on http://customize-collection.onrender.com'));
 
 // =============================================================
 // INBOUND EMAIL WEBHOOK (RECEIVING MAILS)
