@@ -199,7 +199,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Customize Collection <noreply@customizecollection.publicvm.com>', // ✅ Change to hello@customizecollection.publicvm.com after verifying domain on resend.com/domains
+            from: 'Customize Collection <hello@customizecollection.publicvm.com>', // ✅ Change to hello@customizecollection.publicvm.com after verifying domain on resend.com/domains
             to: [email],
             subject: 'Your verification code',
             html: buildVerificationEmail(code, name || 'there', site)
@@ -281,3 +281,33 @@ app.get('/super-admin', (req, res) => {
 app.use(express.static(path.join(__dirname, '../')));
 
 server.listen(3000, () => console.log('Server running on https://customize-collection.onrender.com'));
+
+// =============================================================
+// INBOUND EMAIL WEBHOOK (RECEIVING MAILS)
+// =============================================================
+
+app.post('/api/webhook/receive-email', (req, res) => {
+    const emailData = req.body;
+
+    // Resend sends the email structure in the request body
+    const fromUser = emailData.from;       // e.g., "John Doe <user@gmail.com>"
+    const subject = emailData.subject;     // e.g., "Re: Your verification code"
+    const textHtml = emailData.html;       // The message body they typed
+    const textPlain = emailData.text;
+
+    console.log(` New Email Received from ${fromUser}!`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Content: ${textPlain}`);
+
+    // OPTIONAL: Insert this reply directly into your SQLite Chat database!
+    // If the subject contains an Order ID, you can automatically map it:
+    /*
+    db.run(`INSERT INTO order_chats (order_id, sender_role, message_content) VALUES (?, ?, ?)`,
+        ["EXTRACTED_ORDER_ID", "user", textPlain],
+        (err) => { if (!err) console.log("Saved email reply to chat history."); }
+    );
+    */
+
+    // Always return a 200 OK status to let Resend know you received it safely
+    res.status(200).json({ received: true });
+});
