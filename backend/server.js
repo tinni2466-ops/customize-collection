@@ -199,7 +199,7 @@ app.post('/api/send-welcome-verify', async (req, res) => {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Customize Collection <onboarding@resend.dev>',
+            from: 'Customize Collection <noreply@customizecollection.publicvm.com>',
             to: [email],
             subject: 'Your verification code',
             html: buildVerificationEmail(code, name || 'there', site)
