@@ -5,7 +5,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const sqlite3 = require('sqlite3').verbose();
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const session = require('express-session');
@@ -14,23 +14,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Set up secure session monitoring so the server remembers your phone login
+// Resend email client — set RESEND_API_KEY in your Render environment variables
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Secure session so the server remembers your admin login
 app.use(session({
     secret: 'customize-collection-secret-key-123',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 600000 } // Session expires after 10 minutes of inactivity
+    cookie: { maxAge: 600000 }
 }));
 
-// Initialize the SQLite local persistent database file
+// SQLite local database
 const db = new sqlite3.Database('./data.db', (err) => {
     if (err) console.error("Database connection failure:", err.message);
-    else console.log('SQLite internal tracking data database file generated and connected safely.');
+    else console.log('SQLite database connected.');
 });
 
-// Build the functional structure database tables
 db.serialize(() => {
-    // Inventory monitoring table
     db.run(`CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         product_name TEXT UNIQUE,
@@ -38,16 +39,14 @@ db.serialize(() => {
         status INTEGER DEFAULT 1
     )`);
 
-    // Chat logging storage table mapping message paths
     db.run(`CREATE TABLE IF NOT EXISTS order_chats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_id TEXT,
-        sender_role TEXT, 
+        sender_role TEXT,
         message_content TEXT,
         logged_time DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    // Check and populate base inventory elements if data table is completely empty
     db.all("SELECT COUNT(*) as count FROM inventory", [], (err, rows) => {
         if (rows && rows[0].count === 0) {
             db.run(`INSERT INTO inventory (product_name, category, status) VALUES 
@@ -61,7 +60,6 @@ db.serialize(() => {
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// Open communication channels via WebSockets mapping framework
 io.on('connection', (socket) => {
     socket.on('join_order_channel', (orderId) => {
         socket.join(orderId);
@@ -80,7 +78,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// REST API Endpoints for administration interface frameworks
+// Inventory & chat API
 app.get('/api/inventory', (req, res) => {
     db.all("SELECT * FROM inventory", [], (err, rows) => { res.json(rows); });
 });
@@ -98,122 +96,202 @@ app.get('/api/chat/history/:orderId', (req, res) => {
     });
 });
 
-// ✅ REPLACE THE ENTIRE OLD METHOD WITH THIS NEW NODEMAILER CONFIGURATION:
+// =============================================================
+// VERIFICATION EMAIL  —  Plaid-style template via Resend
+// =============================================================
 
-// ✅ THE PERFECTSECURE PRODUCTION TRANSPORTER CONFIG
-const transporter = nodemailer.createTransport({
-    service: 'gmail', 
-    auth: {
-        user: process.env.EMAIL_USER, // 🌟 Hidden secure variable
-        pass: process.env.EMAIL_PASS  // 🌟 Hidden secure variable
-    }
-});
+function buildVerificationEmail(code, name, websiteUrl) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verify Your Identity</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="400" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);overflow:hidden;">
 
-// 2. Repaired execution pathway for sending verification logs
+          <!-- MAIN CARD -->
+          <tr>
+            <td align="center" style="padding:40px 40px 28px;">
+
+              <!-- Shield icon + blue dots -->
+              <table cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+                <tr>
+                  <!-- left dots -->
+                  <td style="vertical-align:middle;padding-right:10px;">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
+                  </td>
+                  <!-- shield SVG -->
+                  <td style="vertical-align:middle;">
+                    <svg width="52" height="58" viewBox="0 0 52 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M26 2L4 11V28C4 40.5 13.5 52.1 26 55.5C38.5 52.1 48 40.5 48 28V11L26 2Z"
+                            fill="white" stroke="#cccccc" stroke-width="1.5"/>
+                      <!-- grid lines clipped inside shield -->
+                      <line x1="14" y1="26" x2="38" y2="26" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="14" y1="32" x2="38" y2="32" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="14" y1="38" x2="38" y2="38" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="14" y1="20" x2="32" y2="38" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="20" y1="20" x2="38" y2="38" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="20" y1="20" x2="20" y2="44" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="26" y1="18" x2="26" y2="46" stroke="#2a2a2a" stroke-width="2.2"/>
+                      <line x1="32" y1="20" x2="32" y2="44" stroke="#2a2a2a" stroke-width="2.2"/>
+                    </svg>
+                  </td>
+                  <!-- right dots -->
+                  <td style="vertical-align:middle;padding-left:10px;">
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- VERIFY YOUR IDENTITY -->
+              <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:2px;color:#3a7dc9;text-transform:uppercase;font-family:Arial,sans-serif;">
+                VERIFY YOUR IDENTITY
+              </p>
+
+              <!-- Heading -->
+              <p style="margin:0 0 22px;font-size:19px;font-weight:400;color:#111111;line-height:1.45;text-align:center;font-family:Georgia,'Times New Roman',serif;">
+                Enter the following code to finish linking ${websiteUrl}.
+              </p>
+
+              <!-- Code box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+                <tr>
+                  <td align="center"
+                      style="background:#f2f2f2;border-radius:4px;padding:18px 0;">
+                    <span style="font-size:38px;font-weight:700;letter-spacing:10px;color:#111111;font-family:Georgia,'Times New Roman',serif;">
+                      ${code}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Footer note -->
+              <p style="margin:0;font-size:13px;color:#555555;text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
+                Not expecting this email?<br>
+                Contact <a href="mailto:support@${websiteUrl}" style="color:#333333;text-decoration:underline;">${websiteUrl}</a> if you did not request this code.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- BOTTOM BAR -->
+          <tr>
+            <td align="center"
+                style="background:#f0f0f0;border-top:1px solid #e0e0e0;padding:14px 40px;">
+              <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#333333;text-transform:uppercase;font-family:Arial,sans-serif;">
+                SECURELY POWERED BY ${websiteUrl.toUpperCase()}.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 app.post('/api/send-welcome-verify', async (req, res) => {
-    // These match the parameters sent from login.html exactly
-    const { email, code, name } = req.body;
-    
+    const { email, code, name, websiteUrl } = req.body;
+
+    if (!email || !code) {
+        return res.status(400).json({ success: false, error: 'email and code are required' });
+    }
+
+    const site = websiteUrl || 'customize-collection.onrender.com';
+
     try {
-        const mailOptions = {
-            from: '"Ge Mini Store" <customizecollectioncc@gmail.com>', // 👈 Put your real Gmail address here too
-            to: email, // 🌟 FIXED: Changed from userEmail to email
-            subject: 'Welcome to your account',
-            text: `Hello ${name || 'there'}! Welcome to our store. Your standard access number is: ${code}`,
-            html: `
-                <div style="font-family: sans-serif; padding: 20px; color: #333;">
-                    <h2>Verify Your Account</h2>
-                    <p>Hello ${name || 'there'}, thank you for joining us.</p>
-                    <p>Please use the following standard access number to complete your signup process:</p>
-                    <div style="font-size: 24px; font-weight: bold; padding: 10px 20px; background-color: #f4f4f4; display: inline-block; letter-spacing: 2px; border-radius: 4px;">
-                        ${code} 
-                    </div>
-                    <p style="margin-top: 20px; font-size: 12px; color: #777;">
-                        If you did not request this, please safely ignore this email.
-                    </p>
-                </div>
-            ` // 🌟 FIXED: Changed from verificationCode to code
-        };
+        const { data, error } = await resend.emails.send({
+            from: 'Customize Collection <onboarding@resend.dev>',
+            to: [email],
+            subject: 'Your verification code',
+            html: buildVerificationEmail(code, name || 'there', site)
+        });
 
-        // Execute transmission loop
-        await transporter.sendMail(mailOptions);
+        if (error) {
+            console.error('Resend error:', error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
 
-        console.log(`Verification code successfully dispatched to target destination: ${email}`);
-        res.json({ success: true });
-    } catch (error) {
-        console.error("Failed to execute email routing sequence:", error.message);
-        res.status(500).json({ success: false, error: error.message });
+        console.log(`Verification email sent to ${email} — id: ${data.id}`);
+        res.json({ success: true, id: data.id });
+
+    } catch (err) {
+        console.error('Failed to send email:', err.message);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ==========================================
-// TWO-FACTOR AUTHENTICATION SETUP & TRACKING
-// ==========================================
+// =============================================================
+// TWO-FACTOR AUTHENTICATION
+// =============================================================
 
-// Private static base32 code string key for Google Authenticator app pairing setup
 const admin2FASecret = 'MJ2XIZLDN5SWS33SMU2HK43VNVYWSZZV';
 
-// NEW: A clean webpage route that automatically builds and displays your QR code!
 app.get('/setup-2fa', (req, res) => {
-    const otpauthUrl = speakeasy.otpauthURL({ 
-        secret: admin2FASecret, 
-        label: 'Customize Collection Admin', 
-        encoding: 'base32' 
+    const otpauthUrl = speakeasy.otpauthURL({
+        secret: admin2FASecret,
+        label: 'Customize Collection Admin',
+        encoding: 'base32'
     });
 
     qrcode.toDataURL(otpauthUrl, (err, data_url) => {
-        if (err) {
-            return res.status(500).send("Error generating QR code");
-        }
-        // This sends a neat, clean webpage directly to your browser screen
+        if (err) return res.status(500).send("Error generating QR code");
         res.send(`
-            <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>🔒 Scan This Code with Google Authenticator App</h2>
-                <p>Open the app on your phone, tap the <b>+</b> button, and select <b>Scan a QR code</b>.</p>
-                <div style="margin: 30px 0;">
-                    <img src="${data_url}" alt="2FA QR Code" style="border: 2px solid #333; padding: 10px; border-radius: 8px;" />
+            <div style="font-family:Arial,sans-serif;text-align:center;padding:50px;">
+                <h2>🔒 Scan with Google Authenticator</h2>
+                <p>Open the app, tap <b>+</b>, then <b>Scan a QR code</b>.</p>
+                <div style="margin:30px 0;">
+                    <img src="${data_url}" alt="2FA QR Code"
+                         style="border:2px solid #333;padding:10px;border-radius:8px;" />
                 </div>
-                <p style="color: #666; font-size: 14px;">Once scanned, your phone will start displaying your 6-digit access tokens!</p>
+                <p style="color:#666;font-size:14px;">Once scanned your phone shows live 6-digit tokens.</p>
             </div>
         `);
     });
 });
 
-// Endpoint verifying your telephone device authorization status token code inputs
 app.post('/api/verify-2fa', (req, res) => {
     const { token } = req.body;
-
     const verified = speakeasy.totp.verify({
         secret: admin2FASecret,
         encoding: 'base32',
         token: token,
-        window: 1 // 30 second flexibility timer offset window
+        window: 1
     });
 
     if (verified) {
-        req.session.isAdminAuthenticated = true; 
+        req.session.isAdminAuthenticated = true;
         res.json({ success: true });
     } else {
-        res.status(401).json({ success: false, message: "Verification tracking sequence mismatched." });
+        res.status(401).json({ success: false, message: "Token mismatch." });
     }
 });
 
-// ==========================================
-// THE SECURE GATEWAY ROUTE CONTROLLER
-// ==========================================
+// =============================================================
+// SECURE ADMIN GATEWAY
+// =============================================================
+
 app.get('/super-admin', (req, res) => {
     const secretKey = req.query.secret;
-
-    // Checks if you entered the secret link query OR if you have already logged in via your phone session
-    if (secretKey === 'x99_SecureAdmin_p77!' || req.session.isAdminAuthenticated) { 
+    if (secretKey === 'x99_SecureAdmin_p77!' || req.session.isAdminAuthenticated) {
         res.sendFile(path.resolve(__dirname, '../order/history.html'));
     } else {
         res.status(404).send('Cannot GET /super-admin');
     }
 });
 
-// Keep this line below the gateway so it handles generic public store assets safely
 app.use(express.static(path.join(__dirname, '../')));
 
-// Run unified backend app server container framework mapping layout pipelines
-server.listen(3000, () => console.log('Unified Server running on https://customize-collection.onrender.com'));
+server.listen(3000, () => console.log('Server running on https://customize-collection.onrender.com'));
