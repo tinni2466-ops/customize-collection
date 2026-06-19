@@ -213,7 +213,7 @@ function buildVerificationEmail(code, name, siteUrl) {
                       <span
                         style="font-size:38px;font-weight:700;letter-spacing:10px;color:#111111;font-family:Georgia,'Times New Roman',serif;"
                       >
-                        31
+                        ${code}
                       </span>
                     </td>
                   </tr>
