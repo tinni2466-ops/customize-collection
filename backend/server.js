@@ -349,7 +349,7 @@ app.get('/super-admin', (req, res) => {
 app.use(express.static(path.join(__dirname, '../')));
 
 // Run unified backend app server container framework mapping layout pipelines
-server.listen(3000, () => console.log('Unified Server running on http://customize-collection.publicvm.com'));
+server.listen(3000, () => console.log('Unified Server running on http://customize-collection.onrender.com'));
 
 // =============================================================
 // INBOUND EMAIL WEBHOOK (RECEIVING MAILS)
