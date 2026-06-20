@@ -302,71 +302,84 @@ function saveAllOrders(orders){
     localStorage.setItem("allOrdersData", JSON.stringify(orders));
 }
 
-function loadAdminOrders(){
-    const orders = getAllOrders();
+async function loadAdminOrders() {
     const list = document.getElementById("admin-order-list");
+    if (!list) return;
 
-    if(!list) return;
+    try {
+        // 1. Fetch the real global orders from your Render backend
+        const response = await fetch('/api/all-orders', { 
+            method: 'GET',
+            credentials: 'include' 
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch from server');
+        
+        const orders = await response.json();
 
-    if(orders.length === 0){
-        list.innerHTML = `
-            <div style="color:#64748b;text-align:center;padding:20px;">
-                No orders yet.
-            </div>
-        `;
+        // 2. Handle empty state
+        if (orders.length === 0) {
+            list.innerHTML = `
+                <div style="color:#64748b;text-align:center;padding:20px;">
+                    No orders yet.
+                </div>
+            `;
+            document.getElementById("admin-chat-view").innerHTML = "";
+            document.getElementById("admin-order-details").innerHTML = "Select an order";
+            return;
+        }
 
-        document.getElementById("admin-chat-view").innerHTML = "";
-        document.getElementById("admin-order-details").innerHTML = "Select an order";
-        return;
+        list.innerHTML = "";
+
+        // 3. Render the order buttons
+        orders.slice().reverse().forEach(order => {
+            const messageCount = (order.chatLedgerHistory || []).filter(msg => msg.sender === "Customer").length;
+            const isActive = order.orderId === targetedOrderId;
+            const customerLabel = order.customerName || order.orderId || "Customer";
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.onclick = () => selectAdminOrder(order.orderId);
+
+            btn.style.cssText = `
+                width:100%;
+                text-align:left;
+                border:1px solid ${isActive ? "#0b57d0" : "#e2e8f0"};
+                background:${isActive ? "#eaf2ff" : "#fff"};
+                border-radius:6px;
+                padding:10px;
+                margin-bottom:8px;
+                cursor:pointer;
+            `;
+
+            btn.innerHTML = `
+                <div style="font-weight:700;color:#0f172a;font-size:13px;">
+                    ${customerLabel}
+                </div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                    ₹${order.total || 0} • ${order.status || "active"}
+                </div>
+                <div style="font-size:11px;color:#0b57d0;margin-top:4px;">
+                    ${messageCount} customer message${messageCount === 1 ? "" : "s"}
+                </div>
+            `;
+
+            list.appendChild(btn);
+        });
+
+        if (!targetedOrderId && orders.length > 0) {
+            targetedOrderId = orders[orders.length - 1].orderId;
+        }
+
+        loadSelectedOrderChat();
+        loadSelectedOrderDetails();
+
+    } catch (error) {
+        console.error("Admin Panel Error:", error);
+        list.innerHTML = `<div style="color:red;text-align:center;padding:20px;">Error loading orders from server.</div>`;
     }
-
-    list.innerHTML = "";
-
-    orders.slice().reverse().forEach(order => {
-        const messageCount = (order.chatLedgerHistory || []).filter(msg => msg.sender === "Customer").length;
-        const isActive = order.orderId === targetedOrderId;
-        const customerLabel = order.customerName || order.orderId || "Customer";
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.onclick = () => selectAdminOrder(order.orderId);
-
-        btn.style.cssText = `
-            width:100%;
-            text-align:left;
-            border:1px solid ${isActive ? "#0b57d0" : "#e2e8f0"};
-            background:${isActive ? "#eaf2ff" : "#fff"};
-            border-radius:6px;
-            padding:10px;
-            margin-bottom:8px;
-            cursor:pointer;
-        `;
-
-        btn.innerHTML = `
-            <div style="font-weight:700;color:#0f172a;font-size:13px;">
-                ${customerLabel}
-            </div>
-
-            <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                ₹${order.total || 0} • ${order.status || "active"}
-            </div>
-
-            <div style="font-size:11px;color:#0b57d0;margin-top:4px;">
-                ${messageCount} customer message${messageCount === 1 ? "" : "s"}
-            </div>
-        `;
-
-        list.appendChild(btn);
-    });
-
-    if(!targetedOrderId){
-        targetedOrderId = orders[orders.length - 1].orderId;
-    }
-
-    loadSelectedOrderChat();
-    loadSelectedOrderDetails();
 }
-
+    
 function getOrderCustomerLabel(order){
     if(order.customerName){
         const numberPart = String(order.orderId || "").includes("#")
