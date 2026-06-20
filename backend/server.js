@@ -11,11 +11,22 @@ const qrcode = require('qrcode');
 const session = require('express-session');
 
 const app = express();
-app.use(cors());
+// ✅ Allow both the old Render domain AND your new custom domain to send orders
+app.use(cors({
+    origin: [
+        'https://customize-collection.onrender.com', 
+        'https://customizecollection.publicvm.com'
+    ],
+    credentials: true // This is critical! It allows the cart/order sessions to pass through
+}));
+
 app.use(express.json());
 
 // Resend client — RESEND_API_KEY must be set in Render environment variables
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// ✅ Tell Express it is safe to create sessions for the new custom domain on Render
+app.set('trust proxy', 1);
 
 app.use(session({
     secret: 'customize-collection-secret-key-123',
