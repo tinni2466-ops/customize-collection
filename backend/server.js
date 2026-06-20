@@ -87,6 +87,18 @@ app.get('/api/inventory', (req, res) => {
     db.all("SELECT * FROM inventory", [], (err, rows) => res.json(rows));
 });
 
+// ✅ Send all orders to the super admin panel
+app.get('/api/all-orders', (req, res) => {
+    
+    // Check if the admin is logged in (optional but recommended for security)
+    // if (!req.session.isAdminAuthenticated) {
+    //     return res.status(401).json({ error: "Unauthorized" });
+    // }
+
+    // Send the array of orders back to the frontend
+    res.json(allOrders); 
+});
+
 app.post('/api/send-welcome-verify', async (req, res) => {
     const { email, code, name, websiteUrl } = req.body;
 
