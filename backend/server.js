@@ -48,12 +48,14 @@ db.serialize(() => {
         status INTEGER DEFAULT 1
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS order_chats (
+    db.run(`CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id TEXT,
-        sender_role TEXT,
-        message_content TEXT,
-        logged_time DATETIME DEFAULT CURRENT_TIMESTAMP
+        customer_name TEXT,
+        customer_email TEXT,
+        items TEXT,
+        total_price REAL,
+        status TEXT DEFAULT 'Pending',
+        order_date DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
     db.all("SELECT COUNT(*) as count FROM inventory", [], (err, rows) => {
@@ -83,20 +85,14 @@ io.on('connection', (socket) => {
     });
 });
 
-app.get('/api/inventory', (req, res) => {
-    db.all("SELECT * FROM inventory", [], (err, rows) => res.json(rows));
-});
-
-// ✅ Send all orders to the super admin panel
+// ✅ Send real database orders to the super admin panel
 app.get('/api/all-orders', (req, res) => {
-    
-    // Check if the admin is logged in (optional but recommended for security)
-    // if (!req.session.isAdminAuthenticated) {
-    //     return res.status(401).json({ error: "Unauthorized" });
-    // }
-
-    // Send the array of orders back to the frontend
-    res.json(allOrders); 
+    db.all("SELECT * FROM orders ORDER BY order_date DESC", [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
 });
 
 app.post('/api/send-welcome-verify', async (req, res) => {
