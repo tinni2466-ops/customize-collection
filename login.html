@@ -677,7 +677,7 @@
           generatedVerificationCode = Math.floor(10 + Math.random() * 90).toString();
           console.log(`[SECURITY CODE SENT] Verification 2-digit string challenge is: [ ${generatedVerificationCode} ]`);
 
-          fetch('https://customize-collection.publicvm.com/api/send-welcome-verify', {
+          fetch('https://www.customizecollection.publicvm.com/api/send-welcome-verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
