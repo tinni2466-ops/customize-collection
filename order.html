@@ -1473,7 +1473,11 @@ function handlePaymentSuccess(purchasedItems, orderTotal) {
 loadAppState(); 
 renderUI();
 
-    const socket = io('https://www.customizecollection.publicvm.com');
+    // ✅ FIXED: Leaving it blank automatically resolves to the correct origin natively
+const socket = io({
+    transports: ['polling', 'websocket'],
+    withCredentials: true
+});
     const currentOrderId = "ORDER_1001"; // Dynamically update this based on your selected active tracking code order parameters
     const userRole = "customer"; // Identifies this window interface node as the client user instance
 
@@ -1837,16 +1841,16 @@ async function processSecurePaymentExecutionPipeline() {
     const newOrder = createNewOrderObject(purchasedItems, orderTotal);
 
     try {
-        // 👇 2. Line 1876 is inside this try block, which is valid ONLY if 'async' is above!
-        const response = await fetch('https://www.customizecollection.publicvm.com/api/submit-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                customer_name: document.getElementById("customer-name-input")?.value || "Guest Buyer",
-                items: JSON.stringify(newOrder.purchasedItems), 
-                total_price: newOrder.total
-            })
-        });
+        // ✅ FIXED: Use a relative path so the browser never passes through a domain redirect loop!
+const response = await fetch('/api/submit-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        customer_name: document.getElementById("customer-name-input")?.value || "Guest Buyer",
+        items: JSON.stringify(newOrder.purchasedItems), 
+        total_price: newOrder.total
+    })
+});
 
         const data = await response.json();
 
