@@ -319,7 +319,15 @@ function saveAllOrders(orders){
 
 async function loadAdminOrders(){
     // 👇 We keep the exact name, just add 'await' so it waits for the server response
-    const orders = await getAllOrders(); 
+    let orders = await getAllOrders(); 
+    
+    // 🛡️ CRASH-PROOF SAFEGUARD: 
+    // If the backend drops out, returns a 500 error page, or sends invalid data,
+    // this instantly forces 'orders' into a safe empty list [] so .slice() won't break.
+    if (!orders || !Array.isArray(orders)) {
+        console.warn("Admin fetch did not return an array list. Safety fallback applied.");
+        orders = [];
+    }
     
     const list = document.getElementById("admin-order-list");
 
@@ -339,6 +347,7 @@ async function loadAdminOrders(){
 
     list.innerHTML = "";
 
+    // ✅ This can now safely process without triggering "orders.slice is not a function"
     orders.slice().reverse().forEach(order => {
         const messageCount = (order.chatLedgerHistory || []).filter(msg => msg.sender === "Customer").length;
         const isActive = order.orderId === targetedOrderId;
