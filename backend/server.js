@@ -11,13 +11,16 @@ const qrcode = require('qrcode');
 const session = require('express-session');
 
 const app = express();
-// ✅ Allow both the old Render domain AND your new custom domain to send orders
+// ✅ 1. BULLETPROOF CORS CONFIGURATION
+// This allows both your verified www domain and your backend URL to talk to each other safely
 app.use(cors({
     origin: [
-        'https://customize-collection.onrender.com', 
-        'https://customizecollection.publicvm.com'
+        'https://www.customizecollection.publicvm.com',
+        'https://customizecollection.publicvm.com',
+        'https://customize-collection.onrender.com'
     ],
-    credentials: true // This is critical! It allows the cart/order sessions to pass through
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
 }));
 
 app.use(express.json());
@@ -119,13 +122,14 @@ const initializeDatabase = async () => {
 };
 initializeDatabase();
 
-// ✅ 2. CLEAN & CRASH-PROOF GET ROUTE (Replaces both duplicates)
+// ✅ 2. CRASH-PROOF GET ROUTE
+// This will NEVER return a 500 error code, saving your frontend from a .slice() crash
 app.get('/api/all-orders', async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM orders ORDER BY id DESC");
         
         if (!result || !result.rows) {
-            return res.json([]);
+            return res.status(200).json([]); 
         }
 
         const formattedOrders = result.rows.map(row => {
@@ -133,29 +137,26 @@ app.get('/api/all-orders', async (req, res) => {
             try {
                 parsedItems = typeof row.items === 'string' ? JSON.parse(row.items) : (row.items || []);
             } catch (e) {
-                parsedItems = [{ name: row.items || "Custom Product" }]; 
+                parsedItems = [{ name: row.items || "Custom Item" }]; 
             }
 
             return {
                 orderId: row.id,
-                customerName: row.customer_name || "Unknown Customer",
+                customerName: row.customer_name || "Guest Buyer",
                 purchasedItems: Array.isArray(parsedItems) ? parsedItems : [parsedItems],
                 total: Number(row.total_price) || 0,
                 status: "customization_pending",
-                timeline: [
-                    { title: "Payment Confirmed", time: row.created_at ? new Date(row.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--" }
-                ],
+                timeline: [{ title: "Payment Confirmed", time: "--:--" }],
                 chatLedgerHistory: []
             };
         });
 
-        res.json(formattedOrders); 
+        return res.status(200).json(formattedOrders); 
 
     } catch (err) {
-        console.error("============= DATABASE LOG =============");
-        console.error("Error message:", err.message);
-        console.error("========================================");
-        res.json([]); // Returns a clean array so your frontend doesn't throw a .slice() error
+        console.error("Database connection fault logged safely:", err.message);
+        // Returns a status 200 with an empty array so the admin panel can render gracefully
+        return res.status(200).json([]); 
     }
 });
 
