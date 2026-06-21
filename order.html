@@ -1097,28 +1097,17 @@ function renderUI() {
     const currentTimeline = currentOrder.timeline;
 
     // ==========================================
-    // SWAPPED PANEL DISPLAY CONTROLLER
+    // SWAPPED PANEL DISPLAY CONTROLLER (MODIFIED)
     // ==========================================
-    if (currentStatus === ORDER_STATUS.PAYMENT_PENDING || currentStatus === "payment_processing") {
-        // Show both Text Box (Phase 2) and Payment (Phase 1)
-        if (panelPhase2) {
-            panelPhase2.style.display = "block";
-            panelPhase2.classList.add("active");
-        }
-        if (panelPhase1) {
-            panelPhase1.style.display = "block";
-            panelPhase1.classList.add("active");
-        }
-    } else {
-        // Payment complete: Hide payment panels, show only customization & chat workspace
-        if (panelPhase2) {
-            panelPhase2.style.display = "block";
-            panelPhase2.classList.add("active");
-        }
-        if (panelPhase1) {
-            panelPhase1.style.display = "none";
-            panelPhase1.classList.remove("active");
-        }
+    // ✅ FORCE SHOW BOTH PANELS: Removed the conditional check hiding the payout drawer
+    if (panelPhase2) {
+        panelPhase2.style.display = "block";
+        panelPhase2.classList.add("active");
+    }
+    
+    if (panelPhase1) {
+        panelPhase1.style.display = "block";    // Changed from "none" to guarantee visibility
+        panelPhase1.classList.add("active");    // Kept active styling running permanently
     }
 
     // ==========================================
