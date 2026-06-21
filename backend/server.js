@@ -100,15 +100,37 @@ io.on('connection', (socket) => {
     });
 });
 
-// ✅ Send real database orders to the super admin panel
+// ✅ FIXED: Translates Postgres columns directly into the format your admin panel reads
 app.get('/api/all-orders', async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM orders ORDER BY id DESC");
         
-        // PostgreSQL nests rows inside a 'rows' property of the response object
-        res.json(result.rows); 
+        // Map over the rows to convert snake_case to camelCase keys
+        const formattedOrders = result.rows.map(row => {
+            let parsedItems = [];
+            try {
+                // Safely convert the database text back into a functional frontend array
+                parsedItems = typeof row.items === 'string' ? JSON.parse(row.items) : row.items;
+            } catch (e) {
+                parsedItems = row.items; 
+            }
+
+            return {
+                orderId: row.id,                       // Maps database id to frontend orderId
+                customerName: row.customer_name,       // Maps customer_name to customerName
+                purchasedItems: parsedItems,           // Maps items to purchasedItems array
+                total: Number(row.total_price),        // Maps total_price to total
+                status: "customization_pending",       // Fallback default status matching your frontend
+                timeline: [
+                    { title: "Payment Confirmed", time: new Date(row.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
+                ],
+                chatLedgerHistory: []
+            };
+        });
+
+        res.json(formattedOrders); 
     } catch (err) {
-        console.error(err.message);
+        console.error("Failed to map database orders to admin panel format:", err.message);
         res.status(500).json({ error: "Server failed to fetch records." });
     }
 });
