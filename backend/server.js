@@ -11,15 +11,23 @@ const qrcode = require('qrcode');
 const session = require('express-session');
 
 const app = express();
-// ✅ 1. BULLETPROOF CORS CONFIGURATION
-// This allows both your verified www domain and your backend URL to talk to each other safely
+// ✅ FIXED: Explicitly allow both the www and non-www versions of your domain
+const allowedOrigins = [
+    'https://customizecollection.publicvm.com',
+    'https://www.customizecollection.publicvm.com'
+];
+
 app.use(cors({
-    origin: [
-        'https://www.customizecollection.publicvm.com',
-        'https://customizecollection.publicvm.com',
-        'https://customize-collection.onrender.com'
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: function (origin, callback) {
+        // Allow server-to-server or local automated requests
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
     credentials: true
 }));
 
@@ -83,7 +91,17 @@ initDB();
 module.exports = pool;
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+// ✅ FIXED: Opens the gateway for socket connections from the www site layout
+const io = require('socket.io')(server, {
+    cors: {
+        origin: [
+            "https://customizecollection.publicvm.com",
+            "https://www.customizecollection.publicvm.com"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
 
 io.on('connection', (socket) => {
     socket.on('join_order_channel', (orderId) => socket.join(orderId));
