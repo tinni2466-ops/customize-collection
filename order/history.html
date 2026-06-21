@@ -3138,6 +3138,142 @@ async function submitAdmin2FACode() {
     }
 }
 
+function renderOrderDetailsPanel(order) {
+    const detailContainer = document.getElementById("selectedOrderDetailsTarget"); 
+    if (!detailContainer) return;
+
+    if (!order) {
+        detailContainer.innerHTML = `
+            <div class="select-order-placeholder-view">
+                <h3>Select an order</h3>
+                <p>Select an order to view metadata, tracking logs, and messages.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // 1. Map dynamic fallback fields safely
+    const customerLabel = order.customerName || "Guest Buyer";
+    const orderIdTag    = order.orderId ? `#${order.orderId}` : "";
+    const currentStatus = order.status || "customization_pending";
+    const totalPrice    = order.totalPrice || 0;
+    const itemsArray     = order.items || [];
+    const chatMessages  = order.messages || [];
+
+    // 2. Generate the full interactive layout view from image_256a24.png
+    detailContainer.innerHTML = `
+        <!-- HEADER BLOCK METADATA -->
+        <div class="order-details-header-card">
+            <div class="order-meta-title-line">
+                <div>
+                    <h3 class="customer-display-name">${customerLabel} ${orderIdTag}</h3>
+                    <span class="status-badge status-${currentStatus}">Status: ${currentStatus}</span>
+                </div>
+                <span class="badge-chat-indicator">CHAT</span>
+            </div>
+            
+            <div class="order-price-control-row">
+                <label>Order Price (₹):</label>
+                <input type="number" class="order-price-override-field" value="${totalPrice}" readonly />
+            </div>
+            <div class="order-price-hero-display">₹${totalPrice}</div>
+        </div>
+
+        <!-- ITEMS PRODUCT CARDS LOOP -->
+        <div class="order-purchased-items-list">
+            ${itemsArray.length === 0 
+                ? '<p class="empty-items-notice">No products bound to this invoice snapshot.</p>' 
+                : itemsArray.map(item => {
+                    return `
+                        <div class="order-product-item-card">
+                            <img src="${item.img || 'images/placeholder.png'}" class="order-item-thumb" onerror="this.src='images/placeholder.png'">
+                            <div class="order-item-body">
+                                <strong class="order-item-title">${item.name || 'Indo Western Dress'}</strong>
+                                <div class="order-item-specs-grid">
+                                    <span>Material: ${item.material || 'Standard'}</span>
+                                    <span class="color-spec-flex">
+                                        Color: <span class="inv-color-dot" style="background: ${item.colorHex || '#ccc'}; display:inline-block; width:12px; height:12px; border-radius:50%; margin-left:4px; vertical-align:middle;"></span>
+                                    </span>
+                                    <span>Size: ${item.size || 'Free Size'}</span>
+                                    <span>Notes: ${item.notes || 'None'}</span>
+                                    <span>Qty: ${item.qty || 1}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+        </div>
+
+        <!-- FULFILLMENT TRACKING LOGISTICS TIMELINE -->
+        <div class="fulfillment-logistics-timeline-box">
+            <h4>Fulfillment Map Tracking Logistics</h4>
+            <ul class="logistics-timeline-list">
+                <li class="timeline-step step-completed">
+                    <span class="timeline-dot">●</span> 
+                    <span class="step-label">Order Settlement Confirmed</span>
+                    <span class="step-time">${order.settlementTime || '06:19 PM'}</span>
+                </li>
+                <li class="timeline-step step-pending">
+                    <span class="timeline-dot">●</span> 
+                    <span class="step-label">Out for Delivery</span>
+                    <span class="step-time">${order.deliveryTime || 'Waiting'}</span>
+                </li>
+                <li class="timeline-step step-pending">
+                    <span class="timeline-dot">●</span> 
+                    <span class="step-label">Package Complete</span>
+                    <span class="step-time">${order.packageTime || 'Awaiting'}</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- PROCESS ACTION CONTROLS BUTTONS -->
+        <div class="order-action-button-group">
+            <button class="btn-order-accept" onclick="updateOrderStatusAction('${order.orderId}', 'accepted')">ACCEPT</button>
+            <button class="btn-order-done" onclick="updateOrderStatusAction('${order.orderId}', 'completed')">DONE</button>
+        </div>
+
+        <!-- LIVE INTERCOM CHAT LOG STREAM -->
+        <div class="order-intercom-chat-stream">
+            <div class="chat-bubbles-scroll-area">
+                ${chatMessages.length === 0
+                    ? `
+                        <div class="chat-bubble-row bubble-system">
+                            <div class="chat-bubble">
+                                <span class="bubble-sender-title">Customer</span>
+                                <p class="bubble-message-text">Order created. You can now message the store about customization.</p>
+                                <span class="bubble-timestamp">06:19 PM</span>
+                            </div>
+                        </div>
+                      `
+                    : chatMessages.map(msg => {
+                        const isMe = msg.sender === "admin";
+                        return `
+                            <div class="chat-bubble-row ${isMe ? 'bubble-outgoing' : 'bubble-incoming'}">
+                                <div class="chat-bubble">
+                                    <span class="bubble-sender-title">${isMe ? 'Store Admin' : 'Customer'}</span>
+                                    <p class="bubble-message-text">${msg.text}</p>
+                                    <span class="bubble-timestamp">${msg.time || ''}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+            </div>
+
+            <!-- CHAT REPLY INPUT FOOTER PANEL -->
+            <div class="chat-reply-composition-footer">
+                <input type="text" id="intercomReplyInput" placeholder="Type reply to selected customer..." onkeydown="if(event.key==='Enter') sendIntercomReplyMessage('${order.orderId}')" />
+                <button class="btn-send-intercom-reply" onclick="sendIntercomReplyMessage('${order.orderId}')">Send</button>
+            </div>
+        </div>
+    `;
+    
+    // Automatically auto-scroll chat dialog box window downwards
+    const scrollArea = detailContainer.querySelector(".chat-bubbles-scroll-area");
+    if (scrollArea) {
+        scrollArea.scrollTop = scrollArea.scrollHeight;
+    }
+}
+    
 </script>
 </body>
 </html>
