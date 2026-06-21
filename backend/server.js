@@ -46,6 +46,7 @@ const pool = new Pool({
 // Verify connection and initialize table structure
 const initDB = async () => {
     try {
+        // 1. Setup Orders Table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS orders (
                 id SERIAL PRIMARY KEY,
@@ -55,6 +56,18 @@ const initDB = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
+
+        // 2. Setup Order Chats Table (Crucial for keeping your live support functioning!)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS order_chats (
+                id SERIAL PRIMARY KEY,
+                order_id TEXT,
+                sender_role TEXT,
+                message_content TEXT,
+                logged_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
         console.log("PostgreSQL Database connected and initialized smoothly.");
     } catch (err) {
         console.error("Database initialization failed:", err.message);
@@ -72,25 +85,32 @@ const io = new Server(server, { cors: { origin: "*" } });
 io.on('connection', (socket) => {
     socket.on('join_order_channel', (orderId) => socket.join(orderId));
 
-    socket.on('send_chat_message', (data) => {
+    // ✅ FIXED: Converted from SQLite db.run to PostgreSQL pool.query
+    socket.on('send_chat_message', async (data) => {
         const { orderId, senderRole, message } = data;
-        db.run(`INSERT INTO order_chats (order_id, sender_role, message_content) VALUES (?, ?, ?)`,
-            [orderId, senderRole, message],
-            function(err) {
-                if (!err) io.to(orderId).emit('receive_chat_message', { orderId, senderRole, message });
-            }
-        );
+        try {
+            await pool.query(
+                `INSERT INTO order_chats (order_id, sender_role, message_content) VALUES ($1, $2, $3)`,
+                [orderId, senderRole, message]
+            );
+            io.to(orderId).emit('receive_chat_message', { orderId, senderRole, message });
+        } catch (err) {
+            console.error("Failed to save chat message to cloud:", err.message);
+        }
     });
 });
 
 // ✅ Send real database orders to the super admin panel
-app.get('/api/all-orders', (req, res) => {
-    db.all("SELECT * FROM orders ORDER BY order_date DESC", [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(rows);
-    });
+app.get('/api/all-orders', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM orders ORDER BY id DESC");
+        
+        // PostgreSQL nests rows inside a 'rows' property of the response object
+        res.json(result.rows); 
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server failed to fetch records." });
+    }
 });
 
 app.post('/api/send-welcome-verify', async (req, res) => {
@@ -113,11 +133,10 @@ app.post('/api/send-welcome-verify', async (req, res) => {
     try {
         // 3. Send using Resend
         const { data, error } = await resend.emails.send({
-            // Using the verified subdomain route we discussed to prevent immediate bounces
             from: 'Customize Collection <hello@customizecollection.publicvm.com>', 
             to: [email],
-            subject: `Your identity verification code: ${code}`, // Puts it in the subject line too!
-            html: buildVerificationEmail(code, name || 'there', site) // Passes the frontend code to the HTML template
+            subject: `Your identity verification code: ${code}`, 
+            html: buildVerificationEmail(code, name || 'there', site) 
         });
 
         if (error) {
@@ -134,9 +153,18 @@ app.post('/api/send-welcome-verify', async (req, res) => {
     }
 });
 
-app.get('/api/chat/history/:orderId', (req, res) => {
-    db.all("SELECT * FROM order_chats WHERE order_id = ? ORDER BY logged_time ASC",
-        [req.params.orderId], (err, rows) => res.json(rows));
+// ✅ FIXED: Converted from SQLite db.all to async PostgreSQL query
+app.get('/api/chat/history/:orderId', async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT * FROM order_chats WHERE order_id = $1 ORDER BY logged_time ASC",
+            [req.params.orderId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Failed to fetch chat history:", err.message);
+        res.status(500).json({ error: "Could not load message logs." });
+    }
 });
 
 // =============================================================
@@ -145,8 +173,6 @@ app.get('/api/chat/history/:orderId', (req, res) => {
 // =============================================================
 
 function buildVerificationEmail(code, name, siteUrl) {
-    // Logo must be uploaded to your GitHub repo public root as "Logo.png"
-    // so it is reachable at https://customize-collection.onrender.com/Logo.png
     const logoUrl = 'https://www.customizecollection.publicvm.com/Logo.png';
 
     return `<!DOCTYPE html>
@@ -166,25 +192,15 @@ function buildVerificationEmail(code, name, siteUrl) {
             cellspacing="0"
             style="background:#ffffff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.12);overflow:hidden;"
           >
-            <!-- MAIN CARD -->
             <tr>
               <td align="center" style="padding:40px 40px 28px;">
-                <!-- Logo + blue dot decorations -->
                 <table cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
                   <tr>
-                    <!-- left dots -->
                     <td style="vertical-align:middle;padding-right:10px;">
-                      <span
-                        style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"
-                      ></span>
-                      <span
-                        style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"
-                      ></span>
-                      <span
-                        style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"
-                      ></span>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
                     </td>
-                    <!-- logo image — NO inline SVG -->
                     <td style="vertical-align:middle;">
                       <img
                         src="https://www.customizecollection.publicvm.com/Logo.png"
@@ -194,70 +210,44 @@ function buildVerificationEmail(code, name, siteUrl) {
                         style="display:block;width:60px;height:60px;object-fit:contain;border-radius:50%;border:1px solid #eeeeee;"
                       />
                     </td>
-                    <!-- right dots -->
                     <td style="vertical-align:middle;padding-left:10px;">
-                      <span
-                        style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"
-                      ></span>
-                      <span
-                        style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"
-                      ></span>
-                      <span
-                        style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"
-                      ></span>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;margin-right:3px;"></span>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></span>
                     </td>
                   </tr>
                 </table>
 
-                <!-- VERIFY YOUR IDENTITY label -->
-                <p
-                  style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:2px;color:#3a7dc9;text-transform:uppercase;font-family:Arial,sans-serif;"
-                >
+                <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:2px;color:#3a7dc9;text-transform:uppercase;font-family:Arial,sans-serif;">
                   VERIFY YOUR IDENTITY
                 </p>
 
-                <!-- Heading -->
-                <p
-                  style="margin:0 0 22px;font-size:19px;font-weight:400;color:#111111;line-height:1.45;text-align:center;font-family:Georgia,'Times New Roman',serif;"
-                >
+                <p style="margin:0 0 22px;font-size:11px;font-weight:400;color:#111111;line-height:1.45;text-align:center;font-family:Georgia,'Times New Roman',serif;">
                   Enter the following code to finish linking CustomizeCollection.
                 </p>
 
-                <!-- Code box -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
                   <tr>
                     <td align="center" style="background:#f2f2f2;border-radius:4px;padding:18px 0;">
-                      <span
-                        style="font-size:38px;font-weight:700;letter-spacing:10px;color:#111111;font-family:Georgia,'Times New Roman',serif;"
-                      >
+                      <span style="font-size:38px;font-weight:700;letter-spacing:10px;color:#111111;font-family:Georgia,'Times New Roman',serif;">
                         ${code}
                       </span>
                     </td>
                   </tr>
                 </table>
 
-                <!-- Footer note -->
-                <p
-                  style="margin:0;font-size:13px;color:#555555;text-align:center;line-height:1.6;font-family:Arial,sans-serif;"
-                >
+                <p style="margin:0;font-size:13px;color:#555555;text-align:center;line-height:1.6;font-family:Arial,sans-serif;">
                   Not expecting this email?<br />
                   Contact
-                  <a
-                    href="mailto:hello@customizecollection.publicvm.com"
-                    style="color:#333333;text-decoration:underline;"
-                    >customizecollection.publicvm.com</a
-                  >
+                  <a href="mailto:hello@customizecollection.publicvm.com" style="color:#333333;text-decoration:underline;">customizecollection.publicvm.com</a>
                   if you did not request this code.
                 </p>
               </td>
             </tr>
 
-            <!-- BOTTOM BAR -->
             <tr>
               <td align="center" style="background:#f0f0f0;border-top:1px solid #e0e0e0;padding:14px 40px;">
-                <p
-                  style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#333333;text-transform:uppercase;font-family:Arial,sans-serif;"
-                >
+                <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#333333;text-transform:uppercase;font-family:Arial,sans-serif;">
                   SECURELY POWERED BY CUSTOMIZECOLLECTION.PUBLICVM.COM.
                 </p>
               </td>
@@ -269,37 +259,6 @@ function buildVerificationEmail(code, name, siteUrl) {
   </body>
 </html>`;
 }
-
-app.post('/api/send-welcome-verify', async (req, res) => {
-    const { email, code, name, websiteUrl } = req.body;
-
-    if (!email || !code) {
-        return res.status(400).json({ success: false, error: 'email and code are required' });
-    }
-
-    const site = websiteUrl || 'customizecollection.publicvm.com';
-
-    try {
-        const { data, error } = await resend.emails.send({
-            from: 'Customize Collection <hello@customizecollection.publicvm.com>', // ✅ Change to hello@customizecollection.publicvm.com after verifying domain on resend.com/domains
-            to: [email],
-            subject: 'Your verification code',
-            html: buildVerificationEmail(code, name || 'there', site)
-        });
-
-        if (error) {
-            console.error('Resend error:', error);
-            return res.status(500).json({ success: false, error: error.message });
-        }
-
-        console.log(`Verification email sent to ${email} — id: ${data.id}`);
-        res.json({ success: true, id: data.id });
-
-    } catch (err) {
-        console.error('Failed to send email:', err.message);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
 
 // =============================================================
 // TWO-FACTOR AUTHENTICATION
@@ -321,8 +280,7 @@ app.get('/setup-2fa', (req, res) => {
                 <h2>🔒 Scan with Google Authenticator</h2>
                 <p>Open the app, tap <b>+</b>, then <b>Scan a QR code</b>.</p>
                 <div style="margin:30px 0;">
-                    <img src="${data_url}" alt="2FA QR Code"
-                         style="border:2px solid #333;padding:10px;border-radius:8px;" />
+                    <img src="${data_url}" alt="2FA QR Code" style="border:2px solid #333;padding:10px;border-radius:8px;" />
                 </div>
                 <p style="color:#666;font-size:14px;">Once scanned your phone shows live 6-digit tokens.</p>
             </div>
@@ -362,34 +320,35 @@ app.get('/super-admin', (req, res) => {
 
 app.use(express.static(path.join(__dirname, '../')));
 
-server.listen(3000, () => console.log('Server running on https://customizecollection.publicvm.com'));
+server.listen(3000, () => console.log('Server running on port 3000'));
 
 // =============================================================
 // INBOUND EMAIL WEBHOOK (RECEIVING MAILS)
 // =============================================================
 
-app.post('/api/webhook/receive-email', (req, res) => {
+app.post('/api/webhook/receive-email', async (req, res) => {
     const emailData = req.body;
 
-    // Resend sends the email structure in the request body
-    const fromUser = emailData.from;       // e.g., "John Doe <user@gmail.com>"
-    const subject = emailData.subject;     // e.g., "Re: Your verification code"
-    const textHtml = emailData.html;       // The message body they typed
+    const fromUser = emailData.from;       
+    const subject = emailData.subject;     
     const textPlain = emailData.text;
 
-    console.log(` New Email Received from ${fromUser}!`);
+    console.log(`New Email Received from ${fromUser}!`);
     console.log(`Subject: ${subject}`);
     console.log(`Content: ${textPlain}`);
 
-    // OPTIONAL: Insert this reply directly into your SQLite Chat database!
-    // If the subject contains an Order ID, you can automatically map it:
+    // ✅ FIXED: Converted commented template block safely to Postgres syntax
     /*
-    db.run(`INSERT INTO order_chats (order_id, sender_role, message_content) VALUES (?, ?, ?)`,
-        ["EXTRACTED_ORDER_ID", "user", textPlain],
-        (err) => { if (!err) console.log("Saved email reply to chat history."); }
-    );
+    try {
+        await pool.query(
+            `INSERT INTO order_chats (order_id, sender_role, message_content) VALUES ($1, $2, $3)`,
+            ["EXTRACTED_ORDER_ID", "user", textPlain]
+        );
+        console.log("Saved email reply to chat history.");
+    } catch (err) {
+        console.error("Failed to record webhook mail:", err.message);
+    }
     */
 
-    // Always return a 200 OK status to let Resend know you received it safely
     res.status(200).json({ received: true });
 });
