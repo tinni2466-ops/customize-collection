@@ -398,11 +398,28 @@ function selectAdminOrder(orderId){
     loadAdminOrders();
 }
 
+// ✅ Changed to read instantly from local storage cache to avoid Promise crashes
 function getSelectedOrder(){
-    const orders = getAllOrders();
-    return orders.find(order => order.orderId === targetedOrderId);
+    try {
+        const cachedOrdersRaw = localStorage.getItem("allOrdersData");
+        if (!cachedOrdersRaw) return null;
+        
+        const orders = JSON.parse(cachedOrdersRaw);
+        if (!Array.isArray(orders)) return null;
+
+        return orders.find(order => order.orderId === targetedOrderId);
+    } catch (e) {
+        console.error("Error reading cached orders array:", e);
+        return null;
+    }
 }
 
+// ✅ Optional enhancement: Ensure your helper helper maps correctly if undefined
+function getOrderCustomerLabel(order) {
+    if (!order) return "Customer";
+    return order.customerName || order.orderId || "Customer";
+}
+    
 function loadSelectedOrderDetails(){
     const box = document.getElementById("admin-order-details");
     const order = getSelectedOrder();
