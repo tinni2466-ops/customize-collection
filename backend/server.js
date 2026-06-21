@@ -113,6 +113,42 @@ app.get('/api/all-orders', async (req, res) => {
     }
 });
 
+// ✅ NEW: Catch incoming checkout requests and save them directly to PostgreSQL
+app.post('/api/submit-order', async (req, res) => {
+    const { customer_name, items, total_price } = req.body;
+
+    // Safety check: Ensure we aren't saving empty data
+    if (!customer_name || !items) {
+        return res.status(400).json({ success: false, error: "Missing required order information." });
+    }
+
+    try {
+        // Convert items array/object into a clean string if it isn't one already
+        const finalizedItems = typeof items === 'object' ? JSON.stringify(items) : items;
+
+        const queryText = `
+            INSERT INTO orders (customer_name, items, total_price) 
+            VALUES ($1, $2, $3) 
+            RETURNING id, created_at;
+        `;
+        
+        const result = await pool.query(queryText, [customer_name, finalizedItems, total_price || 0]);
+        const newOrder = result.rows[0];
+
+        console.log(`[SUCCESS] Order #${newOrder.id} generated for ${customer_name}`);
+        
+        res.status(201).json({ 
+            success: true, 
+            message: "Order placed successfully!", 
+            orderId: newOrder.id 
+        });
+
+    } catch (err) {
+        console.error("Database failed to save customer order:", err.message);
+        res.status(500).json({ success: false, error: "Internal server database error." });
+    }
+});
+
 app.post('/api/send-welcome-verify', async (req, res) => {
     const { email, code, name, websiteUrl } = req.body;
 
