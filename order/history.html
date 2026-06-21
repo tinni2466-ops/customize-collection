@@ -3138,141 +3138,126 @@ async function submitAdmin2FACode() {
     }
 }
 
-function renderOrderDetailsPanel(order) {
-    const detailContainer = document.getElementById("selectedOrderDetailsTarget"); 
-    if (!detailContainer) return;
-
-    if (!order) {
-        detailContainer.innerHTML = `
-            <div class="select-order-placeholder-view">
-                <h3>Select an order</h3>
-                <p>Select an order to view metadata, tracking logs, and messages.</p>
-            </div>
-        `;
-        return;
-    }
-
-    // 1. Map dynamic fallback fields safely
-    const customerLabel = order.customerName || "Guest Buyer";
-    const orderIdTag    = order.orderId ? `#${order.orderId}` : "";
-    const currentStatus = order.status || "customization_pending";
-    const totalPrice    = order.totalPrice || 0;
-    const itemsArray     = order.items || [];
-    const chatMessages  = order.messages || [];
-
-    // 2. Generate the full interactive layout view from image_256a24.png
-    detailContainer.innerHTML = `
-        <!-- HEADER BLOCK METADATA -->
-        <div class="order-details-header-card">
-            <div class="order-meta-title-line">
-                <div>
-                    <h3 class="customer-display-name">${customerLabel} ${orderIdTag}</h3>
-                    <span class="status-badge status-${currentStatus}">Status: ${currentStatus}</span>
-                </div>
-                <span class="badge-chat-indicator">CHAT</span>
-            </div>
-            
-            <div class="order-price-control-row">
-                <label>Order Price (₹):</label>
-                <input type="number" class="order-price-override-field" value="${totalPrice}" readonly />
-            </div>
-            <div class="order-price-hero-display">₹${totalPrice}</div>
-        </div>
-
-        <!-- ITEMS PRODUCT CARDS LOOP -->
-        <div class="order-purchased-items-list">
-            ${itemsArray.length === 0 
-                ? '<p class="empty-items-notice">No products bound to this invoice snapshot.</p>' 
-                : itemsArray.map(item => {
-                    return `
-                        <div class="order-product-item-card">
-                            <img src="${item.img || 'images/placeholder.png'}" class="order-item-thumb" onerror="this.src='images/placeholder.png'">
-                            <div class="order-item-body">
-                                <strong class="order-item-title">${item.name || 'Indo Western Dress'}</strong>
-                                <div class="order-item-specs-grid">
-                                    <span>Material: ${item.material || 'Standard'}</span>
-                                    <span class="color-spec-flex">
-                                        Color: <span class="inv-color-dot" style="background: ${item.colorHex || '#ccc'}; display:inline-block; width:12px; height:12px; border-radius:50%; margin-left:4px; vertical-align:middle;"></span>
-                                    </span>
-                                    <span>Size: ${item.size || 'Free Size'}</span>
-                                    <span>Notes: ${item.notes || 'None'}</span>
-                                    <span>Qty: ${item.qty || 1}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-        </div>
-
-        <!-- FULFILLMENT TRACKING LOGISTICS TIMELINE -->
-        <div class="fulfillment-logistics-timeline-box">
-            <h4>Fulfillment Map Tracking Logistics</h4>
-            <ul class="logistics-timeline-list">
-                <li class="timeline-step step-completed">
-                    <span class="timeline-dot">●</span> 
-                    <span class="step-label">Order Settlement Confirmed</span>
-                    <span class="step-time">${order.settlementTime || '06:19 PM'}</span>
-                </li>
-                <li class="timeline-step step-pending">
-                    <span class="timeline-dot">●</span> 
-                    <span class="step-label">Out for Delivery</span>
-                    <span class="step-time">${order.deliveryTime || 'Waiting'}</span>
-                </li>
-                <li class="timeline-step step-pending">
-                    <span class="timeline-dot">●</span> 
-                    <span class="step-label">Package Complete</span>
-                    <span class="step-time">${order.packageTime || 'Awaiting'}</span>
-                </li>
-            </ul>
-        </div>
-
-        <!-- PROCESS ACTION CONTROLS BUTTONS -->
-        <div class="order-action-button-group">
-            <button class="btn-order-accept" onclick="updateOrderStatusAction('${order.orderId}', 'accepted')">ACCEPT</button>
-            <button class="btn-order-done" onclick="updateOrderStatusAction('${order.orderId}', 'completed')">DONE</button>
-        </div>
-
-        <!-- LIVE INTERCOM CHAT LOG STREAM -->
-        <div class="order-intercom-chat-stream">
-            <div class="chat-bubbles-scroll-area">
-                ${chatMessages.length === 0
-                    ? `
-                        <div class="chat-bubble-row bubble-system">
-                            <div class="chat-bubble">
-                                <span class="bubble-sender-title">Customer</span>
-                                <p class="bubble-message-text">Order created. You can now message the store about customization.</p>
-                                <span class="bubble-timestamp">06:19 PM</span>
-                            </div>
-                        </div>
-                      `
-                    : chatMessages.map(msg => {
-                        const isMe = msg.sender === "admin";
-                        return `
-                            <div class="chat-bubble-row ${isMe ? 'bubble-outgoing' : 'bubble-incoming'}">
-                                <div class="chat-bubble">
-                                    <span class="bubble-sender-title">${isMe ? 'Store Admin' : 'Customer'}</span>
-                                    <p class="bubble-message-text">${msg.text}</p>
-                                    <span class="bubble-timestamp">${msg.time || ''}</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-            </div>
-
-            <!-- CHAT REPLY INPUT FOOTER PANEL -->
-            <div class="chat-reply-composition-footer">
-                <input type="text" id="intercomReplyInput" placeholder="Type reply to selected customer..." onkeydown="if(event.key==='Enter') sendIntercomReplyMessage('${order.orderId}')" />
-                <button class="btn-send-intercom-reply" onclick="sendIntercomReplyMessage('${order.orderId}')">Send</button>
-            </div>
-        </div>
-    `;
-    
-    // Automatically auto-scroll chat dialog box window downwards
-    const scrollArea = detailContainer.querySelector(".chat-bubbles-scroll-area");
-    if (scrollArea) {
-        scrollArea.scrollTop = scrollArea.scrollHeight;
-    }
+function getCachedOrders(){
+  try {
+    const raw = localStorage.getItem("allOrdersData");
+    const orders = raw ? JSON.parse(raw) : [];
+    return Array.isArray(orders) ? orders : [];
+  } catch {
+    return [];
+  }
 }
+
+const oldLoadAdminOrders = window.loadAdminOrders;
+window.loadAdminOrders = async function(){
+  if (typeof oldLoadAdminOrders === "function") {
+    const originalGetAllOrders = window.getAllOrders;
+
+    window.getAllOrders = async function(){
+      const orders = await originalGetAllOrders();
+      if (Array.isArray(orders)) {
+        localStorage.setItem("allOrdersData", JSON.stringify(orders));
+      }
+      return Array.isArray(orders) ? orders : getCachedOrders();
+    };
+
+    await oldLoadAdminOrders();
+    window.getAllOrders = originalGetAllOrders;
+  }
+};
+
+window.getSelectedOrder = function(){
+  return getCachedOrders().find(o => o.orderId === targetedOrderId) || null;
+};
+
+window.loadSelectedOrderDetails = function(){
+  const box = document.getElementById("admin-order-details");
+  const order = getSelectedOrder();
+  if (!box) return;
+
+  if (!order) {
+    box.innerHTML = "Select an order";
+    return;
+  }
+
+  const items = order.purchasedItems || order.items || [];
+
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start;">
+      <div>
+        <div style="font-weight:800;color:#0f172a;">${order.customerName || order.orderId || "Customer"}</div>
+        <div style="font-size:12px;color:#64748b;">Status: ${order.status || "active"}</div>
+      </div>
+      <button onclick="loadSelectedOrderChat()" style="background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:700;cursor:pointer;">CHAT</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 8px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+      <span style="font-weight:700;color:#111;font-size:14px;">Order Price (₹):</span>
+      <input type="number" value="${order.total || order.totalPaid || 0}" oninput="saveDirectOrderPricePatch(this.value)" style="width:140px;padding:5px 7px;border:2px solid #06b6d4;border-radius:4px;font-weight:800;">
+    </div>
+
+    <div style="font-weight:800;color:#111;margin-top:8px;">₹${order.total || order.totalPaid || 0}</div>
+
+    <div style="margin-top:12px;font-size:13px;color:#334155;">
+      ${items.map(item => `
+        <div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9;">
+          <img src="${item.img || item.image || ""}" style="width:58px;height:58px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.style.display='none'">
+          <div>
+            <b>${item.displayName || item.name || "Item"}</b>
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">
+              Material: ${item.material || "Organza"}<br>
+              Color: ${item.color || ""}<br>
+              Size: ${item.size || ""}<br>
+              Notes: ${item.notes || "None"}<br>
+              Qty: ${item.qty || 1}
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+
+    ${renderAdminFulfillmentMap(order)}
+  `;
+};
+
+window.saveDirectOrderPricePatch = function(value){
+  const orders = getCachedOrders();
+  const order = orders.find(o => o.orderId === targetedOrderId);
+  if (!order) return;
+
+  const amount = Number(value) || 0;
+  order.total = amount;
+  order.totalPaid = amount;
+  order.baseTotal = amount;
+  order.finalTotal = amount;
+
+  localStorage.setItem("allOrdersData", JSON.stringify(orders));
+};
+
+window.loadSelectedOrderChat = function(){
+  const chatView = document.getElementById("admin-chat-view");
+  const order = getSelectedOrder();
+  if (!chatView) return;
+
+  if (!order) {
+    chatView.innerHTML = `<div style="color:#64748b;text-align:center;padding:20px;">Select an order to view messages.</div>`;
+    return;
+  }
+
+  const messages = order.chatLedgerHistory?.length ? order.chatLedgerHistory : [{
+    sender: "Customer",
+    text: "Order created. You can now message the store about customization.",
+    stamp: order.paymentTimestamp || ""
+  }];
+
+  chatView.innerHTML = messages.map(msg => `
+    <div style="padding:8px 14px;border-radius:12px;max-width:75%;width:fit-content;font-size:14px;margin-bottom:8px;background:${msg.sender === "Owner" ? "#0b57d0" : "#cbd5e1"};color:${msg.sender === "Owner" ? "white" : "#1e293b"};align-self:${msg.sender === "Owner" ? "flex-end" : "flex-start"};">
+      <div style="font-size:11px;font-weight:bold;margin-bottom:3px;">${msg.sender || "Customer"}</div>
+      <div>${msg.text || ""}</div>
+      <div style="font-size:10px;opacity:.75;margin-top:4px;text-align:right;">${msg.stamp || ""}</div>
+    </div>
+  `).join("");
+};
     
 </script>
 </body>
