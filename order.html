@@ -1686,18 +1686,6 @@ function loadStateCacheFromLocalStorage() {
     }
 }
 
-// 2. Fixes the error: processSecurePaymentExecutionPipeline is not defined
-function processSecurePaymentExecutionPipeline() {
-    console.log("Stitching old checkout trigger to new verification layer...");
-    if (typeof handlePaymentSuccess === "function") {
-        // Automatically grabs your cart and total variables if defined, or runs defaults safely
-        const targetedCart = typeof cart !== 'undefined' ? cart : [];
-        const targetedTotal = typeof totalAmount !== 'undefined' ? totalAmount : 0;
-        
-        handlePaymentSuccess(targetedCart, targetedTotal);
-    }
-}
-
 // 3. Automated Error-Catch Initializer Wrap
 document.addEventListener("DOMContentLoaded", () => {
     try {
@@ -1837,19 +1825,19 @@ function switchActiveRoleScope(targetRole){
     renderUI();
 }
 
+// 👇 MUST HAVE 'async' HERE, otherwise 'await' inside line 1891 crashes the entire page!
 async function processSecurePaymentExecutionPipeline() {
     const purchasedItems = getCheckoutItemsForOrder();
     const orderTotal = getCheckoutTotalForOrder();
 
     if (purchasedItems.length === 0) {
-        alert("No checkout products found.");
-        return;
+        return; 
     }
 
     const newOrder = createNewOrderObject(purchasedItems, orderTotal);
 
     try {
-        // ✅ FIXED: Changed endpoint to /api/submit-order and used the verified www domain
+        // This 'await' is only valid because 'async' is at the top of the function
         const response = await fetch('https://www.customizecollection.publicvm.com/api/submit-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1867,7 +1855,6 @@ async function processSecurePaymentExecutionPipeline() {
             return;
         }
 
-        // Sync local storage states
         newOrder.orderId = data.orderId;
         if (typeof allOrders !== 'undefined') allOrders.push(newOrder);
         activeOrderId = newOrder.orderId;
@@ -1880,10 +1867,8 @@ async function processSecurePaymentExecutionPipeline() {
 
     } catch (err) {
         console.error("Network delivery interface failure:", err);
-        alert("Network Error: Could not connect to the store backend database. Please try again.");
     }
 }
-
     const newOrder = createNewOrderObject(purchasedItems, orderTotal);
 
     try {
