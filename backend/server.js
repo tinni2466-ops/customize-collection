@@ -160,6 +160,41 @@ app.get('/api/all-orders', async (req, res) => {
     }
 });
 
+// ✅ FIXED: Receives checkout payloads from order.html and registers them to Postgres
+app.post('/api/submit-order', async (req, res) => {
+    try {
+        const { customer_name, items, total_price } = req.body;
+
+        // Validation safety guard
+        if (!customer_name || !items || !total_price) {
+            return res.status(400).json({ success: false, error: "Missing required order fields." });
+        }
+
+        // Insert client records directly into your PostgreSQL database
+        const queryText = `
+            INSERT INTO orders (customer_name, items, total_price, created_at)
+            VALUES ($1, $2, $3, NOW())
+            RETURNING id;
+        `;
+        
+        const result = await pool.query(queryText, [customer_name, items, total_price]);
+        const newOrderId = result.rows[0].id;
+
+        console.log(`[DATABASE] Order #${newOrderId} stored successfully for ${customer_name}`);
+
+        // Return clear JSON so the client processing pipeline never encounters unexpected HTML tokens
+        return res.status(201).json({
+            success: true,
+            orderId: newOrderId,
+            message: "Order logged safely into secure persistence layer."
+        });
+
+    } catch (err) {
+        console.error("[SUBMIT ERROR] Database write transaction failed:", err.message);
+        return res.status(500).json({ success: false, error: "Database execution error during record creation." });
+    }
+});
+
 app.post('/api/send-welcome-verify', async (req, res) => {
     const { email, code, name, websiteUrl } = req.body;
 
