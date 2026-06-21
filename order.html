@@ -1825,7 +1825,7 @@ function switchActiveRoleScope(targetRole){
     renderUI();
 }
 
-// 👇 MUST HAVE 'async' HERE, otherwise 'await' inside line 1891 crashes the entire page!
+// 👇 1. MAKE SURE 'async' IS EXACTLY HERE
 async function processSecurePaymentExecutionPipeline() {
     const purchasedItems = getCheckoutItemsForOrder();
     const orderTotal = getCheckoutTotalForOrder();
@@ -1837,7 +1837,7 @@ async function processSecurePaymentExecutionPipeline() {
     const newOrder = createNewOrderObject(purchasedItems, orderTotal);
 
     try {
-        // This 'await' is only valid because 'async' is at the top of the function
+        // 👇 2. Line 1876 is inside this try block, which is valid ONLY if 'async' is above!
         const response = await fetch('https://www.customizecollection.publicvm.com/api/submit-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1867,42 +1867,6 @@ async function processSecurePaymentExecutionPipeline() {
 
     } catch (err) {
         console.error("Network delivery interface failure:", err);
-    }
-}
-    const newOrder = createNewOrderObject(purchasedItems, orderTotal);
-
-    try {
-        // ✅ FIXED URL: Switched to your bulletproof Render subdomain to avoid DNS blocks
-        const response = await fetch('https://www.customizecollection.publicvm.com/api/chat/history/${activeOrderId}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                customer_name: newOrder.customerName || "Guest Buyer",
-                items: JSON.stringify(newOrder.purchasedItems), 
-                total_price: newOrder.total
-            })
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            alert("Database Error: " + data.error);
-            return;
-        }
-
-        newOrder.orderId = data.orderId;
-        allOrders.push(newOrder);
-        activeOrderId = newOrder.orderId;
-
-        saveAppState();
-        syncSystemStateFromActiveOrder();
-        renderUI();
-
-        alert(`Order confirmed securely! Your Order ID is: #${data.orderId}`);
-
-    } catch (err) {
-        console.error("Network delivery interface failure:", err);
-        alert("Network Error: Could not connect to the store backend database. Please try again.");
     }
 }
     
