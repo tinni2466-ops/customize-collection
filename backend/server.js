@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const { Resend } = require('resend');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
@@ -35,38 +35,36 @@ app.use(session({
     cookie: { maxAge: 600000 }
 }));
 
-const db = new sqlite3.Database('./data.db', (err) => {
-    if (err) console.error("Database connection failure:", err.message);
-    else console.log('SQLite database connected.');
+// The Pool auto-connects using the DATABASE_URL environment variable we will set up next
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false // Required for secure cloud database hosting
+    }
 });
 
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_name TEXT UNIQUE,
-        category TEXT,
-        status INTEGER DEFAULT 1
-    )`);
+// Verify connection and initialize table structure
+const initDB = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                customer_name TEXT,
+                items TEXT,
+                total_price NUMERIC,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("PostgreSQL Database connected and initialized smoothly.");
+    } catch (err) {
+        console.error("Database initialization failed:", err.message);
+    }
+};
 
-    db.run(`CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_name TEXT,
-        customer_email TEXT,
-        items TEXT,
-        total_price REAL,
-        status TEXT DEFAULT 'Pending',
-        order_date DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+initDB();
 
-    db.all("SELECT COUNT(*) as count FROM inventory", [], (err, rows) => {
-        if (rows && rows[0].count === 0) {
-            db.run(`INSERT INTO inventory (product_name, category, status) VALUES 
-                ('Traditional Jamdani Saree', 'Saree', 1),
-                ('Pure Mulberry Silk Saree', 'Saree', 1),
-                ('Designer Bridal Lehenga', 'Lehenga', 1)`);
-        }
-    });
-});
+// Export the pool to use it across your routes files
+module.exports = pool;
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
