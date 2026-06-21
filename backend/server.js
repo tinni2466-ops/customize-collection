@@ -100,49 +100,32 @@ io.on('connection', (socket) => {
     });
 });
 
-// ✅ FIXED: Translates Postgres columns directly into the format your admin panel reads
-app.get('/api/all-orders', async (req, res) => {
+// ✅ 1. AUTO-INITIALIZE DATABASE TABLE (Put this right after your 'const pool = ...' setup)
+const initializeDatabase = async () => {
     try {
-        const result = await pool.query("SELECT * FROM orders ORDER BY id DESC");
-        
-        // Map over the rows to convert snake_case to camelCase keys
-        const formattedOrders = result.rows.map(row => {
-            let parsedItems = [];
-            try {
-                // Safely convert the database text back into a functional frontend array
-                parsedItems = typeof row.items === 'string' ? JSON.parse(row.items) : row.items;
-            } catch (e) {
-                parsedItems = row.items; 
-            }
-
-            return {
-                orderId: row.id,                       // Maps database id to frontend orderId
-                customerName: row.customer_name,       // Maps customer_name to customerName
-                purchasedItems: parsedItems,           // Maps items to purchasedItems array
-                total: Number(row.total_price),        // Maps total_price to total
-                status: "customization_pending",       // Fallback default status matching your frontend
-                timeline: [
-                    { title: "Payment Confirmed", time: new Date(row.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
-                ],
-                chatLedgerHistory: []
-            };
-        });
-
-        res.json(formattedOrders); 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                customer_name VARCHAR(255) NOT NULL,
+                items TEXT NOT NULL,
+                total_price NUMERIC(10, 2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("[DATABASE] 'orders' table verified/created successfully.");
     } catch (err) {
-        console.error("Failed to map database orders to admin panel format:", err.message);
-        res.status(500).json({ error: "Server failed to fetch records." });
+        console.error("[DATABASE] Initialization error:", err.message);
     }
-});
+};
+initializeDatabase();
 
-// ✅ CRASH-PROOFED: Safely handles database errors without breaking your frontend admin panel
+// ✅ 2. CLEAN & CRASH-PROOF GET ROUTE (Replaces both duplicates)
 app.get('/api/all-orders', async (req, res) => {
     try {
-        // Test query to fetch records
         const result = await pool.query("SELECT * FROM orders ORDER BY id DESC");
         
         if (!result || !result.rows) {
-            return res.json([]); // Return safe empty array if nothing comes back
+            return res.json([]);
         }
 
         const formattedOrders = result.rows.map(row => {
@@ -169,13 +152,10 @@ app.get('/api/all-orders', async (req, res) => {
         res.json(formattedOrders); 
 
     } catch (err) {
-        // 🔥 This prints the EXACT database error directly into your Render dashboard logs!
-        console.error("============= DATABASE CRASH LOG =============");
-        console.error("The error is:", err.message);
-        console.error("==============================================");
-        
-        // Return a clean empty array so your frontend admin page doesn't crash with a .slice() error
-        res.json([]); 
+        console.error("============= DATABASE LOG =============");
+        console.error("Error message:", err.message);
+        console.error("========================================");
+        res.json([]); // Returns a clean array so your frontend doesn't throw a .slice() error
     }
 });
 
