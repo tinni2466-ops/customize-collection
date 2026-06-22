@@ -256,6 +256,1102 @@
 
 <script>
 
+let targetedOrderId = "";
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadStockConfigurationTables();
+    loadAdminOrders();
+    setInterval(function(){
+    const activeInput = document.activeElement;
+
+    if(
+        activeInput &&
+        (
+            activeInput.id === "owner-extra-amount-input" ||
+            activeInput.id === "owner-final-total-box"
+        )
+    ){
+        return;
+    }
+
+    loadAdminOrders();
+}, 1000);
+
+    document.getElementById("admin-chat-input").addEventListener("keypress", function(event){
+        if(event.key === "Enter"){
+            transmitAdminResponseText();
+        }
+    });
+});
+
+function loadStockConfigurationTables() {
+    const view = document.getElementById("inventory-table-target");
+    if(!view) return;
+
+    view.innerHTML = `
+        <p style="color:#64748b;">
+            Inventory server is not connected yet.
+        </p>
+    `;
+}
+
+async function getAllOrders() {
+    try {
+        const response = await fetch('/api/all-orders', { 
+            method: 'GET',
+            credentials: 'include' 
+        });
+        
+        if (!response.ok) {
+            console.error("Server rejected the request");
+            return [];
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Failed to fetch from server:", error);
+        return []; // Returns an empty array if it fails so your panel doesn't crash
+    }
+}
+    
+function saveAllOrders(orders){
+    localStorage.setItem("allOrdersData", JSON.stringify(orders));
+}
+
+async function loadAdminOrders(){
+    // 👇 We keep the exact name, just add 'await' so it waits for the server response
+    let orders = await getAllOrders(); 
+    
+    // 🛡️ CRASH-PROOF SAFEGUARD: 
+    // If the backend drops out, returns a 500 error page, or sends invalid data,
+    // this instantly forces 'orders' into a safe empty list [] so .slice() won't break.
+    if (!orders || !Array.isArray(orders)) {
+        console.warn("Admin fetch did not return an array list. Safety fallback applied.");
+        orders = [];
+    }
+    
+    const list = document.getElementById("admin-order-list");
+
+    if(!list) return;
+
+    if(orders.length === 0){
+        list.innerHTML = `
+            <div style="color:#64748b;text-align:center;padding:20px;">
+                No orders yet.
+            </div>
+        `;
+
+        document.getElementById("admin-chat-view").innerHTML = "";
+        document.getElementById("admin-order-details").innerHTML = "Select an order";
+        return;
+    }
+
+    list.innerHTML = "";
+
+    // ✅ This can now safely process without triggering "orders.slice is not a function"
+    orders.slice().reverse().forEach(order => {
+        const messageCount = (order.chatLedgerHistory || []).filter(msg => msg.sender === "Customer").length;
+        const isActive = order.orderId === targetedOrderId;
+        const customerLabel = order.customerName || order.orderId || "Customer";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.onclick = () => selectAdminOrder(order.orderId);
+
+        btn.style.cssText = `
+            width:100%;
+            text-align:left;
+            border:1px solid ${isActive ? "#0b57d0" : "#e2e8f0"};
+            background:${isActive ? "#eaf2ff" : "#fff"};
+            border-radius:6px;
+            padding:10px;
+            margin-bottom:8px;
+            cursor:pointer;
+        `;
+
+        btn.innerHTML = `
+            <div style="font-weight:700;color:#0f172a;font-size:13px;">
+                ${customerLabel}
+            </div>
+
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                ₹${order.total || 0} • ${order.status || "active"}
+            </div>
+
+            <div style="font-size:11px;color:#0b57d0;margin-top:4px;">
+                ${messageCount} customer message${messageCount === 1 ? "" : "s"}
+            </div>
+        `;
+
+        list.appendChild(btn);
+    });
+
+    if(!targetedOrderId && orders.length > 0){
+        targetedOrderId = orders[orders.length - 1].orderId;
+    }
+
+    loadSelectedOrderChat();
+    loadSelectedOrderDetails();
+}
+
+function selectAdminOrder(orderId){
+    targetedOrderId = orderId;
+    loadAdminOrders();
+}
+
+// ✅ Changed to read instantly from local storage cache to avoid Promise crashes
+function getSelectedOrder(){
+    try {
+        const cachedOrdersRaw = localStorage.getItem("allOrdersData");
+        if (!cachedOrdersRaw) return null;
+        
+        const orders = JSON.parse(cachedOrdersRaw);
+        if (!Array.isArray(orders)) return null;
+
+        return orders.find(order => order.orderId === targetedOrderId);
+    } catch (e) {
+        console.error("Error reading cached orders array:", e);
+        return null;
+    }
+}
+
+// ✅ Optional enhancement: Ensure your helper helper maps correctly if undefined
+function getOrderCustomerLabel(order) {
+    if (!order) return "Customer";
+    return order.customerName || order.orderId || "Customer";
+}
+    
+function loadSelectedOrderDetails(){
+    const box = document.getElementById("admin-order-details");
+    const order = getSelectedOrder();
+
+    if(!box) return;
+
+    if(!order){
+        box.innerHTML = "Select an order";
+        return;
+    }
+
+    const items = order.purchasedItems || order.items || [];
+    const colorValueFromItem = item => item.color || item.answer2 || "";
+
+    box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:start;">
+            <div>
+                <div style="font-weight:800;color:#0f172a;">${getOrderCustomerLabel(order)}</div>
+                <div style="font-size:12px;color:#64748b;">${order.customerEmail || ""}</div>
+                <div style="font-size:12px;color:#64748b;">Status: ${order.status || "active"}</div>
+            </div>
+
+            <button onclick="acceptSelectedOrderForDelivery()"
+                    style="background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:700;cursor:pointer;">
+                ACCEPT
+            </button>
+        </div>
+
+        <div style="font-weight:800;color:#111;margin-top:8px;">₹${order.total || order.totalPaid || 0}</div>
+
+        <div style="margin-top:12px;font-size:13px;color:#334155;">
+            ${items.length ? items.map(item => `
+                <div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9;">
+                    <img src="${item.img || item.image || ""}"
+                         style="width:58px;height:58px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;"
+                         onerror="this.style.display='none'">
+
+                    <div style="flex:1;">
+                        <b>${item.displayName || item.name}</b>
+                        <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                            ${item.material ? `Material: ${item.material}<br>` : ""}
+                            ${colorValueFromItem(item) ? `
+                                Color:
+                                <span style="
+                                    display:inline-block;
+                                    width:12px;
+                                    height:12px;
+                                    border-radius:50%;
+                                    background:${colorValueFromItem(item)};
+                                    border:1px solid #999;
+                                    vertical-align:middle;
+                                    margin:0 4px;
+                                "></span><br>
+                            ` : ""}
+                            ${item.size ? `Size: ${item.size}<br>` : ""}
+                            ${item.notes ? `Notes: ${item.notes}<br>` : ""}
+                            Qty: ${item.qty || 1}
+                        </div>
+                    </div>
+                </div>
+            `).join("") : "No item details found."}
+        </div>
+
+        ${renderAdminFulfillmentMap(order)}
+    `;
+}
+
+function loadSelectedOrderChat(){
+    const chatView = document.getElementById("admin-chat-view");
+    const order = getSelectedOrder();
+
+    if(!chatView) return;
+
+    chatView.innerHTML = "";
+
+    if(!order){
+        chatView.innerHTML = `
+            <div style="color:#64748b;text-align:center;padding:20px;">
+                Select an order to view messages.
+            </div>
+        `;
+        return;
+    }
+
+    (order.chatLedgerHistory || []).forEach(msg => {
+        showAdminRenderedBubble(msg.sender, msg.text, msg.stamp);
+    });
+}
+
+function transmitAdminResponseText() {
+    const field = document.getElementById("admin-chat-input");
+    const txt = field.value.trim();
+
+    if(!txt) return;
+
+    const orders = getAllOrders();
+    const order = orders.find(order => order.orderId === targetedOrderId);
+
+    if(!order){
+        alert("Select an order first");
+        return;
+    }
+
+    order.chatLedgerHistory = order.chatLedgerHistory || [];
+
+    order.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: "Owner",
+        text: txt,
+        stamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+        })
+    });
+
+    saveAllOrders(orders);
+    field.value = "";
+    loadAdminOrders();
+}
+
+function showAdminRenderedBubble(role, text, stamp = "") {
+    const container = document.getElementById("admin-chat-view");
+    const bubble = document.createElement("div");
+    const isOwner = role === "Owner" || role === "owner";
+
+    bubble.style = `
+        padding:8px 14px;
+        border-radius:12px;
+        max-width:75%;
+        width:fit-content;
+        font-size:14px;
+        word-wrap:break-word;
+        margin-bottom:8px;
+        ${isOwner
+            ? "background:#0b57d0;align-self:flex-end;color:white;"
+            : "background:#cbd5e1;align-self:flex-start;color:#1e293b;"
+        }
+    `;
+
+    bubble.innerHTML = `
+        <div style="font-size:11px;font-weight:bold;margin-bottom:3px;">
+            ${isOwner ? "Owner" : "Customer"}
+        </div>
+        <div>${text || ""}</div>
+        <div style="font-size:10px;opacity:0.75;margin-top:4px;text-align:right;">
+            ${stamp || ""}
+        </div>
+    `;
+
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
+}
+
+function acceptSelectedOrderForDelivery(){
+    const orders = getAllOrders();
+    const order = orders.find(order => order.orderId === targetedOrderId);
+
+    if(!order){
+        alert("Select an order first");
+        return;
+    }
+
+    const stamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    order.status = "delivery_active";
+    order.currentPhase = 3;
+    order.dispatchTimestamp = stamp;
+    order.timeline = order.timeline || [];
+    order.chatLedgerHistory = order.chatLedgerHistory || [];
+
+    order.timeline.push({
+        title: "Delivery Process Activated",
+        time: stamp
+    });
+
+    order.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: "System",
+        text: "Owner accepted the order. Delivery process activated.",
+        stamp: stamp
+    });
+
+    saveAllOrders(orders);
+    loadAdminOrders();
+}
+
+function renderAdminFulfillmentMap(order){
+    const isAccepted = order.currentPhase === 3 || order.status === "delivery_active" || order.status === "delivered";
+    const isDelivered = order.status === "delivered" || order.isDeliveryFinalized;
+
+    return `
+        <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;">
+                Fulfillment Map Tracking Logistics
+            </div>
+
+            <div style="font-size:13px;color:#334155;line-height:1.8;">
+                <div>
+                    <b style="color:#16a34a;">●</b>
+                    Order Settlement Confirmed
+                    <span style="float:right;color:#64748b;">${order.paymentTimestamp || ""}</span>
+                </div>
+
+                <div>
+                    <b style="color:${isAccepted ? "#fb641b" : "#cbd5e1"};">●</b>
+                    Out for Delivery
+                    <span style="float:right;color:#64748b;">${order.dispatchTimestamp || "Waiting"}</span>
+                </div>
+
+                <div>
+                    <b style="color:${isDelivered ? "#16a34a" : "#cbd5e1"};">●</b>
+                    Package Complete
+                    <span style="float:right;color:#64748b;">${order.deliveryTimestamp || "Awaiting"}</span>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <button onclick="acceptSelectedOrderForDelivery()"
+                        style="flex:1;background:#16a34a;color:#fff;border:none;padding:9px 10px;border-radius:6px;font-weight:800;cursor:pointer;">
+                    ACCEPT
+                </button>
+
+                <button onclick="markSelectedOrderDone()"
+                        style="flex:1;background:#0b57d0;color:#fff;border:none;padding:9px 10px;border-radius:6px;font-weight:800;cursor:pointer;">
+                    DONE
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function markSelectedOrderDone(){
+    const orders = getAllOrders();
+    const order = orders.find(order => order.orderId === targetedOrderId);
+
+    if(!order){
+        alert("Select an order first");
+        return;
+    }
+
+    const stamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    order.status = "delivered";
+    order.currentPhase = 3;
+    order.isDeliveryFinalized = true;
+    order.deliveryTimestamp = stamp;
+    order.chatLedgerHistory = order.chatLedgerHistory || [];
+
+    order.chatLedgerHistory.push({
+        id: Date.now(),
+        sender: "System",
+        text: "Owner marked the package as complete.",
+        stamp: stamp
+    });
+
+    saveAllOrders(orders);
+    loadAdminOrders();
+}
+
+// ======================================================
+// OWNER EXTRA AMOUNT + FINAL TOTAL BOXES
+// Paste at bottom of admin.html before 
+// ======================================================
+
+(function(){
+    if(window.ownerAmountBoxPatchInstalled) return;
+    window.ownerAmountBoxPatchInstalled = true;
+
+    const oldLoadSelectedOrderDetails = window.loadSelectedOrderDetails;
+    
+    // 🟢 LOCK STATE DRIVER: Keeps track of whether your keyboard is active
+    window.adminIsTypingInPriceBox = false;
+
+    function moneyNumber(value){
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    }
+
+    // 🟢 SECURE DATA WRITER
+    window.saveDirectOrderPricePatch = function(value){
+        const orders = getAllOrders();
+        const targetId = typeof targetedOrderId !== "undefined" ? targetedOrderId : localStorage.getItem("activeOrderId");
+        const order = orders.find(order => order.orderId === targetId);
+
+        if(!order) return;
+
+        const updatedPrice = moneyNumber(value);
+
+        // Mutate storage variables directly
+        order.total = updatedPrice;
+        order.totalPaid = updatedPrice;
+        order.baseTotal = updatedPrice;
+        order.finalTotal = updatedPrice;
+        order.ownerAddedAmount = 0; 
+
+        saveAllOrders(orders);
+
+        if(localStorage.getItem("activeOrderId") === order.orderId){
+            localStorage.setItem("pendingOrderTotal", String(updatedPrice));
+        }
+        
+        // Instant visual match for your left listing menu panel
+        const listTotalElement = document.getElementById(`order-total-${targetId}`);
+        if(listTotalElement) {
+            listTotalElement.innerText = `₹${updatedPrice}`;
+        }
+    };
+
+    // 🟢 ISOLATED WORKFLOW ACTION FOR THE CHAT BUTTON ONLY
+    window.executeChatButtonWorkflowOnly = function(event) {
+        if(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        const order = getSelectedOrder();
+        if(!order) return;
+
+        // 1. Post/Render exclusively the message log timeline event update
+        // (Ensures the order status does NOT step forward into delivery execution channels)
+        if (typeof appendAdminChatStatusNotification === "function") {
+            appendAdminChatStatusNotification("Order created. You can now message the store about customization.");
+        } else if (typeof renderOrderTimelineMessages === "function") {
+            // Fallback safety to check if your platform relies on a structural data push layout
+            if (!order.timelineMessages) order.timelineMessages = [];
+            
+            // Avoid pushing duplicates if it already exists
+            const msgExists = order.timelineMessages.some(m => m.text && m.text.includes("You can now message"));
+            if (!msgExists) {
+                order.timelineMessages.push({
+                    text: "Order created. You can now message the store about customization.",
+                    timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                });
+                const orders = getAllOrders();
+                const matched = orders.find(o => o.orderId === order.orderId);
+                if (matched) {
+                    matched.timelineMessages = order.timelineMessages;
+                    saveAllOrders(orders);
+                }
+            }
+        }
+
+        // 2. Safely re-render layout blocks to display the newly posted text bubble cleanly
+        if (typeof loadSelectedOrderDetails === "function" && !window.adminIsTypingInPriceBox) {
+            // Temporarily clear our local lock flag variables so it draws the dialogue text bubble update
+            const oldLockState = window.adminIsTypingInPriceBox;
+            window.adminIsTypingInPriceBox = false;
+            oldLoadSelectedOrderDetails();
+            injectOwnerAmountBoxes();
+            window.adminIsTypingInPriceBox = oldLockState;
+        }
+    };
+
+    // 🟢 BUTTON MODIFIER: Splits functionality between the two green elements completely
+    function applySeparatedButtonActions(box) {
+        const buttons = box.querySelectorAll("button");
+        if (buttons && buttons.length > 0) {
+            let foundFirstAccept = false;
+            for (let btn of buttons) {
+                const text = btn.innerText.trim().toUpperCase();
+                
+                if (text === "ACCEPT" || text === "CHAT") {
+                    if (!foundFirstAccept) {
+                        // 🟢 TARGETING BUTTON 1 (TOP): Transform completely into Chat control workflow
+                        btn.innerText = "CHAT";
+                        
+                        // Strip original execution functions to prevent acceptance workflow triggers
+                        btn.removeAttribute("onclick");
+                        btn.onclick = null;
+                        
+                        // Bind securely to our custom notification handler event loop
+                        btn.onclick = window.executeChatButtonWorkflowOnly;
+                        
+                        foundFirstAccept = true;
+                    } else {
+                        // 🟢 TARGETING BUTTON 2 (BOTTOM): Leave as the real deployment accept execution node
+                        btn.innerText = "ACCEPT";
+                        
+                        // Fallback backup script link to re-attach your standard core system function if wiped
+                        if (!btn.getAttribute("onclick") && typeof acceptSelectedOrderForDelivery === "function") {
+                            btn.onclick = function() { acceptSelectedOrderForDelivery(); };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function injectOwnerAmountBoxes(){
+        const box = document.getElementById("admin-order-details");
+        const order = getSelectedOrder();
+
+        if(!box || !order) return;
+
+        // Clean out duplicates cleanly if they exist
+        const oldRow = document.getElementById("owner-amount-row");
+        if(oldRow){
+            oldRow.remove();
+        }
+
+        const currentPriceAmount = order.total || order.totalPaid || 0;
+
+        const row = document.createElement("div");
+        row.id = "owner-amount-row";
+        row.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0 8px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        `;
+
+        // 🟢 PRELOADED INPUT FIELD MAP LAYOUT STRUCT
+        row.innerHTML = `
+            <span style="font-weight:700; color:#111; font-size:14px;">Order Price (₹):</span>
+            <input id="owner-direct-price-input"
+                   type="number"
+                   min="0"
+                   value="${currentPriceAmount}"
+                   placeholder="Add amount"
+                   onfocus="window.adminIsTypingInPriceBox = true;"
+                   oninput="saveDirectOrderPricePatch(this.value)"
+                   onblur="window.adminIsTypingInPriceBox = false;"
+                   onkeydown="if(event.key === 'Enter') { this.blur(); }"
+                   style="width:140px; padding:5px 7px; border:2px solid #06b6d4; border-radius:4px; font-weight:800; cursor:text; color:#111; background:#ffffff; outline:none;">
+        `;
+
+        const firstBlock = box.firstElementChild;
+        if(firstBlock){
+            firstBlock.insertAdjacentElement("afterend", row);
+        } else {
+            box.prepend(row);
+        }
+
+        // Always check and disconnect event callbacks on layout refreshes
+        applySeparatedButtonActions(box);
+    }
+
+    // 🟢 INTERCEPTOR PROXY: Overrides the old function layout to pause updates
+    window.loadSelectedOrderDetails = function(){
+        // IF YOU ARE TYPING, DO NOTHING. Stop the background reload loop completely!
+        if (window.adminIsTypingInPriceBox) {
+            const inputField = document.getElementById("owner-direct-price-input");
+            // If the element was somehow lost, let it rebuild, otherwise skip completely!
+            if (inputField && document.activeElement === inputField) {
+                return; 
+            }
+        }
+
+        // Run original core structure only when user is idle
+        if(typeof oldLoadSelectedOrderDetails === "function"){
+            oldLoadSelectedOrderDetails();
+        }
+
+        injectOwnerAmountBoxes();
+    };
+})();
+
+// ==========================================================================
+// 3 & 4. DYNAMIC TWO-WAY INVENTORY ENGINE WITH PERMANENT STORAGE LOCKS
+// ==========================================================================
+
+const STORAGE_KEY = "storefront_inventory_cache";
+
+function renderInventoryCoreManagement() {
+    const hubContainer = document.getElementById("dynamic-stockout-button-hub");
+    if (!hubContainer) return;
+
+    hubContainer.innerHTML = "";
+
+    const colorMap = {
+        '#FF5733': 'Flame Red', '#C70039': 'Crimson', '#900C3F': 'Deep Maroon',
+        '#581845': 'Plum Wine', '#FF8D1A': 'Tangerine', '#FFC300': 'Amber Gold',
+        '#EDDD53': 'Mustard Yellow', '#ADD45C': 'Soft Lime', '#57C785': 'Emerald Mint',
+        '#00BAAD': 'Teal Turquoise', '#2A7B9B': 'Ocean Slate', '#3D3D6B': 'Midnight Navy',
+        '#ECF0F1': 'Pearl White', '#95A5A6': 'Stone Gray', '#7F8C8D': 'Charcoal',
+        '#34495E': 'Dark Slate', '#16A085': 'Sea Green', '#27AE60': 'Forest Green',
+        '#3498DB': 'Dodger Blue', '#9B59B6': 'Amethyst', '#8E44AD': 'Royal Purple'
+    };
+
+    // Shared key for all blouse attribute entries — must match storefront-inventory-sync.js
+    const BLOUSE_SHARED = 'BLOUSE_SHARED';
+    const BLOUSE_SIZES  = ['Bust 32', 'Bust 34', 'Bust 36', 'Bust 38', 'Bust 40'];
+
+    if (typeof subProducts === 'undefined') {
+        hubContainer.innerHTML = '<p style="color:red;padding:10px;">Error: subProducts data not found.</p>';
+        return;
+    }
+
+    const savedStockOuts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+    Object.keys(subProducts).forEach(categoryName => {
+        const productsInCat = subProducts[categoryName];
+        if (!productsInCat || productsInCat.length === 0) return;
+
+        const categoryBlock = document.createElement("div");
+        categoryBlock.className = "inventory-category-group-wrapper";
+        categoryBlock.innerHTML = `<h4 class="inventory-category-title">${categoryName}</h4>`;
+
+        // ============================================================
+        // BLOUSE DESIGNS — ONE unified section (shared color/size/mat)
+        // Individual per-image style blocks remain below as compact tiles
+        // ============================================================
+        if (categoryName === "Blouse Designs") {
+
+            // Collect materials from first blouse product that has any
+            let blouseMatOptions = [];
+            productsInCat.forEach(p => {
+                if (blouseMatOptions.length === 0 && typeof sareeMaterials !== "undefined") {
+                    const m = sareeMaterials[p.name];
+                    if (m && m.length > 0) blouseMatOptions = m;
+                }
+            });
+
+            // --- Shared color chips ---
+            const colorChipsHtml = Object.entries(colorMap).map(([hex, name]) => {
+                const isOut = savedStockOuts[`${BLOUSE_SHARED}||Color Variant||${name}`] === true;
+                return `<button class="inv-color-control-chip ${isOut ? 'item-attr-stocked-out' : ''}"
+                            data-stocked-out="${isOut}"
+                            onclick="toggleGranularStock('Color Variant','${BLOUSE_SHARED}','${name}',this)">
+                            <span class="inv-color-dot" style="background:${hex};"></span>
+                            ${isOut ? `❌ ${name} Out` : name}
+                        </button>`;
+            }).join('');
+
+            // --- Shared size chips ---
+            const sizeChipsHtml = BLOUSE_SIZES.map(size => {
+                const isOut = savedStockOuts[`${BLOUSE_SHARED}||Size Option||${size}`] === true;
+                return `<button class="${isOut ? 'item-attr-stocked-out' : ''}"
+                            data-stocked-out="${isOut}"
+                            onclick="toggleGranularStock('Size Option','${BLOUSE_SHARED}','${size}',this)">
+                            ${isOut ? `❌ ${size} Out` : size}
+                        </button>`;
+            }).join('');
+
+            // --- Shared material chips ---
+            const matChipsHtml = blouseMatOptions.length === 0
+                ? `<em class="inv-empty-text">Standard Base Fabric (no variants)</em>`
+                : blouseMatOptions.map(mat => {
+                    const isOut = savedStockOuts[`${BLOUSE_SHARED}||Material option||${mat.name}`] === true;
+                    return `<button class="${isOut ? 'item-attr-stocked-out' : ''}"
+                                data-stocked-out="${isOut}"
+                                onclick="toggleGranularStock('Material option','${BLOUSE_SHARED}','${mat.name}',this)">
+                                ${isOut ? `❌ ${mat.name} Out` : mat.name}
+                            </button>`;
+                  }).join('');
+
+            // Shared settings card
+            const sharedCard = document.createElement("div");
+            sharedCard.className = "inventory-product-management-row";
+            sharedCard.style.cssText = "border-left:4px solid #e65100;margin-bottom:18px;";
+            sharedCard.innerHTML = `
+                <div style="font-size:13px;font-weight:700;color:#e65100;margin-bottom:12px;">
+                    🧵 Shared Settings — applies to <em>all</em> blouse designs at once
+                </div>
+                <div class="inv-attributes-management-grid">
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-ruler"></i> Sizes — Shared</span>
+                        <div class="inv-chips-flex">${sizeChipsHtml}</div>
+                    </div>
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-scroll"></i> Materials — Shared</span>
+                        <div class="inv-chips-flex">${matChipsHtml}</div>
+                    </div>
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-palette"></i> Production Colors — Shared</span>
+                        <div class="inv-chips-flex">${colorChipsHtml}</div>
+                    </div>
+                </div>
+            `;
+            categoryBlock.appendChild(sharedCard);
+
+            // Per-image style grid header
+            const styleHeader = document.createElement("div");
+            styleHeader.style.cssText = "font-size:11px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;";
+            styleHeader.textContent = "Individual Design Styles — block a specific design image";
+            categoryBlock.appendChild(styleHeader);
+
+            // Per-image compact grid
+            const styleGrid = document.createElement("div");
+            styleGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;";
+            productsInCat.forEach(product => {
+                const imgFilename = (product.img || "").split('/').pop().split('?')[0].trim() || "placeholder.png";
+                const isOut       = savedStockOuts[`${imgFilename}||Entire Product Style||${imgFilename}`] === true;
+                const tile = document.createElement("div");
+                tile.style.cssText = "display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;";
+                tile.innerHTML = `
+                    <img src="${product.img || 'images/placeholder.png'}"
+                         style="width:38px;height:38px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;"
+                         onerror="this.style.display='none'">
+                    <div style="flex:1;min-width:0;font-size:12px;">
+                        <div style="font-weight:600;color:#212121;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${product.name}">${product.name}</div>
+                        <div style="color:#999;">₹${product.price}</div>
+                    </div>
+                    <button class="inv-stockout-whole-product-btn ${isOut ? 'item-attr-stocked-out' : ''}"
+                            data-stocked-out="${isOut}"
+                            style="font-size:11px;padding:4px 8px;white-space:nowrap;flex-shrink:0;"
+                            onclick="toggleGranularStock('Entire Product Style','${imgFilename}','${imgFilename}',this)">
+                        <i class="fa ${isOut ? 'fa-times' : 'fa-check-circle'}"></i>
+                        ${isOut ? 'Blocked' : 'Active'}
+                    </button>
+                `;
+                styleGrid.appendChild(tile);
+            });
+            categoryBlock.appendChild(styleGrid);
+            hubContainer.appendChild(categoryBlock);
+            return; // skip normal per-product loop for Blouse Designs
+        }
+
+        // ============================================================
+        // DEFAULT: all other categories — original per-product rows
+        // ============================================================
+        productsInCat.forEach(product => {
+            const productName = product.name;
+            const imgSrc      = product.img || "";
+            const imgFilename = imgSrc.split('/').pop().split('?')[0].trim() || "placeholder.png";
+
+            const sizeOptions     = (typeof subProductSizeOptions !== 'undefined' ? subProductSizeOptions[productName] : []) || [];
+            const materialOptions = (typeof sareeMaterials !== 'undefined' ? sareeMaterials[productName] : []) || [];
+
+            const itemContainer = document.createElement("div");
+            itemContainer.className = "inventory-product-management-row";
+
+            const wholeProductKey    = `${imgFilename}||Entire Product Style||${imgFilename}`;
+            const isWholeProductOut  = savedStockOuts[wholeProductKey] === true;
+
+            itemContainer.innerHTML = `
+                <div class="inv-product-meta-header">
+                    <img src="${product.img || 'images/placeholder.png'}" class="inv-prod-thumb">
+                    <div>
+                        <strong class="inv-prod-name">${productName}</strong>
+                        <div class="inv-action-header-buttons">
+                            <button class="inv-stockout-whole-product-btn ${isWholeProductOut ? 'item-attr-stocked-out' : ''}"
+                                data-stocked-out="${isWholeProductOut}"
+                                onclick="toggleGranularStock('Entire Product Style', '${imgFilename}', '${imgFilename}', this)">
+                                <i class="fa ${isWholeProductOut ? 'fa-times' : 'fa-check-circle'}"></i>
+                                ${isWholeProductOut ? 'Whole Style Blocked' : 'Style Active'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inv-attributes-management-grid">
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-ruler"></i> Sizes</span>
+                        <div class="inv-chips-flex">
+                            ${sizeOptions.length === 0
+                                ? '<em class="inv-empty-text">Drape/Free Size Only</em>'
+                                : sizeOptions.map(size => {
+                                    const isSizeOut = savedStockOuts[`${imgFilename}||Size Option||${size}`] === true;
+                                    return `<button class="${isSizeOut ? 'item-attr-stocked-out' : ''}"
+                                                data-stocked-out="${isSizeOut}"
+                                                onclick="toggleGranularStock('Size Option', '${imgFilename}', '${size}', this)">
+                                                ${isSizeOut ? '❌ ' + size + ' Out' : size}
+                                            </button>`;
+                                  }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-scroll"></i> Materials</span>
+                        <div class="inv-chips-flex">
+                            ${materialOptions.length === 0
+                                ? '<em class="inv-empty-text">Standard Base Fabric</em>'
+                                : materialOptions.map(mat => {
+                                    const isMatOut = savedStockOuts[`${imgFilename}||Material option||${mat.name}`] === true;
+                                    return `<button class="${isMatOut ? 'item-attr-stocked-out' : ''}"
+                                                data-stocked-out="${isMatOut}"
+                                                onclick="toggleGranularStock('Material option', '${imgFilename}', '${mat.name}', this)">
+                                                ${isMatOut ? '❌ ' + mat.name + ' Out' : mat.name}
+                                            </button>`;
+                                  }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="inv-attr-col">
+                        <span><i class="fa fa-palette"></i> Production Colors</span>
+                        <div class="inv-chips-flex">
+                            ${Object.entries(colorMap).map(([hex, name]) => {
+                                const isColorOut = savedStockOuts[`${imgFilename}||Color Variant||${name}`] === true;
+                                return `<button class="inv-color-control-chip ${isColorOut ? 'item-attr-stocked-out' : ''}"
+                                            data-stocked-out="${isColorOut}"
+                                            onclick="toggleGranularStock('Color Variant', '${imgFilename}', '${name}', this)">
+                                            <span class="inv-color-dot" style="background: ${hex};"></span>
+                                            ${isColorOut ? '❌ ' + name + ' Out' : name}
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            categoryBlock.appendChild(itemContainer);
+        });
+
+        hubContainer.appendChild(categoryBlock);
+    });
+}
+function toggleGranularStock(attributeType, targetProduct, valueLabel, buttonNode) {
+    // targetProduct now reliably holds the clean imgFilename passed from renderInventoryCoreManagement
+    const imageIdentifier = targetProduct; 
+    const isCurrentlyStockedOut = buttonNode.getAttribute("data-stocked-out") === "true";
+    
+    let savedStockOuts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    
+    // ========================================================
+    // FIXED STORAGE KEY GENERATION
+    // ========================================================
+    // Uses valueLabel at the end so individual attributes (Sizes/Colors/Mats) get tracked uniquely!
+    const storageUniqueId = `${imageIdentifier}||${attributeType}||${valueLabel}`;
+    const timerStorageKey = `${imageIdentifier}||${imageIdentifier}||timer`;
+    // ========================================================
+
+    if (isCurrentlyStockedOut) {
+        console.log(`[STORAGE SYNC] Restocking: ${storageUniqueId}`);
+        delete savedStockOuts[storageUniqueId];
+        
+        // Only clear the timer if they are restocking the entire product style
+        if (attributeType === "Entire Product Style") {
+            delete savedStockOuts[timerStorageKey];
+        }
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedStockOuts));
+
+        buttonNode.setAttribute("data-stocked-out", "false");
+        buttonNode.classList.remove("item-attr-stocked-out");
+        
+        if (buttonNode.classList.contains("inv-stockout-whole-product-btn")) {
+            buttonNode.innerHTML = `<i class="fa fa-check-circle"></i> Style Active`;
+        } else if (buttonNode.classList.contains("inv-color-control-chip")) {
+            const existingDot = buttonNode.querySelector(".inv-color-dot");
+            const savedHex = existingDot ? existingDot.style.backgroundColor : "";
+            buttonNode.innerHTML = `<span class="inv-color-dot" style="background: ${savedHex};"></span> ${valueLabel}`;
+        } else {
+            buttonNode.innerHTML = valueLabel;
+        }
+
+        window.dispatchEvent(new Event("storage"));
+    } else {
+        const confirmationText = `Confirm Inventory Action:\nMark ${attributeType} "${valueLabel}" as OUT OF STOCK?`;
+        
+        if (confirm(confirmationText)) {
+            console.warn(`[STORAGE SYNC] Stocking Out: ${storageUniqueId}`);
+            savedStockOuts[storageUniqueId] = true;
+
+            if (attributeType === "Entire Product Style") {
+                const timelineInput = prompt(
+                    `Enter Restock Timeline (e.g., "Restocking in 3 Hours", "Back Tomorrow"):`, 
+                    "Restocking Soon"
+                );
+                savedStockOuts[timerStorageKey] = timelineInput && timelineInput.trim() !== "" ? timelineInput.trim() : "Restocking Soon";
+            }
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedStockOuts));
+
+            buttonNode.setAttribute("data-stocked-out", "true");
+            buttonNode.classList.add("item-attr-stocked-out");
+            
+            if (buttonNode.classList.contains("inv-stockout-whole-product-btn")) {
+                buttonNode.innerHTML = `<i class="fa fa-times"></i> Whole Style Blocked`;
+            } else if (buttonNode.classList.contains("inv-color-control-chip")) {
+                const existingDot = buttonNode.querySelector(".inv-color-dot");
+                const savedHex = existingDot ? existingDot.style.backgroundColor : "";
+                buttonNode.innerHTML = `<span class="inv-color-dot" style="background: ${savedHex};"></span> ❌ ${valueLabel} Out`;
+            } else {
+                buttonNode.innerHTML = `❌ ${valueLabel} Out`;
+            }
+
+            window.dispatchEvent(new Event("storage"));
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", renderInventoryCoreManagement);
+
+// Automatically check if the server already knows we are logged in
+window.addEventListener('DOMContentLoaded', () => {
+    // If you already verified recently, the server session handles it, but let's secure the interface view
+    document.getElementById('twoFactorPinInput').focus();
+});
+
+async function submitAdmin2FACode() {
+    const pinCode = document.getElementById('twoFactorPinInput').value;
+    const errorBox = document.getElementById('errorMessage');
+    
+    errorBox.style.display = "none";
+
+    // Call your backend verification script endpoint we added in server.js
+    const response = await fetch('/api/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: pinCode })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        // Hide the block wall completely and reveal your history workspace dashboard contents!
+        document.getElementById('twoFactorWall').style.display = 'none';
+    } else {
+        errorBox.textContent = "Invalid code. Please check your phone app and try again.";
+        errorBox.style.display = "block";
+        document.getElementById('twoFactorPinInput').value = "";
+    }
+}
+
+function getCachedOrders(){
+  try {
+    const raw = localStorage.getItem("allOrdersData");
+    const orders = raw ? JSON.parse(raw) : [];
+    return Array.isArray(orders) ? orders : [];
+  } catch {
+    return [];
+  }
+}
+
+const oldLoadAdminOrders = window.loadAdminOrders;
+window.loadAdminOrders = async function(){
+  if (typeof oldLoadAdminOrders === "function") {
+    const originalGetAllOrders = window.getAllOrders;
+
+    window.getAllOrders = async function(){
+      const orders = await originalGetAllOrders();
+      if (Array.isArray(orders)) {
+        localStorage.setItem("allOrdersData", JSON.stringify(orders));
+      }
+      return Array.isArray(orders) ? orders : getCachedOrders();
+    };
+
+    await oldLoadAdminOrders();
+    window.getAllOrders = originalGetAllOrders;
+  }
+};
+
+window.getSelectedOrder = function(){
+  return getCachedOrders().find(o => o.orderId === targetedOrderId) || null;
+};
+
+window.loadSelectedOrderDetails = function(){
+  const box = document.getElementById("admin-order-details");
+  const order = getSelectedOrder();
+  if (!box) return;
+
+  if (!order) {
+    box.innerHTML = "Select an order";
+    return;
+  }
+
+  const items = order.purchasedItems || order.items || [];
+
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start;">
+      <div>
+        <div style="font-weight:800;color:#0f172a;">${order.customerName || order.orderId || "Customer"}</div>
+        <div style="font-size:12px;color:#64748b;">Status: ${order.status || "active"}</div>
+      </div>
+      <button onclick="loadSelectedOrderChat()" style="background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:700;cursor:pointer;">CHAT</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 8px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+      <span style="font-weight:700;color:#111;font-size:14px;">Order Price (₹):</span>
+      <input type="number" value="${order.total || order.totalPaid || 0}" oninput="saveDirectOrderPricePatch(this.value)" style="width:140px;padding:5px 7px;border:2px solid #06b6d4;border-radius:4px;font-weight:800;">
+    </div>
+
+    <div style="font-weight:800;color:#111;margin-top:8px;">₹${order.total || order.totalPaid || 0}</div>
+
+    <div style="margin-top:12px;font-size:13px;color:#334155;">
+      ${items.map(item => `
+        <div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9;">
+          <img src="${item.img || item.image || ""}" style="width:58px;height:58px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.style.display='none'">
+          <div>
+            <b>${item.displayName || item.name || "Item"}</b>
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">
+              Material: ${item.material || "Organza"}<br>
+              Color: ${item.color || ""}<br>
+              Size: ${item.size || ""}<br>
+              Notes: ${item.notes || "None"}<br>
+              Qty: ${item.qty || 1}
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+
+    ${renderAdminFulfillmentMap(order)}
+  `;
+};
+
+window.saveDirectOrderPricePatch = function(value){
+  const orders = getCachedOrders();
+  const order = orders.find(o => o.orderId === targetedOrderId);
+  if (!order) return;
+
+  const amount = Number(value) || 0;
+  order.total = amount;
+  order.totalPaid = amount;
+  order.baseTotal = amount;
+  order.finalTotal = amount;
+
+  localStorage.setItem("allOrdersData", JSON.stringify(orders));
+};
+
+window.loadSelectedOrderChat = function(){
+  const chatView = document.getElementById("admin-chat-view");
+  const order = getSelectedOrder();
+  if (!chatView) return;
+
+  if (!order) {
+    chatView.innerHTML = `<div style="color:#64748b;text-align:center;padding:20px;">Select an order to view messages.</div>`;
+    return;
+  }
+
+  const messages = order.chatLedgerHistory?.length ? order.chatLedgerHistory : [{
+    sender: "Customer",
+    text: "Order created. You can now message the store about customization.",
+    stamp: order.paymentTimestamp || ""
+  }];
+
+  chatView.innerHTML = messages.map(msg => `
+    <div style="padding:8px 14px;border-radius:12px;max-width:75%;width:fit-content;font-size:14px;margin-bottom:8px;background:${msg.sender === "Owner" ? "#0b57d0" : "#cbd5e1"};color:${msg.sender === "Owner" ? "white" : "#1e293b"};align-self:${msg.sender === "Owner" ? "flex-end" : "flex-start"};">
+      <div style="font-size:11px;font-weight:bold;margin-bottom:3px;">${msg.sender || "Customer"}</div>
+      <div>${msg.text || ""}</div>
+      <div style="font-size:10px;opacity:.75;margin-top:4px;text-align:right;">${msg.stamp || ""}</div>
+    </div>
+  `).join("");
+};
+    
 (function(){
   if (window.adminOrderButtonWorkflowFixInstalled) return;
   window.adminOrderButtonWorkflowFixInstalled = true;
