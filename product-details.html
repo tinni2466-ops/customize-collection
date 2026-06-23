@@ -6006,6 +6006,70 @@ if (document.readyState === "loading") {
     initializeInventorySyncEngine();
 }
 
+(function () {
+    'use strict';
+
+    const BACKEND     = 'https://customize-collection.onrender.com';
+    const STORAGE_KEY = 'storefront_inventory_cache';
+
+    // ── 1. TRIGGER THE CORRECT SYNC FUNCTION FOR EACH PAGE ──────
+    function runStockSync() {
+        // product-details.html uses applyMasterStockSync
+        if (typeof applyMasterStockSync === 'function') applyMasterStockSync();
+        // index.html uses applyIndexGridStockSync
+        if (typeof applyIndexGridStockSync === 'function') applyIndexGridStockSync();
+    }
+
+    // ── 2. FETCH LATEST STOCK STATE FROM BACKEND ON PAGE LOAD ───
+    //    Overwrites localStorage so the inline sync engine picks
+    //    up any stock-outs the admin set from a different device.
+    async function syncInventoryFromBackend() {
+        try {
+            const res = await fetch(BACKEND + '/api/get-inventory-cache');
+            if (!res.ok) return;
+            const backendCache = await res.json();
+            if (backendCache && typeof backendCache === 'object' && Object.keys(backendCache).length > 0) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(backendCache));
+                runStockSync();
+            }
+        } catch {
+            // Backend unreachable — use whatever is already in localStorage
+        }
+    }
+
+    // ── 3. SOCKET.IO: LIVE INVENTORY UPDATES ────────────────────
+    //    When admin toggles a stock button, the server broadcasts
+    //    inventory_cache_updated. We update localStorage and re-run
+    //    the sync engine so the page reflects the change instantly.
+    function connectInventorySocket() {
+        if (typeof io === 'undefined') { setTimeout(connectInventorySocket, 500); return; }
+        try {
+            const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
+            sock.on('inventory_cache_updated', function (data) {
+                if (data && data.cache && typeof data.cache === 'object') {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.cache));
+                    runStockSync();
+                }
+            });
+        } catch (e) {
+            console.warn('[Inventory Bridge] Socket error:', e);
+        }
+    }
+
+    // ── 4. INIT ──────────────────────────────────────────────────
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            syncInventoryFromBackend();
+            connectInventorySocket();
+        });
+    } else {
+        syncInventoryFromBackend();
+        connectInventorySocket();
+    }
+
+    console.log('[Inventory Bridge] Loaded — stock-out sync active.');
+})();
+    
 </script>
 </body>
 </html>
