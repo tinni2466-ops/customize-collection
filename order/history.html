@@ -3788,6 +3788,156 @@ const sareeMaterials = {
 ],
 
 };
+
+(function () {
+    'use strict';
+
+    const BACKEND = 'https://customize-collection.onrender.com';
+
+    // ── 1. ADMIN SOCKET CONNECTION ──────────────────────────────
+    let adminSocket = null;
+    function connectAdminSocket() {
+        if (typeof io === 'undefined') { setTimeout(connectAdminSocket, 500); return; }
+        try {
+            adminSocket = io(BACKEND, { transports: ['polling', 'websocket'] });
+            adminSocket.on('connect', () => {
+                console.log('[Admin Bridge] Socket connected');
+                adminSocket.emit('join_admin_channel');
+            });
+            // Refresh order list automatically when any customer sends a message
+            adminSocket.on('customer_message_received', () => {
+                if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            });
+        } catch (e) {
+            console.warn('[Admin Bridge] Socket setup failed:', e);
+        }
+    }
+    connectAdminSocket();
+
+    // ── 2. SAFE GETTER — reads from localStorage cache, no async issues ──
+    function getOrderFromCache(orderId) {
+        try {
+            const raw = localStorage.getItem('allOrdersData');
+            if (!raw) return null;
+            const list = JSON.parse(raw);
+            return Array.isArray(list) ? list.find(o => o.orderId === orderId) : null;
+        } catch { return null; }
+    }
+
+    function saveOrderToCache(updatedOrder) {
+        try {
+            const raw = localStorage.getItem('allOrdersData');
+            let list = [];
+            try { list = JSON.parse(raw) || []; } catch { }
+            const idx = list.findIndex(o => o.orderId === updatedOrder.orderId);
+            if (idx >= 0) list[idx] = updatedOrder;
+            else list.push(updatedOrder);
+            localStorage.setItem('allOrdersData', JSON.stringify(list));
+        } catch { }
+    }
+
+    // ── 3. REPLACE transmitAdminResponseText ────────────────────
+    //    The original calls getAllOrders() without await → broken.
+    //    This version uses the localStorage cache + backend API.
+    window.transmitAdminResponseText = function () {
+        const field = document.getElementById('admin-chat-input');
+        if (!field) return;
+        const txt = field.value.trim();
+        if (!txt) return;
+
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) { alert('Select an order first'); return; }
+
+        const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Update localStorage immediately so the admin UI refreshes instantly
+        const order = getOrderFromCache(orderId);
+        if (order) {
+            order.chatLedgerHistory = order.chatLedgerHistory || [];
+            order.chatLedgerHistory.push({ id: Date.now(), sender: 'Owner', text: txt, stamp });
+            saveOrderToCache(order);
+        }
+
+        field.value = '';
+        if (typeof loadAdminOrders === 'function') loadAdminOrders();
+
+        // POST to backend → server emits receive_chat_message to the order room
+        fetch(BACKEND + '/api/admin-send-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, message: txt, sender: 'Owner' })
+        }).catch(() => { /* localStorage update already done above */ });
+    };
+
+    // ── 4. REPLACE acceptSelectedOrderForDelivery ───────────────
+    const _origAccept = window.acceptSelectedOrderForDelivery;
+    window.acceptSelectedOrderForDelivery = function () {
+        // Run original (updates localStorage + re-renders admin list)
+        if (typeof _origAccept === 'function') _origAccept();
+
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) return;
+
+        // POST to backend → server emits order_status_changed to customer
+        fetch(BACKEND + '/api/admin-update-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, action: 'accept' })
+        }).catch(() => {});
+    };
+
+    // ── 5. REPLACE markSelectedOrderDone ────────────────────────
+    const _origDone = window.markSelectedOrderDone;
+    window.markSelectedOrderDone = function () {
+        // Run original (updates localStorage + re-renders admin list)
+        if (typeof _origDone === 'function') _origDone();
+
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) return;
+
+        // POST to backend → server emits order_status_changed to customer
+        fetch(BACKEND + '/api/admin-update-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, action: 'done' })
+        }).catch(() => {});
+    };
+
+    // ── 6. INTERCEPT localStorage writes to inventory cache ─────
+    //    Whenever admin toggles a stock button, sync to backend
+    //    which then broadcasts inventory_cache_updated to all storefronts.
+    const _origSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+        _origSetItem.call(this, key, value);
+        if (key === 'storefront_inventory_cache') {
+            try {
+                const cache = JSON.parse(value);
+                fetch(BACKEND + '/api/sync-inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cache })
+                }).catch(() => {});
+            } catch (e) {}
+        }
+    };
+
+    // ── 7. LOAD INITIAL INVENTORY CACHE FROM BACKEND ────────────
+    //    So the admin UI reflects any stock state set on another device.
+    (async function syncAdminInventoryOnLoad() {
+        try {
+            const res = await fetch(BACKEND + '/api/get-inventory-cache');
+            if (!res.ok) return;
+            const backendCache = await res.json();
+            if (backendCache && typeof backendCache === 'object' && Object.keys(backendCache).length > 0) {
+                // Use the raw Storage.prototype to avoid triggering our own sync loop
+                _origSetItem.call(localStorage, 'storefront_inventory_cache', JSON.stringify(backendCache));
+                if (typeof renderInventoryCoreManagement === 'function') renderInventoryCoreManagement();
+            }
+        } catch { }
+    })();
+
+    console.log('[Admin Bridge] Loaded — ACCEPT/DONE/CHAT wired to backend socket.');
+})();
     
 </script>
 </body>
