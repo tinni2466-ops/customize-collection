@@ -2883,6 +2883,269 @@ function clearOldOrder() {
     displayCartProductsOnOrderPage();
 })();
 
+(function () {
+    'use strict';
+
+    const BACKEND = 'https://customize-collection.onrender.com';
+
+    // ── 1. FIX hideFulfillmentMapForNow ─────────────────────────
+    //    The original function ALWAYS hides panel-phase-3.
+    //    We replace it with a conditional version: only hide when
+    //    the order hasn't been accepted/delivered yet.
+    window.hideFulfillmentMapForNow = function () {
+        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        const isAccepted = order && (
+            order.currentPhase >= 3 ||
+            order.status === 'delivery_active' ||
+            order.status === 'delivered'
+        );
+        if (isAccepted) return; // Keep visible — admin already accepted
+        const panel3 = document.getElementById('panel-phase-3');
+        if (panel3) { panel3.style.display = 'none'; panel3.classList.remove('active'); }
+    };
+
+    // ── 2. FORCE-SHOW FULFILLMENT PANEL WITH CORRECT STATE ──────
+    function showFulfillmentPanel(order) {
+        const p1  = document.getElementById('panel-phase-1');
+        const p1c = document.getElementById('panel-phase-1-card');
+        const p1u = document.getElementById('panel-phase-1-upi');
+        const p2  = document.getElementById('panel-phase-2');
+        const p3  = document.getElementById('panel-phase-3');
+
+        if (p1)  p1.style.display  = 'none';
+        if (p1c) p1c.style.display = 'none';
+        if (p1u) p1u.style.display = 'none';
+        if (p2)  { p2.style.display = 'block'; p2.classList.add('active'); }
+        if (p3)  { p3.style.display = 'block'; p3.classList.add('active'); }
+
+        // Lock the chat input so customers can't type once accepted
+        const chatFrame = document.getElementById('chat-workspace-frame');
+        if (chatFrame) chatFrame.classList.add('locked-state');
+
+        // Populate milestone timestamps
+        const stamp1     = document.getElementById('stamp-time-milestone-1');
+        const stamp2     = document.getElementById('stamp-time-milestone-2');
+        const stamp3     = document.getElementById('stamp-time-milestone-3');
+        const node2      = document.getElementById('node-milestone-2');
+        const node3      = document.getElementById('node-milestone-3');
+        const banner     = document.getElementById('banner-fulfillment-final');
+        const gfxLine    = document.getElementById('timeline-graphics-wrapper');
+
+        if (stamp1) stamp1.innerText = order.paymentTimestamp  || '--:--';
+        if (stamp2) stamp2.innerText = order.dispatchTimestamp || 'In Progress';
+
+        const isDelivered = order.status === 'delivered' || order.isDeliveryFinalized;
+
+        if (isDelivered) {
+            if (node2)   node2.className = 'milestone-node-item completed';
+            if (node3)   node3.className = 'milestone-node-item completed';
+            if (stamp3)  stamp3.innerText = order.deliveryTimestamp || 'Delivered';
+            if (banner)  banner.style.display = 'flex';
+            if (gfxLine) gfxLine.classList.add('pipeline-completed');
+        } else {
+            if (node2)   node2.className = 'milestone-node-item active';
+            if (node3)   node3.className = 'milestone-node-item';
+            if (stamp3)  stamp3.innerText = 'Awaiting Arrival';
+            if (banner)  banner.style.display = 'none';
+            if (gfxLine) gfxLine.classList.remove('pipeline-completed');
+        }
+    }
+
+    // ── 3. APPLY STATUS CHANGE (from socket or API poll) ────────
+    function applyStatusChange(data, order) {
+        if (!order) return;
+
+        if (data.action === 'accepted' || data.status === 'delivery_active') {
+            const stamp = data.dispatchTimestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            order.status           = 'delivery_active';
+            order.currentPhase     = 3;
+            order.dispatchTimestamp = stamp;
+            if (window.systemApplicationState) {
+                window.systemApplicationState.currentPhase      = 3;
+                window.systemApplicationState.dispatchTimestamp = stamp;
+            }
+            pushSystemMsg(order, 'Owner accepted the order. Delivery process activated.');
+        }
+
+        if (data.action === 'delivered' || data.status === 'delivered') {
+            const stamp = data.deliveryTimestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            order.status               = 'delivered';
+            order.isDeliveryFinalized  = true;
+            order.deliveryTimestamp    = stamp;
+            if (window.systemApplicationState) {
+                window.systemApplicationState.isDeliveryFinalized = true;
+                window.systemApplicationState.deliveryTimestamp   = stamp;
+            }
+            pushSystemMsg(order, 'Owner marked the package as complete.');
+        }
+
+        if (typeof saveAppState === 'function') saveAppState();
+        showFulfillmentPanel(order);
+        if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
+    }
+
+    function pushSystemMsg(order, text) {
+        order.chatLedgerHistory = order.chatLedgerHistory || [];
+        if (!order.chatLedgerHistory.some(m => m.text === text)) {
+            const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            order.chatLedgerHistory.push({ id: Date.now(), sender: 'System', text, stamp });
+        }
+    }
+
+    // ── 4. SOCKET CONNECTION ─────────────────────────────────────
+    let _socket = null;
+
+    function connectSocket() {
+        const orderId = localStorage.getItem('activeOrderId');
+        if (!orderId) { setTimeout(connectSocket, 2000); return; }
+        if (typeof io === 'undefined') { setTimeout(connectSocket, 500); return; }
+
+        try {
+            // Reuse the existing socket if already connected (order.html already calls io())
+            _socket = (window.socket && window.socket.connected) ? window.socket : io(BACKEND, {
+                transports: ['polling', 'websocket'],
+                withCredentials: true
+            });
+
+            _socket.off('connect.bridge');
+            _socket.on('connect', function () {
+                _socket.emit('join_order_channel', orderId);
+            });
+            if (_socket.connected) _socket.emit('join_order_channel', orderId);
+
+            // ── Incoming chat message from admin ──
+            _socket.off('receive_chat_message.bridge');
+            _socket.on('receive_chat_message', function (data) {
+                if (data.orderId !== orderId) return;
+                const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+                if (!order) return;
+                order.chatLedgerHistory = order.chatLedgerHistory || [];
+                // Deduplicate by id
+                if (!order.chatLedgerHistory.some(m => m.id === data.id)) {
+                    order.chatLedgerHistory.push({
+                        id:     data.id || Date.now(),
+                        sender: data.sender || 'Owner',
+                        text:   data.message || data.text || '',
+                        stamp:  data.stamp || ''
+                    });
+                    if (typeof saveAppState === 'function') saveAppState();
+                    if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
+                }
+            });
+
+            // ── Order status changed (ACCEPT or DONE from admin) ──
+            _socket.off('order_status_changed.bridge');
+            _socket.on('order_status_changed', function (data) {
+                if (data.orderId !== orderId) return;
+                const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+                applyStatusChange(data, order);
+            });
+
+        } catch (e) {
+            console.warn('[Order Bridge] Socket error:', e);
+        }
+    }
+
+    // ── 5. BACKEND POLLING (4-second fallback) ───────────────────
+    //    Keeps the page in sync even when socket drops or admin
+    //    is on a different domain/device without socket support.
+    let _lastChatLen = -1;
+    let _lastPhase   = -1;
+
+    async function pollOrderFromBackend() {
+        const orderId = localStorage.getItem('activeOrderId');
+        if (!orderId) return;
+
+        try {
+            const res = await fetch(BACKEND + '/api/order/' + encodeURIComponent(orderId));
+            if (!res.ok) return;
+            const fresh = await res.json();
+            if (!fresh || !fresh.orderId) return;
+
+            const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+            if (!order) return;
+
+            // Merge fresh data into in-memory order
+            Object.assign(order, {
+                status:             fresh.status,
+                currentPhase:       fresh.currentPhase,
+                chatLedgerHistory:  fresh.chatLedgerHistory || order.chatLedgerHistory,
+                dispatchTimestamp:  fresh.dispatchTimestamp  || order.dispatchTimestamp,
+                deliveryTimestamp:  fresh.deliveryTimestamp  || order.deliveryTimestamp,
+                isDeliveryFinalized: fresh.isDeliveryFinalized || order.isDeliveryFinalized
+            });
+            if (typeof saveAppState === 'function') saveAppState();
+
+            const newPhase   = fresh.currentPhase;
+            const newChatLen = (fresh.chatLedgerHistory || []).length;
+            const isAccepted = newPhase >= 3 || fresh.status === 'delivery_active' || fresh.status === 'delivered';
+
+            if (isAccepted && (_lastPhase < 3)) {
+                if (window.systemApplicationState) window.systemApplicationState.currentPhase = 3;
+                showFulfillmentPanel(order);
+            } else if (isAccepted) {
+                // Already accepted — keep panel visible on re-renders
+                showFulfillmentPanel(order);
+            }
+
+            if (newChatLen !== _lastChatLen) {
+                _lastChatLen = newChatLen;
+                if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
+            }
+
+            _lastPhase = newPhase;
+
+        } catch { /* Backend offline — socket + localStorage poller still work */ }
+    }
+
+    setInterval(pollOrderFromBackend, 4000);
+
+    // ── 6. PATCH dispatchConsoleChatMessage ──────────────────────
+    //    Also POST customer messages to backend so admin receives them
+    //    via socket (admin_room) and they persist cross-browser.
+    const _origDispatch = window.dispatchConsoleChatMessage;
+    window.dispatchConsoleChatMessage = function () {
+        if (typeof _origDispatch === 'function') _origDispatch.apply(this, arguments);
+
+        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        if (!order) return;
+        const msgs = order.chatLedgerHistory || [];
+        const last = msgs[msgs.length - 1];
+        if (!last || last.sender === 'System' || last.sender === 'Owner') return;
+
+        fetch(BACKEND + '/api/customer-send-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: order.orderId, message: last.text })
+        }).catch(() => {});
+    };
+
+    // ── 7. INIT ──────────────────────────────────────────────────
+    function init() {
+        connectSocket();
+
+        // If order already in accepted/delivered state on load, show panel immediately
+        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        if (order) {
+            const isAccepted = order.currentPhase >= 3 ||
+                               order.status === 'delivery_active' ||
+                               order.status === 'delivered';
+            if (isAccepted) showFulfillmentPanel(order);
+        }
+
+        // Kick off first backend poll immediately
+        pollOrderFromBackend();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 100); // yield to existing scripts first
+    }
+
+    console.log('[Order Bridge] Loaded — ACCEPT/DONE/CHAT connected.');
+})();
+    
 </script>
 
 </body>
