@@ -2956,8 +2956,9 @@ function clearOldOrder() {
     function applyStatusChange(data, order) {
         if (!order) return;
 
-        if (data.action === 'accepted' || data.status === 'delivery_active') {
-            const stamp = data.dispatchTimestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+// Expanded to capture 'accept', 'accepted', and 'delivery_active'
+        if (data.action === 'accepted' || data.action === 'accept' || data.status === 'delivery_active') {
+            const stamp = data.dispatchTimestamp || data.stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             order.status           = 'delivery_active';
             order.currentPhase     = 3;
             order.dispatchTimestamp = stamp;
@@ -2968,14 +2969,17 @@ function clearOldOrder() {
             pushSystemMsg(order, 'Owner accepted the order. Delivery process activated.');
         }
 
-        if (data.action === 'delivered' || data.status === 'delivered') {
-            const stamp = data.deliveryTimestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // Expanded to capture 'delivered', 'done', and status tracking values
+        if (data.action === 'delivered' || data.action === 'done' || data.status === 'delivered') {
+            const stamp = data.deliveryTimestamp || data.stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             order.status               = 'delivered';
             order.isDeliveryFinalized  = true;
             order.deliveryTimestamp    = stamp;
+            order.currentPhase         = 3; // Ensures phase is updated symmetrically
             if (window.systemApplicationState) {
                 window.systemApplicationState.isDeliveryFinalized = true;
                 window.systemApplicationState.deliveryTimestamp   = stamp;
+                window.systemApplicationState.currentPhase        = 3;
             }
             pushSystemMsg(order, 'Owner marked the package as complete.');
         }
@@ -3034,9 +3038,20 @@ function clearOldOrder() {
                 }
             });
 
-            // ── Order status changed (ACCEPT or DONE from admin) ──
+// Assign instance globally so all other scripts use this exact pipeline
+            window.socket = _socket;
+
+            // Catch the primary status update channel
             _socket.off('order_status_changed.bridge');
             _socket.on('order_status_changed', function (data) {
+                if (data.orderId !== orderId) return;
+                const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+                applyStatusChange(data, order);
+            });
+
+            // Catch alternative naming conventions seamlessly on the same socket
+            _socket.off('order_status_update.bridge');
+            _socket.on('order_status_update', function (data) {
                 if (data.orderId !== orderId) return;
                 const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
                 applyStatusChange(data, order);
@@ -3287,24 +3302,33 @@ function clearOldOrder() {
             (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
         const messages = currentOrder ? (currentOrder.chatLedgerHistory || []) : [];
 
-        // Re-render only messages that have audioUrl and don't already have <audio>
-        let nodeIdx = 0;
-        messages.forEach(msg => {
-            if (!msg.isAudio || !msg.audioUrl) { nodeIdx++; return; }
-            const node = historyBox.children[nodeIdx];
-            if (!node) { nodeIdx++; return; }
-            // Only patch if the audio element is missing
+// Fix: Isolate and collect only elements containing voice indicators
+        const audioNodes = Array.from(historyBox.children).filter(node => 
+            node.querySelector('.audio-attachment-player') || 
+            node.textContent.includes('🎙️ Voice note')
+        );
+        
+        // Filter out target data objects
+        const audioMessages = messages.filter(msg => msg.isAudio && msg.audioUrl);
+
+        // Process sequentially through isolated structural blocks
+        audioMessages.forEach((msg, index) => {
+            const node = audioNodes[index];
+            if (!node) return;
+            
             if (!node.querySelector('audio')) {
                 const player = document.createElement('audio');
-                player.controls    = true;
-                player.src         = msg.audioUrl;
+                player.controls      = true;
+                player.src           = msg.audioUrl;
                 player.style.cssText = 'display:block;margin-top:6px;width:180px;height:32px;';
-                // Remove fake waveform if present
+                
                 const fakeWave = node.querySelector('.audio-attachment-player');
-                if (fakeWave) fakeWave.replaceWith(player);
-                else          node.appendChild(player);
+                if (fakeWave) {
+                    fakeWave.replaceWith(player);
+                } else {
+                    node.appendChild(player);
+                }
             }
-            nodeIdx++;
         });
     };
 
@@ -3346,78 +3370,6 @@ function clearOldOrder() {
         }
         return _origFetch.call(this, url, options, ...rest);
     };
-
-    // ──────────────────────────────────────────────────────────────
-    // 4. FIX SOCKET orderId — use real activeOrderId from localStorage
-    // ──────────────────────────────────────────────────────────────
-    // The inline socket block hardcodes "ORDER_1001".
-    // We wait for the socket to be defined, then join the correct room.
-    (function patchSocketOrderId() {
-        function tryPatch() {
-            if (typeof socket === 'undefined' || !socket) {
-                setTimeout(tryPatch, 300);
-                return;
-            }
-
-            socket.on('connect', function () {
-                const orderId =
-                    localStorage.getItem('activeOrderId') ||
-                    (typeof activeOrderId !== 'undefined' ? activeOrderId : null);
-                if (orderId) socket.emit('join_order_channel', orderId);
-            });
-
-            // Also join immediately if already connected
-            if (socket.connected) {
-                const orderId =
-                    localStorage.getItem('activeOrderId') ||
-                    (typeof activeOrderId !== 'undefined' ? activeOrderId : null);
-                if (orderId) socket.emit('join_order_channel', orderId);
-            }
-
-            // Listen for admin owner reply and add to chat
-            socket.on('receive_chat_message', function (data) {
-                const currentOrder =
-                    (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-                if (!currentOrder || data.orderId !== currentOrder.orderId) return;
-
-                currentOrder.chatLedgerHistory = currentOrder.chatLedgerHistory || [];
-                currentOrder.chatLedgerHistory.push({
-                    id:      Date.now(),
-                    sender:  data.senderRole === 'owner' ? 'Owner' : data.senderRole,
-                    text:    data.message || '',
-                    isAudio: data.isAudio  || false,
-                    audioUrl:data.audioUrl || '',
-                    stamp:   data.stamp    || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                });
-
-                if (typeof saveAppState === 'function')              saveAppState();
-                if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
-            });
-
-            // Also listen for order_status_update to advance phase
-            socket.on('order_status_update', function (data) {
-                const currentOrder =
-                    (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-                if (!currentOrder || data.orderId !== currentOrder.orderId) return;
-
-                if (data.status === 'delivery_active' || data.action === 'accept') {
-                    currentOrder.status       = 'delivery_active';
-                    currentOrder.currentPhase = 3;
-                    if (data.stamp) currentOrder.dispatchTimestamp = data.stamp;
-                }
-                if (data.status === 'delivered' || data.action === 'done') {
-                    currentOrder.status            = 'delivered';
-                    currentOrder.currentPhase      = 3;
-                    currentOrder.isDeliveryFinalized = true;
-                    if (data.stamp) currentOrder.deliveryTimestamp = data.stamp;
-                }
-
-                if (typeof saveAppState === 'function') saveAppState();
-                if (typeof renderUI === 'function')     renderUI();
-            });
-        }
-        tryPatch();
-    })();
 
     console.log('[Order Page Fixes v2] Loaded.');
 })();
