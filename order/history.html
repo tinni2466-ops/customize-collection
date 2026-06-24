@@ -4145,6 +4145,529 @@ const sareeMaterials = {
 
     console.log('[Admin Bridge v2] Loaded.');
 })();
+
+const ADMIN_COLOR_MAP = {
+    "red": "Flame Red", "#ff5733": "Flame Red", "rgb(255, 87, 51)": "Flame Red", "rgb(229, 62, 62)": "Flame Red", "#e53e3e": "Flame Red",
+    "crimson": "Crimson", "#c70039": "Crimson", "rgb(199, 0, 57)": "Crimson", "rgb(220, 20, 60)": "Crimson", "#dc143c": "Crimson",
+    "maroon": "Deep Maroon", "#900c3f": "Deep Maroon", "rgb(144, 12, 63)": "Deep Maroon", "#800000": "Deep Maroon",
+    "plum wine": "Plum Wine", "#581845": "Plum Wine", "rgb(88, 24, 69)": "Plum Wine", "plum": "Plum Wine",
+    "tangerine": "Tangerine", "#ff8d1a": "Tangerine", "rgb(255, 141, 26)": "Tangerine", "#ffa500": "Tangerine",
+    "amber gold": "Amber Gold", "#ffc300": "Amber Gold", "rgb(255, 195, 0)": "Amber Gold",
+    "mustard yellow": "Mustard Yellow", "#eddd53": "Mustard Yellow", "rgb(237, 221, 83)": "Mustard Yellow", "#ffff00": "Mustard Yellow",
+    "soft lime": "Soft Lime", "#add45c": "Soft Lime", "rgb(173, 212, 92)": "Soft Lime",
+    "emerald mint": "Emerald Mint", "#57c785": "Emerald Mint", "rgb(87, 199, 133)": "Emerald Mint",
+    "sea green": "Sea Green", "#16a085": "Sea Green", "rgb(22, 160, 133)": "Sea Green",
+    "forest green": "Forest Green", "#27ae60": "Forest Green", "rgb(39, 174, 96)": "Forest Green", "#008000": "Forest Green",
+    "teal turquoise": "Teal Turquoise", "#00baad": "Teal Turquoise", "rgb(0, 186, 173)": "Teal Turquoise", "#00ffff": "Teal Turquoise",
+    "ocean slate": "Ocean Slate", "#2a7b9b": "Ocean Slate", "rgb(42, 123, 155)": "Ocean Slate",
+    "midnight navy": "Midnight Navy", "#3d3d6b": "Midnight Navy", "rgb(61, 61, 107)": "Midnight Navy", "#000080": "Midnight Navy",
+    "dodger blue": "Dodger Blue", "#3498db": "Dodger Blue", "rgb(52, 152, 219)": "Dodger Blue",
+    "pearl white": "Pearl White", "#ecf0f1": "Pearl White", "rgb(236, 240, 241)": "Pearl White", "#ffffff": "Pearl White",
+    "stone gray": "Stone Gray", "#95a5a6": "Stone Gray", "rgb(149, 165, 166)": "Stone Gray",
+    "charcoal": "Charcoal", "#7f8c8d": "Charcoal", "rgb(127, 140, 141)": "Charcoal",
+    "dark slate": "Dark Slate", "#34495e": "Dark Slate", "rgb(52, 73, 94)": "Dark Slate",
+    "black": "Black", "#000000": "Black", "rgb(0, 0, 0)": "Black",
+    "amethyst": "Amethyst", "#9b59b6": "Amethyst", "rgb(155, 89, 182)": "Amethyst",
+    "royal purple": "Royal Purple", "#8e44ad": "Royal Purple", "rgb(142, 68, 173)": "Royal Purple"
+};
+
+const ALL_RANDOM_COLORS = [
+    "#FF5733", "#C70039", "#900C3F", "#581845",
+    "#FF8D1A", "#FFC300", "#EDDD53", "#ADD45C",
+    "#57C785", "#00BAAD", "#2A7B9B", "#3D3D6B",
+    "#ECF0F1", "#95A5A6", "#7F8C8D", "#34495E",
+    "#16A085", "#27AE60", "#3498DB", "#8E44AD"
+];
+
+const STORAGE_KEY = "storefront_inventory_cache";
+const BLOUSE_SHARED = "BLOUSE_SHARED";
+
+// ==========================================================================
+// HELPERS
+// ==========================================================================
+function resolveColorKey(raw) {
+    if (!raw) return "";
+    const lower = raw.toLowerCase().trim();
+    return ADMIN_COLOR_MAP[lower] || lower;
+}
+
+function extractHexFromOnclick(onclick) {
+    if (!onclick) return "";
+    const matches = onclick.match(/#([0-9A-Fa-f]{6})\b/g);
+    return matches && matches.length > 0 ? matches[matches.length - 1].toLowerCase() : "";
+}
+
+function extractColorNameFromElement(element) {
+    let colorName = element.getAttribute("data-color-name") || element.getAttribute("title") || "";
+    if (!colorName) colorName = extractHexFromOnclick(element.getAttribute("onclick") || "");
+    if (!colorName && element.style && element.style.backgroundColor)
+        colorName = element.style.backgroundColor.toLowerCase().trim();
+    if (!colorName) {
+        try {
+            const c = window.getComputedStyle(element).backgroundColor;
+            if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") colorName = c.toLowerCase().trim();
+        } catch (e) { }
+    }
+    return colorName ? resolveColorKey(colorName) : "";
+}
+
+function getParentProductFilename(element) {
+    const fallback = () => {
+        const img = document.querySelector(".Explore-Saree-Styles img, .saree-card img, main img, .product-card img, .saree-sub-product-card img");
+        return img ? (img.getAttribute("src") || "").split('/').pop().split('?')[0].trim() : "";
+    };
+    if (!element) return fallback();
+    const card = element.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .saree-card, .product-card, .saree-sub-product-card');
+    if (card) {
+        const img = card.querySelector("img");
+        if (img) return (img.getAttribute("src") || "").split('/').pop().split('?')[0].trim();
+    }
+    return fallback();
+}
+
+function getFilenameByCardIndex(index) {
+    const btn = document.getElementById("cart-btn-" + index);
+    if (btn) {
+        const card = btn.closest(".saree-card, .saree-sub-product-card, .product-card");
+        if (card) {
+            const img = card.querySelector("img");
+            if (img) return (img.getAttribute("src") || "").split('/').pop().split('?')[0].trim();
+        }
+    }
+    return getParentProductFilename(null);
+}
+
+function isBlouseElement(el) {
+    return !!(
+        el.closest('#exploreStylesSection') ||
+        el.closest('#blouseMainActions')    ||
+        el.closest('#blouse-topbar-drawer') ||
+        el.closest('#blouse-material-target')
+    );
+}
+
+// ==========================================================================
+// ★ UPDATED: "S" LETTER BLOCK ICON FOR COLORS
+//   White bold "S" centred on a red circle — replaces the old slash icon.
+// ==========================================================================
+function buildColorBlockIcon(swatchEl) {
+    const w       = swatchEl.offsetWidth  || 24;
+    const h       = swatchEl.offsetHeight || 24;
+    const base    = Math.min(w, h);
+    const iconPx  = Math.max(14, Math.round(base * 0.82));
+    const fontPx  = Math.max(8,  Math.round(iconPx * 0.62));
+
+    const icon = document.createElement("div");
+    icon.className = "color-blocked-overlay-icon";
+    icon.style.cssText =
+        "position:absolute;top:50%;left:50%;" +
+        "transform:translate(-50%,-50%);" +
+        "width:"  + iconPx + "px;" +
+        "height:" + iconPx + "px;" +
+        "background:#e53e3e;" +
+        "border:2px solid #ffffff;" +
+        "border-radius:50%;" +
+        "z-index:9999;" +
+        "pointer-events:none;" +
+        "box-sizing:border-box;" +
+        "display:flex;" +
+        "align-items:center;" +
+        "justify-content:center;";
+
+    const letter = document.createElement("span");
+    letter.style.cssText =
+        "color:#ffffff;" +
+        "font-size:" + fontPx + "px;" +
+        "font-weight:900;" +
+        "font-family:Arial,sans-serif;" +
+        "line-height:1;" +
+        "pointer-events:none;" +
+        "-webkit-text-stroke:0.4px rgba(180,0,0,0.6);";
+    letter.textContent = "S";
+    icon.appendChild(letter);
+    return icon;
+}
+
+// ==========================================================================
+// LOCK HELPERS
+// ==========================================================================
+function lockColorSwatch(el) {
+    const clone = el.cloneNode(true);
+    clone.removeAttribute("onclick");
+    clone.setAttribute("data-is-dead-clone", "true");
+    clone.setAttribute("data-dead-type", "color");
+    clone.title = "Out of Stock";
+    clone.setAttribute("aria-disabled", "true");
+    clone.style.setProperty("pointer-events", "none", "important");
+    clone.style.cursor   = "not-allowed";
+    clone.style.opacity  = "0.55";
+    clone.style.filter   = "grayscale(20%)";
+    clone.style.position = "relative";
+    clone.style.overflow = "visible";
+    clone.querySelectorAll(".color-blocked-overlay-icon").forEach(e => e.remove());
+    clone.appendChild(buildColorBlockIcon(el));
+    el.parentNode.replaceChild(clone, el);
+}
+
+function lockSizeOrMaterial(el) {
+    const clone = el.cloneNode(true);
+    clone.removeAttribute("onclick");
+    clone.setAttribute("data-is-dead-clone", "true");
+    clone.setAttribute("data-dead-type", "size");
+    clone.title = "Out of Stock";
+    clone.setAttribute("aria-disabled", "true");
+    clone.style.setProperty("pointer-events", "none", "important");
+    clone.style.cursor         = "not-allowed";
+    clone.style.textDecoration = "line-through";
+    clone.style.color          = "#aaaaaa";
+    clone.style.opacity        = "0.7";
+    clone.querySelectorAll(".color-blocked-overlay-icon").forEach(e => e.remove());
+    el.parentNode.replaceChild(clone, el);
+}
+
+function restoreElement(el) {
+    el.style.removeProperty("pointer-events");
+    el.style.cursor         = "pointer";
+    el.style.opacity        = "";
+    el.style.filter         = "";
+    el.style.textDecoration = "";
+    el.style.color          = "";
+    el.removeAttribute("aria-disabled");
+    el.removeAttribute("data-is-dead-clone");
+    el.removeAttribute("data-dead-type");
+    el.querySelectorAll(".color-blocked-overlay-icon").forEach(i => i.remove());
+    const saved = el.getAttribute("data-saved-onclick");
+    if (saved) { el.setAttribute("onclick", saved); el.removeAttribute("data-saved-onclick"); }
+}
+
+function saveAndLock(el, lockFn) {
+    if (!el.getAttribute("data-saved-onclick") && el.getAttribute("onclick"))
+        el.setAttribute("data-saved-onclick", el.getAttribute("onclick"));
+    lockFn(el);
+}
+
+// ==========================================================================
+// DEAD-CLONE RESTORE SWEEP
+// ==========================================================================
+function sweepAndRestoreDeadClones(savedStock) {
+    document.querySelectorAll("[data-is-dead-clone='true']").forEach(deadEl => {
+        const deadType = deadEl.getAttribute("data-dead-type") || "";
+
+        if (deadType === "color") {
+            if (isBlouseElement(deadEl)) {
+                const hex      = extractHexFromOnclick(deadEl.getAttribute("data-saved-onclick") || "");
+                const colorKey = resolveColorKey(hex);
+                if (!savedStock[`${BLOUSE_SHARED}||Color Variant||${colorKey}`]) restoreElement(deadEl);
+            } else {
+                const imgFilename = getParentProductFilename(deadEl);
+                if (!imgFilename) return;
+                const hex      = extractHexFromOnclick(deadEl.getAttribute("data-saved-onclick") || "");
+                const colorKey = resolveColorKey(hex);
+                if (!savedStock[`${imgFilename}||Color Variant||${colorKey}`]) restoreElement(deadEl);
+            }
+        } else if (deadType === "size") {
+            const label = deadEl.innerText.trim();
+            if (!label) return;
+            if (isBlouseElement(deadEl)) {
+                const sizeOut = savedStock[`${BLOUSE_SHARED}||Size Option||${label}`];
+                const matOut  = savedStock[`${BLOUSE_SHARED}||Material option||${label}`];
+                if (!sizeOut && !matOut) restoreElement(deadEl);
+            } else {
+                const imgFilename = getParentProductFilename(deadEl);
+                if (!imgFilename) return;
+                const sizeOut = savedStock[`${imgFilename}||Size Option||${label}`];
+                const matOut  = savedStock[`${imgFilename}||Material option||${label}`];
+                if (!sizeOut && !matOut) restoreElement(deadEl);
+            }
+        }
+    });
+}
+
+// ==========================================================================
+// MAIN SYNC ENGINE
+// ==========================================================================
+function applyMasterStockSync() {
+    const savedStock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+    // 1. FULL PRODUCT CARD DEACTIVATIONS
+    document.querySelectorAll(".Explore-Saree-Styles img, [id*='Style'] img, .mini-card-static img, .saree-card img, .product-card img, main img").forEach(imgEl => {
+        const imgFilename = (imgEl.getAttribute("src") || "").split('/').pop().split('?')[0].trim();
+        if (!imgFilename) return;
+        const parentCard = imgEl.closest(".Explore-Saree-Styles, [id*='Style'], .mini-card-static, .saree-card, .product-card, .saree-sub-product-card");
+        const imgWrapper = imgEl.parentElement;
+        if (!parentCard || !imgWrapper) return;
+
+        imgWrapper.querySelectorAll(".details-image-stockout-badge").forEach(e => e.remove());
+
+        if (savedStock[`${imgFilename}||Entire Product Style||${imgFilename}`] === true) {
+            imgWrapper.style.position = "relative";
+            imgWrapper.style.display  = "inline-block";
+            const overlay = document.createElement("div");
+            overlay.className    = "details-image-stockout-badge";
+            overlay.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.72);display:flex;justify-content:center;align-items:center;z-index:9;border-radius:inherit;pointer-events:none;";
+            overlay.innerHTML    = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:6px 12px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.3);letter-spacing:0.5px;white-space:nowrap;">OUT OF STOCK</div>';
+            imgWrapper.appendChild(overlay);
+            parentCard.querySelectorAll("button, .add-to-cart-btn, .mini-add-btn").forEach(btn => {
+                btn.style.opacity       = "0.4";
+                btn.style.pointerEvents = "none";
+            });
+        }
+    });
+
+    // 2. BLOUSE COLOR SWATCHES — "S" block icon
+    document.querySelectorAll(
+        "#step-panel-colors span[onclick*='handleBlouseWizardSelection'], " +
+        "#exploreStylesSection .opts button[class*='color-swatch-'], " +
+        "#exploreStylesSection [id^='opts-'] .opts button, " +
+        "[onclick*=\"handleBlouseWizardSelection('color'\"]"
+    ).forEach(swatch => {
+        if (swatch.getAttribute("data-is-dead-clone") === "true") return;
+        const colorKey = extractColorNameFromElement(swatch);
+        if (!colorKey) return;
+        if (savedStock[`${BLOUSE_SHARED}||Color Variant||${colorKey}`] === true)
+            saveAndLock(swatch, lockColorSwatch);
+    });
+
+    // 3. BLOUSE SIZE BUTTONS — line-through + ash
+    document.querySelectorAll(
+        "#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], " +
+        "#exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], " +
+        "[onclick*=\"handleBlouseWizardSelection('size'\"]"
+    ).forEach(btn => {
+        if (btn.getAttribute("data-is-dead-clone") === "true") return;
+        const sizeLabel = btn.innerText.trim();
+        if (!sizeLabel) return;
+        if (savedStock[`${BLOUSE_SHARED}||Size Option||${sizeLabel}`] === true)
+            saveAndLock(btn, lockSizeOrMaterial);
+    });
+
+    // 4. BLOUSE MATERIAL CHIPS — line-through + ash
+    document.querySelectorAll(
+        "#exploreStylesSection .material-chip, " +
+        "#blouse-material-target .material-chip, " +
+        "#blouseMainActions .material-chip"
+    ).forEach(chip => {
+        if (chip.getAttribute("data-is-dead-clone") === "true") return;
+        const label = chip.innerText.trim();
+        if (!label) return;
+        if (savedStock[`${BLOUSE_SHARED}||Material option||${label}`] === true)
+            saveAndLock(chip, lockSizeOrMaterial);
+    });
+
+    // 5. NON-BLOUSE COLOR CIRCLES
+    document.querySelectorAll(".color-circle, [style*='background'][onclick*='color']").forEach(circle => {
+        if (circle.getAttribute("data-is-dead-clone") === "true") return;
+        if (isBlouseElement(circle)) return;
+        const imgFilename = getParentProductFilename(circle);
+        if (!imgFilename) return;
+        const colorKey = extractColorNameFromElement(circle);
+        if (!colorKey) return;
+        if (savedStock[`${imgFilename}||Color Variant||${colorKey}`] === true)
+            saveAndLock(circle, lockColorSwatch);
+    });
+
+    // 6. NON-BLOUSE SIZE BUTTONS — line-through + ash
+    document.querySelectorAll(".size-chip, .size-btn, .quiz-step-btn[onclick*='processWizardStep']").forEach(btn => {
+        if (btn.getAttribute("data-is-dead-clone") === "true") return;
+        if (isBlouseElement(btn)) return;
+        const imgFilename = getParentProductFilename(btn);
+        if (!imgFilename) return;
+        const label = btn.innerText.trim();
+        if (!label) return;
+        if (savedStock[`${imgFilename}||Size Option||${label}`] === true)
+            saveAndLock(btn, lockSizeOrMaterial);
+    });
+
+    // 7. NON-BLOUSE MATERIAL CHIPS — line-through + ash
+    document.querySelectorAll(".material-chip").forEach(chip => {
+        if (chip.getAttribute("data-is-dead-clone") === "true") return;
+        if (isBlouseElement(chip)) return;
+        const imgFilename = getParentProductFilename(chip);
+        if (!imgFilename) return;
+        const label = chip.innerText.trim();
+        if (!label) return;
+        if (savedStock[`${imgFilename}||Material option||${label}`] === true)
+            saveAndLock(chip, lockSizeOrMaterial);
+    });
+
+    // 8. RESTORE SWEEP
+    sweepAndRestoreDeadClones(savedStock);
+}
+
+// ==========================================================================
+// BUTTON GATING ENGINE
+// ==========================================================================
+function _fadeBtn(btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.style.opacity       = "0.45";
+    btn.style.cursor        = "not-allowed";
+    btn.style.pointerEvents = "none";
+    btn.setAttribute("data-gated", "true");
+}
+
+function _activateBtn(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.style.opacity       = "1";
+    btn.style.cursor        = "pointer";
+    btn.style.pointerEvents = "";
+    btn.removeAttribute("data-gated");
+}
+
+function initBlouseButtonGating() {
+    function getBlouseButtons() {
+        return [document.querySelector(".main-cart-btn"), document.querySelector(".main-buy-btn")];
+    }
+
+    function updateBlouseButtons() {
+        const fp = document.getElementById("blouse-topbar-final");
+        const isComplete = fp && fp.style.display !== "none" && fp.style.display !== "";
+        getBlouseButtons().forEach(btn => { if (btn) isComplete ? _activateBtn(btn) : _fadeBtn(btn); });
+    }
+
+    getBlouseButtons().forEach(_fadeBtn);
+
+    function attachFinalObserver() {
+        const fp = document.getElementById("blouse-topbar-final");
+        if (!fp) return false;
+        new MutationObserver(updateBlouseButtons).observe(fp, { attributes: true, attributeFilter: ["style"] });
+        updateBlouseButtons();
+        return true;
+    }
+
+    if (!attachFinalObserver()) {
+        const probe = new MutationObserver(() => { if (attachFinalObserver()) probe.disconnect(); });
+        probe.observe(document.body, { childList: true, subtree: true });
+    }
+}
+
+function initSubProductButtonGating() {
+    const watchedIndices = new Set();
+
+    function watchCard(index) {
+        if (watchedIndices.has(index)) return;
+        watchedIndices.add(index);
+        const cartBtn = document.getElementById("cart-btn-" + index);
+        const buyBtn  = document.getElementById("buy-btn-" + index);
+        const fp      = document.getElementById("final-" + index);
+        _fadeBtn(cartBtn);
+        _fadeBtn(buyBtn);
+        if (!fp) return;
+
+        function update() {
+            const isComplete = fp.style.display !== "none" && fp.style.display !== "";
+            const c = document.getElementById("cart-btn-" + index);
+            const b = document.getElementById("buy-btn-" + index);
+            if (isComplete) { _activateBtn(c); _activateBtn(b); }
+            else            { _fadeBtn(c);     _fadeBtn(b);     }
+        }
+
+        new MutationObserver(update).observe(fp, { attributes: true, attributeFilter: ["style"] });
+        update();
+    }
+
+    function scan() {
+        document.querySelectorAll("[id^='cart-btn-']").forEach(btn => {
+            const idx = btn.id.replace("cart-btn-", "");
+            if (!watchedIndices.has(idx)) watchCard(idx);
+        });
+    }
+
+    scan();
+    new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+}
+
+// ==========================================================================
+// RANDOM BUTTON OVERRIDE — skips stocked-out colors/sizes/materials
+// ==========================================================================
+let _rndCtx = null;
+
+function _stockAwareGetRandomColor() {
+    if (!_rndCtx) return null;
+    const { productKey, savedStock } = _rndCtx;
+    const available = ALL_RANDOM_COLORS.filter(hex => {
+        const key = resolveColorKey(hex.toLowerCase());
+        return !savedStock[`${productKey}||Color Variant||${key}`];
+    });
+    if (available.length === 0) return ALL_RANDOM_COLORS[Math.floor(Math.random() * ALL_RANDOM_COLORS.length)];
+    return available[Math.floor(Math.random() * available.length)];
+}
+
+function _stockAwareRandomPick(list) {
+    if (!_rndCtx || !list || list.length === 0) return null;
+    const { productKey, savedStock } = _rndCtx;
+    const isObjects = typeof list[0] === "object" && list[0] !== null;
+    const available = list.filter(item => {
+        const label = isObjects ? (item.name || String(item)) : String(item).trim();
+        const type  = isObjects ? "Material option" : "Size Option";
+        return !savedStock[`${productKey}||${type}||${label}`];
+    });
+    const pool = available.length > 0 ? available : list;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function _wrapWithStockContext(fn, productKey) {
+    const savedStock    = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    _rndCtx             = { productKey, savedStock };
+    const _origColor    = window.getRandomColor;
+    const _origPick     = window.randomPick;
+    window.getRandomColor = function () {
+        const r = _stockAwareGetRandomColor();
+        return r !== null ? r : (_origColor ? _origColor() : "#3498DB");
+    };
+    window.randomPick = function (list) {
+        const r = _stockAwareRandomPick(list);
+        return r !== null ? r : (_origPick ? _origPick(list) : list[0]);
+    };
+    try { fn(); } finally {
+        window.getRandomColor = _origColor;
+        window.randomPick     = _origPick;
+        _rndCtx = null;
+    }
+}
+
+function patchRandomFunctions() {
+    if (typeof window.randomizeBlouseAnswers === "function") {
+        const _orig = window.randomizeBlouseAnswers;
+        window.randomizeBlouseAnswers = function () {
+            _wrapWithStockContext(() => _orig.apply(this, arguments), BLOUSE_SHARED);
+        };
+    }
+
+    if (typeof window.randomizeSubProductAnswers === "function") {
+        const _orig = window.randomizeSubProductAnswers;
+        window.randomizeSubProductAnswers = function (subProductName, basePrice, index) {
+            const imgFilename = getFilenameByCardIndex(index) || getParentProductFilename(null);
+            const isBlouseCard = (function () {
+                const btn = document.getElementById("cart-btn-" + index);
+                return btn ? isBlouseElement(btn) : false;
+            })();
+            const productKey = isBlouseCard ? BLOUSE_SHARED : imgFilename;
+            _wrapWithStockContext(() => _orig.apply(this, arguments), productKey);
+        };
+    }
+}
+
+// ==========================================================================
+// RE-EXECUTION LIFE CYCLE ENGINE
+// ==========================================================================
+window.addEventListener("storage", applyMasterStockSync);
+
+function initializeInventorySyncEngine() {
+    applyMasterStockSync();
+    patchRandomFunctions();
+    initBlouseButtonGating();
+    initSubProductButtonGating();
+    new MutationObserver(applyMasterStockSync).observe(document.body, { childList: true, subtree: true });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeInventorySyncEngine);
+} else {
+    initializeInventorySyncEngine();
+}
+
     
 </script>
 </body>
