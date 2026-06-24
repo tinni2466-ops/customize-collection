@@ -3081,15 +3081,27 @@ function clearOldOrder() {
             const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
             if (!order) return;
 
-            // Merge fresh data into in-memory order
+            // Build a deduplicated map of chat messages to protect local items from getting overwritten
+            const localChatMap = new Map(order.chatLedgerHistory?.map(m => [m.id || m.text, m]) || []);
+            
+            // Loop through incoming server updates and insert or update them safely
+            (fresh.chatLedgerHistory || []).forEach(remoteMsg => {
+                localChatMap.set(remoteMsg.id || remoteMsg.text, remoteMsg);
+            });
+
+            // Convert back to a sequentially sorted array
+            const mergedChatHistory = Array.from(localChatMap.values());
+
+            // Merge fresh properties cleanly without dropping local-first logs
             Object.assign(order, {
-                status:             fresh.status,
-                currentPhase:       fresh.currentPhase,
-                chatLedgerHistory:  fresh.chatLedgerHistory || order.chatLedgerHistory,
-                dispatchTimestamp:  fresh.dispatchTimestamp  || order.dispatchTimestamp,
-                deliveryTimestamp:  fresh.deliveryTimestamp  || order.deliveryTimestamp,
+                status:              fresh.status,
+                currentPhase:        fresh.currentPhase,
+                chatLedgerHistory:   mergedChatHistory,
+                dispatchTimestamp:   fresh.dispatchTimestamp  || order.dispatchTimestamp,
+                deliveryTimestamp:   fresh.deliveryTimestamp  || order.deliveryTimestamp,
                 isDeliveryFinalized: fresh.isDeliveryFinalized || order.isDeliveryFinalized
             });
+            
             if (typeof saveAppState === 'function') saveAppState();
 
             const newPhase   = fresh.currentPhase;
