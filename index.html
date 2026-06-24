@@ -2644,188 +2644,15 @@ const subProducts = {
         { name: "Indo Western Dress", img: "https://res.cloudinary.com/dnami0fsz/image/upload/v1781711581/indo2_r1mrqa.png", price: 1049 }
     ]
 };
-// 1. Declare the global tracker variable ONCE at the top
-let dynamicGridObserver = null;
-
-function applyIndexGridStockSync() {
-    // Temporarily pause the observer so our changes don't trigger an infinite loop
-    if (dynamicGridObserver) {
-        dynamicGridObserver.disconnect();
-    }
-
-    const STORAGE_KEY = "storefront_inventory_cache";
-    const savedStock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    
-    // Target all sub-style card types rendered inside your dynamic scroll containers
-    const scrollerCards = document.querySelectorAll(".mini-card, .mini-card-static");
-    
-    scrollerCards.forEach(card => {
-        const imgEl = card.querySelector("img");
-        if (!imgEl) return;
-        
-        // Grab the clean image filename to use as the true unique identifier
-        const imgSrc = imgEl.getAttribute("src") || "";
-        const imgFilename = imgSrc.split('/').pop().split('?')[0].trim();
-        if (!imgFilename) return;
-
-        // Matches your fixed admin backend stock structure templates precisely (Filename based)
-        const entireProductKey = `${imgFilename}||Entire Product Style||${imgFilename}`;
-        const isStockedOut = savedStock[entireProductKey] === true;
-        
-        // Clean up pre-existing overlays to avoid visual stacking
-        card.querySelectorAll(".scroller-stockout-badge").forEach(el => el.remove());
-        
-        if (isStockedOut) {
-            // Store the card's original layout positioning state if not already saved
-            if (!card.hasAttribute("data-orig-position")) {
-                card.setAttribute("data-orig-position", card.style.position || "static");
-            }
-            
-            card.style.position = "relative";
-            
-            // Create a perfectly matching blurred layout block mask over the item square
-            const badgeOverlay = document.createElement("div");
-            badgeOverlay.className = "scroller-stockout-badge";
-            badgeOverlay.style.cssText = `
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(255, 255, 255, 0.85); display: flex; flex-direction: column;
-                justify-content: center; align-items: center; z-index: 99;
-                text-align: center; border-radius: inherit; pointer-events: auto;
-            `;
-            
-            // Inject a clean minimalist red banner directly over the element visual grid area
-            badgeOverlay.innerHTML = `
-                <div style="background: #e53e3e; color: #ffffff; font-weight: 800; 
-                            padding: 4px 10px; border-radius: 4px; text-transform: uppercase; 
-                            font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
-                    OUT OF STOCK
-                </div>
-            `;
-            
-            card.appendChild(badgeOverlay);
-            
-            // Inline block actions safely without breaking global javascript variables
-            badgeOverlay.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                alert("This style is currently out of stock!");
-                return false;
-            };
-
-            // Soft-disable underlying buttons visually without bricking core logic
-            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
-            if (addButton) {
-                addButton.style.opacity = "0.4";
-                addButton.style.cursor = "not-allowed";
-            }
-        } else {
-            // RESTORE ORIGINAL THEME STYLES: This resets the hover rules completely
-            if (card.hasAttribute("data-orig-position")) {
-                card.style.position = card.getAttribute("data-orig-position");
-                card.removeAttribute("data-orig-position");
-            }
-
-            // Restore normal behavior if status is active
-            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
-            if (addButton) {
-                addButton.style.opacity = "";
-                addButton.style.cursor = "";
-            }
-        }
-    });
-
-    // 2. Safely turn the observer back on now that modifications are complete
-    if (dynamicGridObserver) {
-        dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
-    }
-}
-
-// Attach lifecycle listeners to catch initial data load
-document.addEventListener("DOMContentLoaded", () => {
-    // Setup structural tracker engines safely
-    dynamicGridObserver = new MutationObserver(() => applyIndexGridStockSync());
-    dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
-    
-    // Smooth phased lifecycles instead of resource-heavy crash intervals
-    setTimeout(applyIndexGridStockSync, 150);
-    setTimeout(applyIndexGridStockSync, 800);
-});
-
-// Sync across multiple admin/index browser tabs instantly
-window.addEventListener("storage", applyIndexGridStockSync);
-
+// ── CONSOLIDATED LIVE INVENTORY SYNC ENGINE ──
 (function () {
     'use strict';
 
-    const BACKEND     = 'https://customize-collection.onrender.com';
+    const BACKEND = 'https://customize-collection.onrender.com';
     const STORAGE_KEY = 'storefront_inventory_cache';
 
-    // ── 1. TRIGGER THE CORRECT SYNC FUNCTION FOR EACH PAGE ──────
-    function runStockSync() {
-        // product-details.html uses applyMasterStockSync
-        if (typeof applyMasterStockSync === 'function') applyMasterStockSync();
-        // index.html uses applyIndexGridStockSync
-        if (typeof applyIndexGridStockSync === 'function') applyIndexGridStockSync();
-    }
-
-    // ── 2. FETCH LATEST STOCK STATE FROM BACKEND ON PAGE LOAD ───
-    //    Overwrites localStorage so the inline sync engine picks
-    //    up any stock-outs the admin set from a different device.
-    async function syncInventoryFromBackend() {
-        try {
-            const res = await fetch(BACKEND + '/api/get-inventory-cache');
-            if (!res.ok) return;
-            const backendCache = await res.json();
-            if (backendCache && typeof backendCache === 'object' && Object.keys(backendCache).length > 0) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(backendCache));
-                runStockSync();
-            }
-        } catch {
-            // Backend unreachable — use whatever is already in localStorage
-        }
-    }
-
-    // ── 3. SOCKET.IO: LIVE INVENTORY UPDATES ────────────────────
-    //    When admin toggles a stock button, the server broadcasts
-    //    inventory_cache_updated. We update localStorage and re-run
-    //    the sync engine so the page reflects the change instantly.
-    function connectInventorySocket() {
-        if (typeof io === 'undefined') { setTimeout(connectInventorySocket, 500); return; }
-        try {
-            const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
-            sock.on('inventory_cache_updated', function (data) {
-                if (data && data.cache && typeof data.cache === 'object') {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.cache));
-                    runStockSync();
-                }
-            });
-        } catch (e) {
-            console.warn('[Inventory Bridge] Socket error:', e);
-        }
-    }
-
-    // ── 4. INIT ──────────────────────────────────────────────────
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            syncInventoryFromBackend();
-            connectInventorySocket();
-        });
-    } else {
-        syncInventoryFromBackend();
-        connectInventorySocket();
-    }
-
-    console.log('[Inventory Bridge] Loaded — stock-out sync active.');
-})();
-
-(function () {
-    'use strict';
-
-    var BACKEND     = 'https://customize-collection.onrender.com';
-    var STORAGE_KEY = 'storefront_inventory_cache';
-
-    // ── COLOR MAP (must match admin panel) ────────────────────────
-    var ADMIN_COLOR_MAP = {
+    // Admin Panel Color Mapping Matrix
+    const ADMIN_COLOR_MAP = {
         'red':'Flame Red','#ff5733':'Flame Red','rgb(255, 87, 51)':'Flame Red','rgb(229, 62, 62)':'Flame Red','#e53e3e':'Flame Red',
         'crimson':'Crimson','#c70039':'Crimson','rgb(199, 0, 57)':'Crimson','rgb(220, 20, 60)':'Crimson','#dc143c':'Crimson',
         'maroon':'Deep Maroon','#900c3f':'Deep Maroon','rgb(144, 12, 63)':'Deep Maroon','#800000':'Deep Maroon',
@@ -2850,9 +2677,10 @@ window.addEventListener("storage", applyIndexGridStockSync);
         'royal purple':'Royal Purple','#8e44ad':'Royal Purple','rgb(142, 68, 173)':'Royal Purple'
     };
 
-    var BLOUSE_SHARED = 'BLOUSE_SHARED';
+    const BLOUSE_SHARED = 'BLOUSE_SHARED';
+    let localObserver = null;
 
-    // ── HELPERS ───────────────────────────────────────────────────
+    // ── CORE UTILITIES ──
     function resolveColorKey(raw) {
         if (!raw) return '';
         var lower = raw.toLowerCase().trim();
@@ -2875,11 +2703,11 @@ window.addEventListener("storage", applyIndexGridStockSync);
 
     function getProductImg(el) {
         var fb = function() {
-            var i = document.querySelector('.Explore-Saree-Styles img,.saree-card img,main img,.product-card img,.saree-sub-product-card img');
+            var i = document.querySelector('.Explore-Saree-Styles img,.saree-card img,main img,.product-card img,.saree-sub-product-card img,.mini-card img,.mini-card-static img');
             return i ? (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim() : '';
         };
         if (!el) return fb();
-        var card = el.closest('.Explore-Saree-Styles,[id*="Style"],.mini-card-static,.saree-card,.product-card,.saree-sub-product-card');
+        var card = el.closest('.Explore-Saree-Styles,[id*="Style"],.mini-card-static,.mini-card,.saree-card,.product-card,.saree-sub-product-card');
         if (card) { var i = card.querySelector('img'); if (i) return (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim(); }
         return fb();
     }
@@ -2888,7 +2716,6 @@ window.addEventListener("storage", applyIndexGridStockSync);
         return !!(el.closest('#exploreStylesSection') || el.closest('#blouseMainActions') || el.closest('#blouse-topbar-drawer') || el.closest('#blouse-material-target'));
     }
 
-    // ── "S" ICON for stocked-out color swatches ───────────────────
     function buildSIcon(swatch) {
         var w = swatch.offsetWidth || 24, h = swatch.offsetHeight || 24;
         var base = Math.min(w,h), px = Math.max(14, Math.round(base*0.82)), fp = Math.max(8, Math.round(px*0.62));
@@ -2902,7 +2729,6 @@ window.addEventListener("storage", applyIndexGridStockSync);
         return icon;
     }
 
-    // ── LOCK / RESTORE ────────────────────────────────────────────
     function lockColor(el) {
         var c = el.cloneNode(true);
         c.removeAttribute('onclick');
@@ -2945,7 +2771,6 @@ window.addEventListener("storage", applyIndexGridStockSync);
         fn(el);
     }
 
-    // ── RESTORE SWEEP ─────────────────────────────────────────────
     function restoreSweep(stock) {
         document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
             var type = dead.getAttribute('data-sf-dead');
@@ -2970,68 +2795,86 @@ window.addEventListener("storage", applyIndexGridStockSync);
         });
     }
 
-    // ── MAIN APPLY ────────────────────────────────────────────────
+    // ── MAIN UNIFIED SYNC EXECUTION ──
     function applySync() {
+        if (localObserver) { localObserver.disconnect(); }
+
         var stock = {};
         try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) {}
 
-        // 1. Whole-product OUT OF STOCK badge
-        document.querySelectorAll('.Explore-Saree-Styles img,[id*="Style"] img,.mini-card-static img,.saree-card img,.product-card img,main img').forEach(function(img) {
+        // 1. Target ALL styles of layout frames across the platform
+        document.querySelectorAll('.Explore-Saree-Styles img, [id*="Style"] img, .mini-card-static img, .mini-card img, .saree-card img, .product-card img, main img').forEach(function(img) {
             var fn = (img.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
             if (!fn) return;
-            var card = img.closest('.Explore-Saree-Styles,[id*="Style"],.mini-card-static,.saree-card,.product-card,.saree-sub-product-card');
+            var card = img.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .mini-card, .saree-card, .product-card, .saree-sub-product-card');
             var wrap = img.parentElement;
             if (!card || !wrap) return;
-            wrap.querySelectorAll('.sf-oos-badge').forEach(function(e){e.remove();});
+            
+            wrap.querySelectorAll('.sf-oos-badge, .scroller-stockout-badge').forEach(function(e){e.remove();});
+            
             if (stock[fn+'||Entire Product Style||'+fn] === true) {
-                wrap.style.position = 'relative'; wrap.style.display = 'inline-block';
+                wrap.style.position = 'relative';
                 var ov = document.createElement('div');
                 ov.className = 'sf-oos-badge';
-                ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.72);display:flex;justify-content:center;align-items:center;z-index:9;border-radius:inherit;pointer-events:none;';
-                ov.innerHTML = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:6px 12px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.3);white-space:nowrap;">OUT OF STOCK</div>';
+                ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);display:flex;justify-content:center;align-items:center;z-index:99;border-radius:inherit;pointer-events:auto;';
+                ov.innerHTML = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:5px 10px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.2);white-space:nowrap;letter-spacing:0.5px;">OUT OF STOCK</div>';
+                
+                ov.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert("This style is currently out of stock!");
+                    return false;
+                };
                 wrap.appendChild(ov);
-                card.querySelectorAll('button,.add-to-cart-btn,.mini-add-btn').forEach(function(b){b.style.opacity='0.4';b.style.pointerEvents='none';});
+                
+                card.querySelectorAll('button, .add-to-cart-btn, .mini-add-btn').forEach(function(b){
+                    b.style.opacity='0.4'; b.style.cursor='not-allowed'; b.style.pointerEvents='none';
+                });
+            } else {
+                card.querySelectorAll('button, .add-to-cart-btn, .mini-add-btn').forEach(function(b){
+                    b.style.opacity=''; b.style.cursor=''; b.style.pointerEvents='';
+                });
             }
         });
 
-        // 2. Blouse color swatches — "S" icon
-        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'],#exploreStylesSection .opts button[class*='color-swatch-'],#exploreStylesSection [id^='opts-'] .opts button,[onclick*=\"handleBlouseWizardSelection('color'\"]").forEach(function(sw) {
+        // 2. Blouse color swatches
+        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .opts button[class*='color-swatch-'], #exploreStylesSection [id^='opts-'] .opts button, [onclick*=\"handleBlouseWizardSelection('color'\"]").forEach(function(sw) {
             if (sw.getAttribute('data-sf-dead')) return;
             var ck = extractColorName(sw); if (!ck) return;
             if (stock[BLOUSE_SHARED+'||Color Variant||'+ck] === true) saveAndLock(sw, lockColor);
         });
 
-        // 3. Blouse sizes — line-through
-        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'],#exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'],[onclick*=\"handleBlouseWizardSelection('size'\"]").forEach(function(btn) {
+        // 3. Blouse sizes
+        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], [onclick*=\"handleBlouseWizardSelection('size'\"]").forEach(function(btn) {
             if (btn.getAttribute('data-sf-dead')) return;
             var lbl = btn.innerText.trim(); if (!lbl) return;
             if (stock[BLOUSE_SHARED+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
         });
 
-        // 4. Blouse materials — line-through
-        document.querySelectorAll('#exploreStylesSection .material-chip,#blouse-material-target .material-chip,#blouseMainActions .material-chip').forEach(function(chip) {
+        // 4. Blouse materials
+        document.querySelectorAll('#exploreStylesSection .material-chip, #blouse-material-target .material-chip, #blouseMainActions .material-chip').forEach(function(chip) {
             if (chip.getAttribute('data-sf-dead')) return;
             var lbl = chip.innerText.trim(); if (!lbl) return;
             if (stock[BLOUSE_SHARED+'||Material option||'+lbl] === true) saveAndLock(chip, lockAttr);
         });
 
-        // 5. Non-blouse color circles — "S" icon
-        document.querySelectorAll(".color-circle,[style*='background'][onclick*='color']").forEach(function(c) {
+        // 5. Non-blouse color circles
+        document.querySelectorAll(".color-circle, [style*='background'][onclick*='color']").forEach(function(c) {
             if (c.getAttribute('data-sf-dead') || isBlouseEl(c)) return;
             var img = getProductImg(c); if (!img) return;
             var ck = extractColorName(c); if (!ck) return;
             if (stock[img+'||Color Variant||'+ck] === true) saveAndLock(c, lockColor);
         });
 
-        // 6. Non-blouse sizes — line-through
-        document.querySelectorAll(".size-chip,.size-btn,.quiz-step-btn[onclick*='processWizardStep']").forEach(function(btn) {
+        // 6. Non-blouse sizes
+        document.querySelectorAll(".size-chip, .size-btn, .quiz-step-btn[onclick*='processWizardStep']").forEach(function(btn) {
             if (btn.getAttribute('data-sf-dead') || isBlouseEl(btn)) return;
             var img = getProductImg(btn); if (!img) return;
             var lbl = btn.innerText.trim(); if (!lbl) return;
             if (stock[img+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
         });
 
-        // 7. Non-blouse materials — line-through
+        // 7. Non-blouse materials
         document.querySelectorAll('.material-chip').forEach(function(chip) {
             if (chip.getAttribute('data-sf-dead') || isBlouseEl(chip)) return;
             var img = getProductImg(chip); if (!img) return;
@@ -3039,43 +2882,59 @@ window.addEventListener("storage", applyIndexGridStockSync);
             if (stock[img+'||Material option||'+lbl] === true) saveAndLock(chip, lockAttr);
         });
 
-        // 8. Restore anything no longer stocked-out
         restoreSweep(stock);
+
+        if (localObserver) {
+            localObserver.observe(document.body, { childList: true, subtree: true });
+        }
     }
 
-    // ── FETCH LATEST FROM BACKEND, THEN APPLY ────────────────────
     function fetchAndApply() {
         fetch(BACKEND + '/api/get-inventory-cache')
             .then(function(r){ return r.ok ? r.json() : {}; })
             .then(function(cache) {
-                // Always write the backend snapshot — even {} means "all restocked"
                 try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache || {})); } catch(e){}
                 applySync();
             })
-            .catch(function(){ applySync(); }); // still apply from localStorage if fetch fails
+            .catch(function(){ applySync(); });
     }
 
-    // ── BOOT ─────────────────────────────────────────────────────
+    function connectInventorySocket() {
+        if (typeof io === 'undefined') { setTimeout(connectInventorySocket, 500); return; }
+        try {
+            const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
+            sock.on('inventory_cache_updated', function (data) {
+                if (data && data.cache && typeof data.cache === 'object') {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.cache));
+                    applySync();
+                }
+            });
+        } catch (e) {
+            console.warn('[Inventory Bridge] Socket error:', e);
+        }
+    }
+
+    // ── ENGINE INITIALIZATION ──
+    localObserver = new MutationObserver(applySync);
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', fetchAndApply);
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchAndApply();
+            connectInventorySocket();
+        });
     } else {
         fetchAndApply();
+        connectInventorySocket();
     }
 
-    // Re-fetch every 30 seconds so long-open pages stay current
     setInterval(fetchAndApply, 30000);
-
-    // React instantly when the admin changes stock in another tab
     window.addEventListener('storage', function(e) {
         if (e.key === STORAGE_KEY) applySync();
     });
 
-    // Watch for DOM changes (lazy-loaded product cards)
-    new MutationObserver(applySync).observe(document.body, { childList: true, subtree: true });
-
+    console.log('[Inventory System] Unified Engine online.');
 })();
     
 </script>
-
 </body>
 </html>
