@@ -3938,6 +3938,213 @@ const sareeMaterials = {
 
     console.log('[Admin Bridge] Loaded — ACCEPT/DONE/CHAT wired to backend socket.');
 })();
+
+(function () {
+    'use strict';
+
+    const BACKEND = 'https://customize-collection.onrender.com';
+
+    // ── 1. FIX showAdminRenderedBubble ───────────────────────────
+    //    Original only checks isOwner (Owner / owner).
+    //    System messages fell to "Customer" branch — now they render
+    //    as a centred italic notification row.
+    //    Audio messages get a real <audio> element.
+    window.showAdminRenderedBubble = function (role, text, stamp, audioUrl) {
+        const container = document.getElementById('admin-chat-view');
+        if (!container) return;
+
+        const isOwner  = role === 'Owner' || role === 'owner';
+        const isSystem = role === 'System' || role === 'system';
+        const bubble   = document.createElement('div');
+        bubble.style.flexShrink = '0'; // prevent flex from squishing bubbles
+
+        if (isSystem) {
+            // ── System notification row ──
+            bubble.style.cssText =
+                'text-align:center;font-size:11px;color:#64748b;font-style:italic;' +
+                'padding:3px 6px;margin:2px 0;word-wrap:break-word;';
+            bubble.innerHTML =
+                `<span>${text || ''}</span>` +
+                (stamp ? `&ensp;<span style="font-size:10px;opacity:0.65;">${stamp}</span>` : '');
+        } else {
+            // ── Chat bubble ──
+            bubble.style.cssText =
+                'padding:8px 14px;border-radius:12px;max-width:75%;width:fit-content;' +
+                'font-size:14px;word-wrap:break-word;margin-bottom:4px;' +
+                (isOwner
+                    ? 'background:#0b57d0;align-self:flex-end;color:white;margin-left:auto;'
+                    : 'background:#cbd5e1;align-self:flex-start;color:#1e293b;');
+
+            let bodyHtml = `<div>${text || ''}</div>`;
+
+            if (audioUrl) {
+                // Real audio player for voice notes
+                bodyHtml +=
+                    `<audio controls style="margin-top:6px;width:180px;height:32px;" src="${audioUrl}"></audio>`;
+            }
+
+            bubble.innerHTML =
+                `<div style="font-size:11px;font-weight:bold;margin-bottom:3px;">
+                    ${isOwner ? 'Owner' : 'Customer'}
+                </div>` +
+                bodyHtml +
+                `<div style="font-size:10px;opacity:0.75;margin-top:4px;text-align:right;">${stamp || ''}</div>`;
+        }
+
+        container.appendChild(bubble);
+        // Scroll to bottom after paint — works even inside flex containers
+        requestAnimationFrame(() => { container.scrollTop = container.scrollHeight; });
+    };
+
+    // ── 2. FIX loadSelectedOrderChat to pass audioUrl + final scroll ─
+    const _origLoadChat = window.loadSelectedOrderChat;
+    window.loadSelectedOrderChat = function () {
+        const chatView = document.getElementById('admin-chat-view');
+        const order    = (typeof getSelectedOrder === 'function') ? getSelectedOrder() : null;
+
+        if (!chatView) { if (typeof _origLoadChat === 'function') _origLoadChat(); return; }
+
+        chatView.innerHTML = '';
+
+        if (!order) {
+            chatView.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">Select an order to view messages.</div>';
+            return;
+        }
+
+        (order.chatLedgerHistory || []).forEach(msg => {
+            window.showAdminRenderedBubble(msg.sender, msg.text, msg.stamp, msg.audioUrl || '');
+        });
+
+        // Final scroll after all bubbles have been appended
+        setTimeout(() => { chatView.scrollTop = chatView.scrollHeight; }, 30);
+    };
+
+    // ── 3. ADMIN SOCKET CONNECTION ───────────────────────────────
+    let adminSocket = null;
+    function connectAdminSocket() {
+        if (typeof io === 'undefined') { setTimeout(connectAdminSocket, 500); return; }
+        try {
+            adminSocket = io(BACKEND, { transports: ['polling', 'websocket'] });
+            adminSocket.on('connect', () => {
+                adminSocket.emit('join_admin_channel');
+            });
+            // Refresh order list when customer sends any message
+            adminSocket.on('customer_message_received', () => {
+                if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            });
+        } catch (e) {
+            console.warn('[Admin Bridge] Socket error:', e);
+        }
+    }
+    connectAdminSocket();
+
+    // ── 4. SAFE ORDER CACHE HELPERS ─────────────────────────────
+    function getOrderFromCache(orderId) {
+        try {
+            const list = JSON.parse(localStorage.getItem('allOrdersData') || '[]');
+            return Array.isArray(list) ? list.find(o => o.orderId === orderId) : null;
+        } catch { return null; }
+    }
+
+    function saveOrderToCache(updatedOrder) {
+        try {
+            let list = [];
+            try { list = JSON.parse(localStorage.getItem('allOrdersData') || '[]'); } catch { }
+            const idx = list.findIndex(o => o.orderId === updatedOrder.orderId);
+            if (idx >= 0) list[idx] = updatedOrder; else list.push(updatedOrder);
+            localStorage.setItem('allOrdersData', JSON.stringify(list));
+        } catch { }
+    }
+
+    // ── 5. REPLACE transmitAdminResponseText ─────────────────────
+    //    Original calls getAllOrders() without await — broken.
+    //    Uses localStorage cache + backend API instead.
+    window.transmitAdminResponseText = function () {
+        const field = document.getElementById('admin-chat-input');
+        if (!field) return;
+        const txt = field.value.trim();
+        if (!txt) return;
+
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) { alert('Select an order first'); return; }
+
+        const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Update localStorage immediately for instant UI feedback
+        const order = getOrderFromCache(orderId);
+        if (order) {
+            order.chatLedgerHistory = order.chatLedgerHistory || [];
+            order.chatLedgerHistory.push({ id: Date.now(), sender: 'Owner', text: txt, stamp });
+            saveOrderToCache(order);
+        }
+
+        field.value = '';
+        if (typeof loadAdminOrders === 'function') loadAdminOrders();
+
+        // POST to backend → server emits receive_chat_message to customer socket room
+        fetch(BACKEND + '/api/admin-send-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, message: txt, sender: 'Owner' })
+        }).catch(() => {});
+    };
+
+    // ── 6. PATCH acceptSelectedOrderForDelivery ──────────────────
+    const _origAccept = window.acceptSelectedOrderForDelivery;
+    window.acceptSelectedOrderForDelivery = function () {
+        if (typeof _origAccept === 'function') _origAccept();
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) return;
+        fetch(BACKEND + '/api/admin-update-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, action: 'accept' })
+        }).catch(() => {});
+    };
+
+    // ── 7. PATCH markSelectedOrderDone ───────────────────────────
+    const _origDone = window.markSelectedOrderDone;
+    window.markSelectedOrderDone = function () {
+        if (typeof _origDone === 'function') _origDone();
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) return;
+        fetch(BACKEND + '/api/admin-update-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, action: 'done' })
+        }).catch(() => {});
+    };
+
+    // ── 8. INTERCEPT inventory localStorage → sync to backend ────
+    const _origSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+        _origSetItem.call(this, key, value);
+        if (key === 'storefront_inventory_cache') {
+            try {
+                fetch(BACKEND + '/api/sync-inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cache: JSON.parse(value) })
+                }).catch(() => {});
+            } catch { }
+        }
+    };
+
+    // ── 9. LOAD INITIAL INVENTORY FROM BACKEND ───────────────────
+    (async function () {
+        try {
+            const res = await fetch(BACKEND + '/api/get-inventory-cache');
+            if (!res.ok) return;
+            const cache = await res.json();
+            if (cache && Object.keys(cache).length > 0) {
+                _origSetItem.call(localStorage, 'storefront_inventory_cache', JSON.stringify(cache));
+                if (typeof renderInventoryCoreManagement === 'function') renderInventoryCoreManagement();
+            }
+        } catch { }
+    })();
+
+    console.log('[Admin Bridge v2] Loaded.');
+})();
     
 </script>
 </body>
