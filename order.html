@@ -3012,14 +3012,15 @@ function clearOldOrder() {
                 withCredentials: true
             });
 
-            _socket.off('connect.bridge');
+            // Use the base event name string directly to clean listeners reliably
+            _socket.off('connect');
             _socket.on('connect', function () {
                 _socket.emit('join_order_channel', orderId);
             });
             if (_socket.connected) _socket.emit('join_order_channel', orderId);
 
-            // ── Incoming chat message from admin ──
-            _socket.off('receive_chat_message.bridge');
+            // Clear standard channel attachments completely before re-binding
+            _socket.off('receive_chat_message');
             _socket.on('receive_chat_message', function (data) {
                 if (data.orderId !== orderId) return;
                 const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
@@ -3137,14 +3138,17 @@ function clearOldOrder() {
 
         const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
         if (!order) return;
+        
+        // Explicitly isolate the latest text entry authored specifically by the customer
         const msgs = order.chatLedgerHistory || [];
-        const last = msgs[msgs.length - 1];
-        if (!last || last.sender === 'System' || last.sender === 'Owner') return;
+        const lastCustomerMsg = [...msgs].reverse().find(m => m.sender === 'Customer' || (!m.sender && !m.isAudio));
+        
+        if (!lastCustomerMsg || !lastCustomerMsg.text) return;
 
         fetch(BACKEND + '/api/customer-send-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: order.orderId, message: last.text })
+            body: JSON.stringify({ orderId: order.orderId, message: lastCustomerMsg.text })
         }).catch(() => {});
     };
 
