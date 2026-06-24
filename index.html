@@ -3048,9 +3048,8 @@ window.addEventListener("storage", applyIndexGridStockSync);
         fetch(BACKEND + '/api/get-inventory-cache')
             .then(function(r){ return r.ok ? r.json() : {}; })
             .then(function(cache) {
-                if (cache && Object.keys(cache).length > 0) {
-                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache)); } catch(e){}
-                }
+                // Always write the backend snapshot — even {} means "all restocked"
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache || {})); } catch(e){}
                 applySync();
             })
             .catch(function(){ applySync(); }); // still apply from localStorage if fetch fails
