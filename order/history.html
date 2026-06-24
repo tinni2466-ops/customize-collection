@@ -4147,6 +4147,8 @@ const sareeMaterials = {
     console.log('[Admin Bridge v2] Loaded.');
 })();
 
+(function () {
+    'use strict';
     const ADMIN_COLOR_MAP = {
         "red": "Flame Red", "#ff5733": "Flame Red", "rgb(255, 87, 51)": "Flame Red", "rgb(229, 62, 62)": "Flame Red", "#e53e3e": "Flame Red",
         "crimson": "Crimson", "#c70039": "Crimson", "rgb(199, 0, 57)": "Crimson", "rgb(220, 20, 60)": "Crimson", "#dc143c": "Crimson",
@@ -4667,10 +4669,12 @@ const sareeMaterials = {
     window.addEventListener("storage", applyMasterStockSync);
 
     if (document.readyState === "loading") {
+        
         document.addEventListener("DOMContentLoaded", initializeInventorySyncEngine);
     } else {
         initializeInventorySyncEngine();
     }
+    window.applyMasterStockSync = applyMasterStockSync;
 
 })();
 
