@@ -64,7 +64,7 @@ app.use('/voice-notes', express.static(voiceNotesDir));
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // =============================================================
-// SQLITE DATABASE
+// SQLITE DATABASE Setup & Automated Migrations
 // =============================================================
 const db = new sqlite3.Database('./data.db', (err) => {
     if (err) console.error('Database connection failure:', err.message);
@@ -88,27 +88,33 @@ db.serialize(() => {
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS orders (
-        id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id             TEXT UNIQUE,
-        customer_name        TEXT,
-        customer_email       TEXT,
-        items                TEXT    DEFAULT '[]',
-        total                REAL    DEFAULT 0,
-        status               TEXT    DEFAULT 'customization_pending',
-        current_phase        INTEGER DEFAULT 2,
-        chat_history         TEXT    DEFAULT '[]',
-        timeline             TEXT    DEFAULT '[]',
-        payment_timestamp    TEXT,
-        dispatch_timestamp   TEXT,
-        delivery_timestamp   TEXT,
+        id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id              TEXT UNIQUE,
+        customer_name         TEXT,
+        customer_email        TEXT,
+        items                 TEXT    DEFAULT '[]',
+        total                 REAL    DEFAULT 0,
+        status                TEXT    DEFAULT 'customization_pending',
+        current_phase         INTEGER DEFAULT 2,
+        chat_history          TEXT    DEFAULT '[]',
+        timeline              TEXT    DEFAULT '[]',
+        payment_timestamp     TEXT,
+        dispatch_timestamp    TEXT,
+        delivery_timestamp    TEXT,
         is_delivery_finalized INTEGER DEFAULT 0,
-        created_at           DATETIME DEFAULT CURRENT_TIMESTAMP
+        chat_enabled          INTEGER DEFAULT 0,
+        created_at            DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS inventory_cache (
         cache_key   TEXT PRIMARY KEY,
         cache_value TEXT
     )`);
+
+    // Retroactive check for older database instances to make sure chat_enabled column exists safely
+    db.run(`ALTER TABLE orders ADD COLUMN chat_enabled INTEGER DEFAULT 0`, (err) => {
+        // Silently catch error if column already exists in database instance
+    });
 
     db.all('SELECT COUNT(*) as count FROM inventory', [], (err, rows) => {
         if (rows && rows[0].count === 0) {
@@ -132,13 +138,21 @@ io.on('connection', (socket) => {
 
     socket.on('send_chat_message', (data) => {
         const { orderId, senderRole, message } = data;
-        db.run(
-            `INSERT INTO order_chats (order_id, sender_role, message_content) VALUES (?, ?, ?)`,
-            [orderId, senderRole, message],
-            function (err) {
-                if (!err) io.to(orderId).emit('receive_chat_message', { orderId, senderRole, message });
+        
+        // Before accepting user messages, ensure the context supports tracking
+        db.get('SELECT chat_enabled FROM orders WHERE order_id = ?', [orderId], (err, row) => {
+            if (senderRole === 'Customer' && row && !row.chat_enabled) {
+                return; // Guard statement to prevent socket exploits if chat is closed
             }
-        );
+            
+            db.run(
+                `INSERT INTO order_chats (order_id, sender_role, message_content) VALUES (?, ?, ?)`,
+                [orderId, senderRole, message],
+                function (err) {
+                    if (!err) io.to(orderId).emit('receive_chat_message', { orderId, senderRole, message });
+                }
+            );
+        });
     });
 
     socket.on('order_status_update', (data) => {
@@ -318,11 +332,18 @@ app.post('/api/verify-2fa', (req, res) => {
 });
 
 // =============================================================
-// SECURE ADMIN GATEWAY
+// SECURE ADMIN GATEWAY (Fixes Page Refresh Loop Error)
 // =============================================================
 app.get('/super-admin', (req, res) => {
     const secretKey = req.query.secret;
-    if (secretKey === 'x99_SecureAdmin_p77!' || req.session.isAdminAuthenticated) {
+    
+    // If they hit the URL with the correct secret key, store the authentication token state immediately!
+    if (secretKey === 'x99_SecureAdmin_p77!') {
+        req.session.isAdminAuthenticated = true;
+    }
+    
+    // Check if the session is authenticated (works seamlessly during standard browser refreshes)
+    if (req.session.isAdminAuthenticated) {
         res.sendFile(path.resolve(__dirname, '../order/history.html'));
     } else {
         res.status(404).send('Cannot GET /super-admin');
@@ -349,8 +370,8 @@ app.post('/api/submit-order', (req, res) => {
     db.run(
         `INSERT OR IGNORE INTO orders
             (order_id, customer_name, customer_email, items, total,
-             chat_history, timeline, payment_timestamp, current_phase)
-         VALUES (?,?,?,?,?,?,?,?,2)`,
+             chat_history, timeline, payment_timestamp, current_phase, chat_enabled)
+         VALUES (?,?,?,?,?,?,?,?,2,0)`,
         [orderId, customer_name || 'Customer', customer_email || '',
          typeof items === 'string' ? items : JSON.stringify(items),
          total_price || 0, chatHistory, timeline, now],
@@ -379,12 +400,13 @@ app.get('/api/all-orders', (req, res) => {
             paymentTimestamp:    row.payment_timestamp,
             dispatchTimestamp:   row.dispatch_timestamp,
             deliveryTimestamp:   row.delivery_timestamp,
-            isDeliveryFinalized: !!row.is_delivery_finalized
+            isDeliveryFinalized: !!row.is_delivery_finalized,
+            chatEnabled:         !!row.chat_enabled
         })));
     });
 });
 
-// ── GET SINGLE ORDER (customer polling) ───────────────────────
+// ── GET SINGLE ORDER (customer check) ───────────────────────
 app.get('/api/order/:orderId', (req, res) => {
     db.get('SELECT * FROM orders WHERE order_id = ?', [req.params.orderId], (err, row) => {
         if (err || !row) return res.status(404).json({ error: 'Order not found' });
@@ -399,8 +421,26 @@ app.get('/api/order/:orderId', (req, res) => {
             paymentTimestamp:    row.payment_timestamp,
             dispatchTimestamp:   row.dispatch_timestamp,
             deliveryTimestamp:   row.delivery_timestamp,
-            isDeliveryFinalized: !!row.is_delivery_finalized
+            isDeliveryFinalized: !!row.is_delivery_finalized,
+            chatEnabled:         !!row.chat_enabled
         });
+    });
+});
+
+// ── ADMIN TOGGLE CUSTOMER CHAT INITIALIZATION LOCK ───────────
+app.post('/api/admin/toggle-chat', (req, res) => {
+    const { orderId, enabled } = req.body;
+    if (!orderId) return res.status(400).json({ error: 'orderId is required' });
+    
+    const statusValue = enabled ? 1 : 0;
+    db.run('UPDATE orders SET chat_enabled = ? WHERE order_id = ?', [statusValue, orderId], (err) => {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        
+        // Broadcast change in real-time across WebSockets to lock/unlock inputs immediately
+        io.to(orderId).emit('chat_status_updated', { orderId, chatEnabled: !!statusValue });
+        io.to('admin_room').emit('chat_status_updated', { orderId, chatEnabled: !!statusValue });
+        
+        res.json({ success: true, chatEnabled: !!statusValue });
     });
 });
 
@@ -433,8 +473,14 @@ app.post('/api/customer-send-chat', (req, res) => {
     if (!orderId || !message) return res.status(400).json({ error: 'orderId and message required' });
     const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    db.get('SELECT chat_history FROM orders WHERE order_id = ?', [orderId], (err, row) => {
+    db.get('SELECT chat_enabled, chat_history FROM orders WHERE order_id = ?', [orderId], (err, row) => {
         if (err || !row) return res.status(404).json({ error: 'Order not found' });
+        
+        // Enforce lock verification
+        if (!row.chat_enabled) {
+            return res.status(403).json({ error: 'Chat channel is currently locked by the store administrator.' });
+        }
+
         let history = [];
         try { history = JSON.parse(row.chat_history); } catch { }
         const entry = { id: Date.now(), sender: 'Customer', text: message, stamp };
@@ -443,7 +489,9 @@ app.post('/api/customer-send-chat', (req, res) => {
         db.run('UPDATE orders SET chat_history = ? WHERE order_id = ?',
             [JSON.stringify(history), orderId],
             () => {
+                // Emit symmetrically to admin tracking view and individual customer views
                 io.to('admin_room').emit('customer_message_received', { orderId, message, stamp });
+                io.to(orderId).emit('receive_chat_message', { orderId, ...entry });
                 res.json({ success: true });
             }
         );
@@ -494,7 +542,7 @@ app.post('/api/admin-update-order', (req, res) => {
 });
 
 // =============================================================
-// VOICE MESSAGE UPLOAD
+// VOICE MESSAGE UPLOAD & PIPELINE TRANSMISSION
 // =============================================================
 app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
     const { orderId, stamp } = req.body;
@@ -506,23 +554,28 @@ app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
     const messageText = '🎙️ Voice note';
     const msgStamp    = stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    db.get('SELECT chat_history FROM orders WHERE order_id = ?', [orderId], (err, row) => {
-        if (err || !row) {
-            io.to('admin_room').emit('customer_message_received', {
-                orderId, message: messageText, isAudio: true, audioUrl, stamp: msgStamp
-            });
-            return res.json({ success: true, audioUrl });
+    db.get('SELECT chat_enabled, chat_history FROM orders WHERE order_id = ?', [orderId], (err, row) => {
+        if (err || !row) return res.status(404).json({ error: 'Order profile tracking context error.' });
+        
+        // Enforce lock validation
+        if (!row.chat_enabled) {
+            return res.status(403).json({ error: 'Chat channel is currently locked by the store administrator.' });
         }
 
         let history = [];
         try { history = JSON.parse(row.chat_history || '[]'); } catch { }
-        history.push({ id: Date.now(), sender: 'Customer', text: messageText, isAudio: true, audioUrl, stamp: msgStamp });
+        const entry = { id: Date.now(), sender: 'Customer', text: messageText, isAudio: true, audioUrl, stamp: msgStamp };
+        history.push(entry);
 
         db.run('UPDATE orders SET chat_history = ? WHERE order_id = ?',
             [JSON.stringify(history), orderId],
             () => {
+                // Real-time synchronization fallback triggers across general admin panels and order rooms
                 io.to('admin_room').emit('customer_message_received', {
                     orderId, message: messageText, isAudio: true, audioUrl, stamp: msgStamp
+                });
+                io.to(orderId).emit('receive_chat_message', {
+                    orderId, ...entry
                 });
                 res.json({ success: true, audioUrl });
             }
@@ -533,31 +586,21 @@ app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
 // =============================================================
 // INVENTORY CACHE SYNC
 // =============================================================
-
-// ── POST /api/sync-inventory ──────────────────────────────────
-// Called by the admin panel whenever stock state changes.
-// We WIPE the entire table first, then re-insert the current
-// snapshot.  This is the only safe way to handle restocked items:
-// when admin removes a key (restock), we must DELETE that row
-// from the DB — INSERT OR REPLACE alone will never remove it.
 app.post('/api/sync-inventory', (req, res) => {
     const { cache } = req.body;
     if (!cache || typeof cache !== 'object') {
         return res.status(400).json({ error: 'cache object required' });
     }
 
-    // Step 1: wipe everything so restocked (deleted) keys are gone
     db.run('DELETE FROM inventory_cache', [], function (delErr) {
         if (delErr) return res.status(500).json({ error: delErr.message });
 
-        // Step 2: if cache is empty (all items restocked) we are done
         const entries = Object.entries(cache);
         if (entries.length === 0) {
             io.emit('inventory_cache_updated', { cache });
             return res.json({ success: true });
         }
 
-        // Step 3: re-insert the current snapshot
         const stmt = db.prepare(
             'INSERT INTO inventory_cache (cache_key, cache_value) VALUES (?, ?)'
         );
