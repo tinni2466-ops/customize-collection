@@ -3145,6 +3145,281 @@ function clearOldOrder() {
 
     console.log('[Order Bridge] Loaded — ACCEPT/DONE/CHAT connected.');
 })();
+
+(function () {
+    'use strict';
+
+    const BACKEND = 'https://customize-collection.onrender.com';
+
+    // ──────────────────────────────────────────────────────────────
+    // 1. REAL VOICE RECORDING WITH MediaRecorder API
+    // ──────────────────────────────────────────────────────────────
+    let _mediaRecorder  = null;
+    let _audioChunks    = [];
+    let _isRecording    = false;
+
+    // Replace the fake toggle function with a real one
+    window.toggleVoiceRecordingStateLoop = async function () {
+        const textField      = document.getElementById('chat-text-message-field');
+        const recordFeedback = document.getElementById('voice-recording-console-feedback');
+        const micIcon        = document.getElementById('mic-action-trigger');
+
+        if (!_isRecording) {
+            // ── START RECORDING ──────────────────────────────────
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                _audioChunks   = [];
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                    ? 'audio/webm;codecs=opus'
+                    : 'audio/webm';
+                _mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+                _mediaRecorder.ondataavailable = function (e) {
+                    if (e.data && e.data.size > 0) _audioChunks.push(e.data);
+                };
+
+                _mediaRecorder.onstop = async function () {
+                    // Release microphone
+                    stream.getTracks().forEach(t => t.stop());
+
+                    const blob = new Blob(_audioChunks, { type: mimeType });
+                    _audioChunks = [];
+                    await _uploadVoiceBlob(blob, mimeType);
+                };
+
+                _mediaRecorder.start();
+                _isRecording = true;
+
+                // Update UI to show "recording" state
+                if (window.systemApplicationState)
+                    window.systemApplicationState.isVoiceRecording = true;
+                if (textField)      textField.style.display      = 'none';
+                if (recordFeedback) recordFeedback.style.display  = 'flex';
+                if (micIcon)        micIcon.style.background      = '#ffe3e3';
+
+            } catch (err) {
+                console.error('[Voice] getUserMedia error:', err);
+                alert('Microphone access denied. Please allow microphone permission in your browser and try again.');
+            }
+
+        } else {
+            // ── STOP RECORDING (triggers onstop → _uploadVoiceBlob) ──
+            _isRecording = false;
+
+            if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
+                _mediaRecorder.stop(); // fires onstop asynchronously
+            }
+
+            // Reset UI
+            if (window.systemApplicationState)
+                window.systemApplicationState.isVoiceRecording = false;
+            if (textField)      textField.style.display      = 'block';
+            if (recordFeedback) recordFeedback.style.display  = 'none';
+            if (micIcon)        micIcon.style.background      = 'none';
+        }
+    };
+
+    // Upload audio blob → backend → get audioUrl back
+    async function _uploadVoiceBlob(blob, mimeType) {
+        const currentOrder =
+            (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+
+        if (!currentOrder) {
+            alert('Confirm your order first before sending voice notes.');
+            return;
+        }
+
+        const stamp    = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const ext      = mimeType.includes('ogg') ? 'ogg' : 'webm';
+        const formData = new FormData();
+        formData.append('audio',   blob, 'voice-note.' + ext);
+        formData.append('orderId', currentOrder.orderId);
+        formData.append('stamp',   stamp);
+
+        try {
+            const res  = await fetch(BACKEND + '/api/send-voice-message', {
+                method: 'POST',
+                body:   formData
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                alert('Voice note upload failed. Please try again.');
+                return;
+            }
+
+            // Add the voice message to the local chat history
+            currentOrder.chatLedgerHistory = currentOrder.chatLedgerHistory || [];
+            currentOrder.chatLedgerHistory.push({
+                id:       Date.now(),
+                sender:   'Customer',
+                text:     '🎙️ Voice note',
+                isAudio:  true,
+                audioUrl: BACKEND + data.audioUrl,   // full URL for playback
+                stamp
+            });
+
+            if (typeof saveAppState === 'function')               saveAppState();
+            if (typeof rebuildChatLedgerUIStream === 'function')  rebuildChatLedgerUIStream();
+
+        } catch (err) {
+            console.error('[Voice] Upload failed:', err);
+            alert('Failed to send voice note. Please check your connection.');
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // 2. REBUILD CHAT STREAM — show real <audio> player for voice msgs
+    // ──────────────────────────────────────────────────────────────
+    // Wraps the existing rebuildChatLedgerUIStream so audio messages
+    // get a real <audio controls> element instead of a fake waveform.
+    const _origRebuild = window.rebuildChatLedgerUIStream;
+    window.rebuildChatLedgerUIStream = function () {
+        // Run the original first to populate the box
+        if (typeof _origRebuild === 'function') _origRebuild();
+
+        // Then upgrade any fake audio placeholders to real players
+        const historyBox = document.getElementById('chat-history-scroll-box');
+        if (!historyBox) return;
+
+        const currentOrder =
+            (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        const messages = currentOrder ? (currentOrder.chatLedgerHistory || []) : [];
+
+        // Re-render only messages that have audioUrl and don't already have <audio>
+        let nodeIdx = 0;
+        messages.forEach(msg => {
+            if (!msg.isAudio || !msg.audioUrl) { nodeIdx++; return; }
+            const node = historyBox.children[nodeIdx];
+            if (!node) { nodeIdx++; return; }
+            // Only patch if the audio element is missing
+            if (!node.querySelector('audio')) {
+                const player = document.createElement('audio');
+                player.controls    = true;
+                player.src         = msg.audioUrl;
+                player.style.cssText = 'display:block;margin-top:6px;width:180px;height:32px;';
+                // Remove fake waveform if present
+                const fakeWave = node.querySelector('.audio-attachment-player');
+                if (fakeWave) fakeWave.replaceWith(player);
+                else          node.appendChild(player);
+            }
+            nodeIdx++;
+        });
+    };
+
+    // ──────────────────────────────────────────────────────────────
+    // 3. FIX CUSTOMER NAME — use Google account name
+    // ──────────────────────────────────────────────────────────────
+    // The original processSecurePaymentExecutionPipeline uses:
+    //   customer_name: document.getElementById("customer-name-input")?.value || "Guest Buyer"
+    // We intercept fetch() to swap in the real Google account name.
+    const _origFetch = window.fetch;
+    window.fetch = async function (url, options, ...rest) {
+        if (
+            typeof url === 'string' &&
+            url.includes('/api/submit-order') &&
+            options && options.body
+        ) {
+            try {
+                const body = JSON.parse(options.body);
+                // Only fix if name is still the fallback
+                const googleName =
+                    (typeof getGoogleCustomerName === 'function')
+                        ? getGoogleCustomerName()
+                        : (localStorage.getItem('googleUserName') || '');
+
+                if (!body.customer_name || body.customer_name === 'Guest Buyer') {
+                    body.customer_name = googleName.trim() || 'Customer';
+                }
+
+                const googleEmail =
+                    (typeof getGoogleCustomerEmail === 'function')
+                        ? getGoogleCustomerEmail()
+                        : (localStorage.getItem('googleUserEmail') || '');
+                if (googleEmail && !body.customer_email) {
+                    body.customer_email = googleEmail.trim();
+                }
+
+                options = Object.assign({}, options, { body: JSON.stringify(body) });
+            } catch { }
+        }
+        return _origFetch.call(this, url, options, ...rest);
+    };
+
+    // ──────────────────────────────────────────────────────────────
+    // 4. FIX SOCKET orderId — use real activeOrderId from localStorage
+    // ──────────────────────────────────────────────────────────────
+    // The inline socket block hardcodes "ORDER_1001".
+    // We wait for the socket to be defined, then join the correct room.
+    (function patchSocketOrderId() {
+        function tryPatch() {
+            if (typeof socket === 'undefined' || !socket) {
+                setTimeout(tryPatch, 300);
+                return;
+            }
+
+            socket.on('connect', function () {
+                const orderId =
+                    localStorage.getItem('activeOrderId') ||
+                    (typeof activeOrderId !== 'undefined' ? activeOrderId : null);
+                if (orderId) socket.emit('join_order_channel', orderId);
+            });
+
+            // Also join immediately if already connected
+            if (socket.connected) {
+                const orderId =
+                    localStorage.getItem('activeOrderId') ||
+                    (typeof activeOrderId !== 'undefined' ? activeOrderId : null);
+                if (orderId) socket.emit('join_order_channel', orderId);
+            }
+
+            // Listen for admin owner reply and add to chat
+            socket.on('receive_chat_message', function (data) {
+                const currentOrder =
+                    (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+                if (!currentOrder || data.orderId !== currentOrder.orderId) return;
+
+                currentOrder.chatLedgerHistory = currentOrder.chatLedgerHistory || [];
+                currentOrder.chatLedgerHistory.push({
+                    id:      Date.now(),
+                    sender:  data.senderRole === 'owner' ? 'Owner' : data.senderRole,
+                    text:    data.message || '',
+                    isAudio: data.isAudio  || false,
+                    audioUrl:data.audioUrl || '',
+                    stamp:   data.stamp    || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+
+                if (typeof saveAppState === 'function')              saveAppState();
+                if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
+            });
+
+            // Also listen for order_status_update to advance phase
+            socket.on('order_status_update', function (data) {
+                const currentOrder =
+                    (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+                if (!currentOrder || data.orderId !== currentOrder.orderId) return;
+
+                if (data.status === 'delivery_active' || data.action === 'accept') {
+                    currentOrder.status       = 'delivery_active';
+                    currentOrder.currentPhase = 3;
+                    if (data.stamp) currentOrder.dispatchTimestamp = data.stamp;
+                }
+                if (data.status === 'delivered' || data.action === 'done') {
+                    currentOrder.status            = 'delivered';
+                    currentOrder.currentPhase      = 3;
+                    currentOrder.isDeliveryFinalized = true;
+                    if (data.stamp) currentOrder.deliveryTimestamp = data.stamp;
+                }
+
+                if (typeof saveAppState === 'function') saveAppState();
+                if (typeof renderUI === 'function')     renderUI();
+            });
+        }
+        tryPatch();
+    })();
+
+    console.log('[Order Page Fixes v2] Loaded.');
+})();
     
 </script>
 
