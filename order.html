@@ -3109,12 +3109,16 @@ function clearOldOrder() {
             const newChatLen = (fresh.chatLedgerHistory || []).length;
             const isAccepted = newPhase >= 3 || fresh.status === 'delivery_active' || fresh.status === 'delivered';
 
+            // Only force a heavy layout redraw if the phase transition actually just happened
             if (isAccepted && (_lastPhase < 3)) {
                 if (window.systemApplicationState) window.systemApplicationState.currentPhase = 3;
-                showFulfillmentPanel(order);
+                if (typeof showFulfillmentPanel === 'function') showFulfillmentPanel(order);
             } else if (isAccepted) {
-                // Already accepted — keep panel visible on re-renders
-                showFulfillmentPanel(order);
+                // Safe check: If the panel was accidentally hidden or dropped by an unrelated script render, restore it without rewriting DOM elements blindly
+                const panel = document.getElementById('fulfillment-panel-container') || document.querySelector('.fulfillment-card');
+                if (panel && panel.style.display === 'none') {
+                    if (typeof showFulfillmentPanel === 'function') showFulfillmentPanel(order);
+                }
             }
 
             if (newChatLen !== _lastChatLen) {
@@ -3127,29 +3131,53 @@ function clearOldOrder() {
         } catch { /* Backend offline — socket + localStorage poller still work */ }
     }
 
-    setInterval(pollOrderFromBackend, 4000);
+// Replaced fixed interval loops with sequential execution threads to prevent request compounding
+    function runAdaptivePollingQueue() {
+        setTimeout(async () => {
+            await pollOrderFromBackend();
+            runAdaptivePollingQueue(); // Recurse cleanly only after resolution attempt completes
+        }, 4000);
+    }
+
+    // Replace your old initialization trigger inside the final block:
+    function init() {
+        connectSocket();
+
+        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        if (order) {
+            const isAccepted = order.currentPhase >= 3 ||
+                               order.status === 'delivery_active' ||
+                               order.status === 'delivered';
+            if (isAccepted) showFulfillmentPanel(order);
+        }
+
+        // Kick off your self-correcting sequence instead of fixed execution intervals
+        runAdaptivePollingQueue();
+    }
 
     // ── 6. PATCH dispatchConsoleChatMessage ──────────────────────
     //    Also POST customer messages to backend so admin receives them
     //    via socket (admin_room) and they persist cross-browser.
-    const _origDispatch = window.dispatchConsoleChatMessage;
-    window.dispatchConsoleChatMessage = function () {
-        if (typeof _origDispatch === 'function') _origDispatch.apply(this, arguments);
+// Guard against multiple execution instances creating circular evaluation loops
+    if (!window.dispatchConsoleChatMessage?.isPatched) {
+        const _origDispatch = window.dispatchConsoleChatMessage;
+        window.dispatchConsoleChatMessage = function () {
+            if (typeof _origDispatch === 'function') _origDispatch.apply(this, arguments);
 
-        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-        if (!order) return;
-        
-        // Explicitly isolate the latest text entry authored specifically by the customer
-        const msgs = order.chatLedgerHistory || [];
-        const lastCustomerMsg = [...msgs].reverse().find(m => m.sender === 'Customer' || (!m.sender && !m.isAudio));
-        
-        if (!lastCustomerMsg || !lastCustomerMsg.text) return;
+            const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+            if (!order) return;
+            
+            const msgs = order.chatLedgerHistory || [];
+            const lastCustomerMsg = [...msgs].reverse().find(m => m.sender === 'Customer' || (!m.sender && !m.isAudio));
+            if (!lastCustomerMsg || !lastCustomerMsg.text) return;
 
-        fetch(BACKEND + '/api/customer-send-chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: order.orderId, message: lastCustomerMsg.text })
-        }).catch(() => {});
+            fetch(BACKEND + '/api/customer-send-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: order.orderId, message: lastCustomerMsg.text })
+            }).catch(() => {});
+        };
+        window.dispatchConsoleChatMessage.isPatched = true;
     };
 
     // ── 7. INIT ──────────────────────────────────────────────────
@@ -3201,10 +3229,17 @@ function clearOldOrder() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 _audioChunks   = [];
-                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-                    ? 'audio/webm;codecs=opus'
-                    : 'audio/webm';
-                _mediaRecorder = new MediaRecorder(stream, { mimeType });
+                // Saccadic fallback selection to accommodate Apple iOS environments seamlessly
+                let mimeType = 'audio/webm;codecs=opus';
+                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/webm';
+                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4'; // Standard iOS Safari container
+                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = '';          // Use browser default fallback
+
+                const options = mimeType ? { mimeType } : {};
+                _mediaRecorder = new MediaRecorder(stream, options);
+                
+                // Track dynamic extensions for the subsequent upload payload construction
+                const dynamicExt = mimeType.includes('mp4') ? 'mp4' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
 
                 _mediaRecorder.ondataavailable = function (e) {
                     if (e.data && e.data.size > 0) _audioChunks.push(e.data);
@@ -3262,7 +3297,11 @@ function clearOldOrder() {
         }
 
         const stamp    = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const ext      = mimeType.includes('ogg') ? 'ogg' : 'webm';
+// Evaluate real container signatures to prevent mobile payload corruption
+        let ext = 'webm';
+        if (mimeType.includes('mp4')) ext = 'mp4';
+        else if (mimeType.includes('ogg')) ext = 'ogg';
+        else if (mimeType.includes('wav')) ext = 'wav';
         const formData = new FormData();
         formData.append('audio',   blob, 'voice-note.' + ext);
         formData.append('orderId', currentOrder.orderId);
@@ -3354,37 +3393,39 @@ function clearOldOrder() {
     // The original processSecurePaymentExecutionPipeline uses:
     //   customer_name: document.getElementById("customer-name-input")?.value || "Guest Buyer"
     // We intercept fetch() to swap in the real Google account name.
-    const _origFetch = window.fetch;
-    window.fetch = async function (url, options, ...rest) {
-        if (
-            typeof url === 'string' &&
-            url.includes('/api/submit-order') &&
-            options && options.body
-        ) {
-            try {
-                const body = JSON.parse(options.body);
-                // Only fix if name is still the fallback
-                const googleName =
-                    (typeof getGoogleCustomerName === 'function')
+// Lock the fetch injection engine to prevent circular reference compilation errors
+    if (!window.fetch?.isPatched) {
+        const _origFetch = window.fetch;
+        window.fetch = async function (url, options, ...rest) {
+            if (
+                typeof url === 'string' &&
+                url.includes('/api/submit-order') &&
+                options && options.body && 
+                typeof options.body === 'string' // Ensure it's stringified JSON data
+            ) {
+                try {
+                    const body = JSON.parse(options.body);
+                    const googleName = (typeof getGoogleCustomerName === 'function')
                         ? getGoogleCustomerName()
                         : (localStorage.getItem('googleUserName') || '');
 
-                if (!body.customer_name || body.customer_name === 'Guest Buyer') {
-                    body.customer_name = googleName.trim() || 'Customer';
-                }
+                    if (!body.customer_name || body.customer_name === 'Guest Buyer') {
+                        body.customer_name = googleName.trim() || 'Customer';
+                    }
 
-                const googleEmail =
-                    (typeof getGoogleCustomerEmail === 'function')
+                    const googleEmail = (typeof getGoogleCustomerEmail === 'function')
                         ? getGoogleCustomerEmail()
                         : (localStorage.getItem('googleUserEmail') || '');
-                if (googleEmail && !body.customer_email) {
-                    body.customer_email = googleEmail.trim();
-                }
+                    if (googleEmail && !body.customer_email) {
+                        body.customer_email = googleEmail.trim();
+                    }
 
-                options = Object.assign({}, options, { body: JSON.stringify(body) });
-            } catch { }
-        }
-        return _origFetch.call(this, url, options, ...rest);
+                    options = Object.assign({}, options, { body: JSON.stringify(body) });
+                } catch (e) { console.warn('[Order Fix] Body intercept parse skip:', e); }
+            }
+            return _origFetch.call(this, url, options, ...rest);
+        };
+        window.fetch.isPatched = true;
     };
 
     console.log('[Order Page Fixes v2] Loaded.');
