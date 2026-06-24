@@ -533,15 +533,40 @@ app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
 // =============================================================
 // INVENTORY CACHE SYNC
 // =============================================================
+
+// ── POST /api/sync-inventory ──────────────────────────────────
+// Called by the admin panel whenever stock state changes.
+// We WIPE the entire table first, then re-insert the current
+// snapshot.  This is the only safe way to handle restocked items:
+// when admin removes a key (restock), we must DELETE that row
+// from the DB — INSERT OR REPLACE alone will never remove it.
 app.post('/api/sync-inventory', (req, res) => {
     const { cache } = req.body;
-    if (!cache || typeof cache !== 'object') return res.status(400).json({ error: 'cache object required' });
+    if (!cache || typeof cache !== 'object') {
+        return res.status(400).json({ error: 'cache object required' });
+    }
 
-    const stmt = db.prepare('INSERT OR REPLACE INTO inventory_cache (cache_key, cache_value) VALUES (?, ?)');
-    Object.entries(cache).forEach(([k, v]) => stmt.run(k, JSON.stringify(v)));
-    stmt.finalize(() => {
-        io.emit('inventory_cache_updated', { cache });
-        res.json({ success: true });
+    // Step 1: wipe everything so restocked (deleted) keys are gone
+    db.run('DELETE FROM inventory_cache', [], function (delErr) {
+        if (delErr) return res.status(500).json({ error: delErr.message });
+
+        // Step 2: if cache is empty (all items restocked) we are done
+        const entries = Object.entries(cache);
+        if (entries.length === 0) {
+            io.emit('inventory_cache_updated', { cache });
+            return res.json({ success: true });
+        }
+
+        // Step 3: re-insert the current snapshot
+        const stmt = db.prepare(
+            'INSERT INTO inventory_cache (cache_key, cache_value) VALUES (?, ?)'
+        );
+        entries.forEach(([k, v]) => stmt.run(k, JSON.stringify(v)));
+        stmt.finalize((finalErr) => {
+            if (finalErr) return res.status(500).json({ error: finalErr.message });
+            io.emit('inventory_cache_updated', { cache });
+            res.json({ success: true });
+        });
     });
 });
 
