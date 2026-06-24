@@ -6070,6 +6070,264 @@ if (document.readyState === "loading") {
 
     console.log('[Inventory Bridge] Loaded — stock-out sync active.');
 })();
+
+(function () {
+    'use strict';
+
+    var BACKEND     = 'https://customize-collection.onrender.com';
+    var STORAGE_KEY = 'storefront_inventory_cache';
+
+    // ── COLOR MAP (must match admin panel) ────────────────────────
+    var ADMIN_COLOR_MAP = {
+        'red':'Flame Red','#ff5733':'Flame Red','rgb(255, 87, 51)':'Flame Red','rgb(229, 62, 62)':'Flame Red','#e53e3e':'Flame Red',
+        'crimson':'Crimson','#c70039':'Crimson','rgb(199, 0, 57)':'Crimson','rgb(220, 20, 60)':'Crimson','#dc143c':'Crimson',
+        'maroon':'Deep Maroon','#900c3f':'Deep Maroon','rgb(144, 12, 63)':'Deep Maroon','#800000':'Deep Maroon',
+        'plum wine':'Plum Wine','#581845':'Plum Wine','rgb(88, 24, 69)':'Plum Wine','plum':'Plum Wine',
+        'tangerine':'Tangerine','#ff8d1a':'Tangerine','rgb(255, 141, 26)':'Tangerine','#ffa500':'Tangerine',
+        'amber gold':'Amber Gold','#ffc300':'Amber Gold','rgb(255, 195, 0)':'Amber Gold',
+        'mustard yellow':'Mustard Yellow','#eddd53':'Mustard Yellow','rgb(237, 221, 83)':'Mustard Yellow','#ffff00':'Mustard Yellow',
+        'soft lime':'Soft Lime','#add45c':'Soft Lime','rgb(173, 212, 92)':'Soft Lime',
+        'emerald mint':'Emerald Mint','#57c785':'Emerald Mint','rgb(87, 199, 133)':'Emerald Mint',
+        'sea green':'Sea Green','#16a085':'Sea Green','rgb(22, 160, 133)':'Sea Green',
+        'forest green':'Forest Green','#27ae60':'Forest Green','rgb(39, 174, 96)':'Forest Green','#008000':'Forest Green',
+        'teal turquoise':'Teal Turquoise','#00baad':'Teal Turquoise','rgb(0, 186, 173)':'Teal Turquoise','#00ffff':'Teal Turquoise',
+        'ocean slate':'Ocean Slate','#2a7b9b':'Ocean Slate','rgb(42, 123, 155)':'Ocean Slate',
+        'midnight navy':'Midnight Navy','#3d3d6b':'Midnight Navy','rgb(61, 61, 107)':'Midnight Navy','#000080':'Midnight Navy',
+        'dodger blue':'Dodger Blue','#3498db':'Dodger Blue','rgb(52, 152, 219)':'Dodger Blue',
+        'pearl white':'Pearl White','#ecf0f1':'Pearl White','rgb(236, 240, 241)':'Pearl White','#ffffff':'Pearl White',
+        'stone gray':'Stone Gray','#95a5a6':'Stone Gray','rgb(149, 165, 166)':'Stone Gray',
+        'charcoal':'Charcoal','#7f8c8d':'Charcoal','rgb(127, 140, 141)':'Charcoal',
+        'dark slate':'Dark Slate','#34495e':'Dark Slate','rgb(52, 73, 94)':'Dark Slate',
+        'black':'Black','#000000':'Black','rgb(0, 0, 0)':'Black',
+        'amethyst':'Amethyst','#9b59b6':'Amethyst','rgb(155, 89, 182)':'Amethyst',
+        'royal purple':'Royal Purple','#8e44ad':'Royal Purple','rgb(142, 68, 173)':'Royal Purple'
+    };
+
+    var BLOUSE_SHARED = 'BLOUSE_SHARED';
+
+    // ── HELPERS ───────────────────────────────────────────────────
+    function resolveColorKey(raw) {
+        if (!raw) return '';
+        var lower = raw.toLowerCase().trim();
+        return ADMIN_COLOR_MAP[lower] || lower;
+    }
+
+    function extractHex(onclick) {
+        if (!onclick) return '';
+        var m = onclick.match(/#([0-9A-Fa-f]{6})\b/g);
+        return m && m.length ? m[m.length - 1].toLowerCase() : '';
+    }
+
+    function extractColorName(el) {
+        var c = el.getAttribute('data-color-name') || el.getAttribute('title') || '';
+        if (!c) c = extractHex(el.getAttribute('onclick') || '');
+        if (!c && el.style && el.style.backgroundColor) c = el.style.backgroundColor.toLowerCase().trim();
+        if (!c) { try { var s = window.getComputedStyle(el).backgroundColor; if (s && s !== 'rgba(0, 0, 0, 0)' && s !== 'transparent') c = s.toLowerCase().trim(); } catch(e){} }
+        return c ? resolveColorKey(c) : '';
+    }
+
+    function getProductImg(el) {
+        var fb = function() {
+            var i = document.querySelector('.Explore-Saree-Styles img,.saree-card img,main img,.product-card img,.saree-sub-product-card img');
+            return i ? (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim() : '';
+        };
+        if (!el) return fb();
+        var card = el.closest('.Explore-Saree-Styles,[id*="Style"],.mini-card-static,.saree-card,.product-card,.saree-sub-product-card');
+        if (card) { var i = card.querySelector('img'); if (i) return (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim(); }
+        return fb();
+    }
+
+    function isBlouseEl(el) {
+        return !!(el.closest('#exploreStylesSection') || el.closest('#blouseMainActions') || el.closest('#blouse-topbar-drawer') || el.closest('#blouse-material-target'));
+    }
+
+    // ── "S" ICON for stocked-out color swatches ───────────────────
+    function buildSIcon(swatch) {
+        var w = swatch.offsetWidth || 24, h = swatch.offsetHeight || 24;
+        var base = Math.min(w,h), px = Math.max(14, Math.round(base*0.82)), fp = Math.max(8, Math.round(px*0.62));
+        var icon = document.createElement('div');
+        icon.className = 'sf-blocked-icon';
+        icon.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:'+px+'px;height:'+px+'px;background:#e53e3e;border:2px solid #fff;border-radius:50%;z-index:9999;pointer-events:none;box-sizing:border-box;display:flex;align-items:center;justify-content:center;';
+        var span = document.createElement('span');
+        span.style.cssText = 'color:#fff;font-size:'+fp+'px;font-weight:900;font-family:Arial,sans-serif;line-height:1;pointer-events:none;';
+        span.textContent = 'S';
+        icon.appendChild(span);
+        return icon;
+    }
+
+    // ── LOCK / RESTORE ────────────────────────────────────────────
+    function lockColor(el) {
+        var c = el.cloneNode(true);
+        c.removeAttribute('onclick');
+        c.setAttribute('data-sf-dead','color');
+        c.title = 'Out of Stock';
+        c.setAttribute('aria-disabled','true');
+        c.style.setProperty('pointer-events','none','important');
+        c.style.cursor = 'not-allowed'; c.style.opacity = '0.55'; c.style.filter = 'grayscale(20%)';
+        c.style.position = 'relative'; c.style.overflow = 'visible';
+        c.querySelectorAll('.sf-blocked-icon').forEach(function(e){e.remove();});
+        c.appendChild(buildSIcon(el));
+        el.parentNode.replaceChild(c, el);
+    }
+
+    function lockAttr(el) {
+        var c = el.cloneNode(true);
+        c.removeAttribute('onclick');
+        c.setAttribute('data-sf-dead','attr');
+        c.title = 'Out of Stock';
+        c.setAttribute('aria-disabled','true');
+        c.style.setProperty('pointer-events','none','important');
+        c.style.cursor = 'not-allowed'; c.style.textDecoration = 'line-through';
+        c.style.color = '#aaaaaa'; c.style.opacity = '0.7';
+        el.parentNode.replaceChild(c, el);
+    }
+
+    function restore(el) {
+        el.style.removeProperty('pointer-events');
+        el.style.cursor='pointer'; el.style.opacity=''; el.style.filter='';
+        el.style.textDecoration=''; el.style.color='';
+        el.removeAttribute('aria-disabled'); el.removeAttribute('data-sf-dead');
+        el.querySelectorAll('.sf-blocked-icon').forEach(function(e){e.remove();});
+        var s = el.getAttribute('data-sf-onclick');
+        if (s) { el.setAttribute('onclick', s); el.removeAttribute('data-sf-onclick'); }
+    }
+
+    function saveAndLock(el, fn) {
+        if (!el.getAttribute('data-sf-onclick') && el.getAttribute('onclick'))
+            el.setAttribute('data-sf-onclick', el.getAttribute('onclick'));
+        fn(el);
+    }
+
+    // ── RESTORE SWEEP ─────────────────────────────────────────────
+    function restoreSweep(stock) {
+        document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
+            var type = dead.getAttribute('data-sf-dead');
+            if (type === 'color') {
+                if (isBlouseEl(dead)) {
+                    var hex = extractHex(dead.getAttribute('data-sf-onclick')||'');
+                    if (!stock[BLOUSE_SHARED+'||Color Variant||'+resolveColorKey(hex)]) restore(dead);
+                } else {
+                    var img = getProductImg(dead); if (!img) return;
+                    var hex2 = extractHex(dead.getAttribute('data-sf-onclick')||'');
+                    if (!stock[img+'||Color Variant||'+resolveColorKey(hex2)]) restore(dead);
+                }
+            } else {
+                var lbl = dead.innerText.trim(); if (!lbl) return;
+                if (isBlouseEl(dead)) {
+                    if (!stock[BLOUSE_SHARED+'||Size Option||'+lbl] && !stock[BLOUSE_SHARED+'||Material option||'+lbl]) restore(dead);
+                } else {
+                    var img2 = getProductImg(dead); if (!img2) return;
+                    if (!stock[img2+'||Size Option||'+lbl] && !stock[img2+'||Material option||'+lbl]) restore(dead);
+                }
+            }
+        });
+    }
+
+    // ── MAIN APPLY ────────────────────────────────────────────────
+    function applySync() {
+        var stock = {};
+        try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) {}
+
+        // 1. Whole-product OUT OF STOCK badge
+        document.querySelectorAll('.Explore-Saree-Styles img,[id*="Style"] img,.mini-card-static img,.saree-card img,.product-card img,main img').forEach(function(img) {
+            var fn = (img.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
+            if (!fn) return;
+            var card = img.closest('.Explore-Saree-Styles,[id*="Style"],.mini-card-static,.saree-card,.product-card,.saree-sub-product-card');
+            var wrap = img.parentElement;
+            if (!card || !wrap) return;
+            wrap.querySelectorAll('.sf-oos-badge').forEach(function(e){e.remove();});
+            if (stock[fn+'||Entire Product Style||'+fn] === true) {
+                wrap.style.position = 'relative'; wrap.style.display = 'inline-block';
+                var ov = document.createElement('div');
+                ov.className = 'sf-oos-badge';
+                ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.72);display:flex;justify-content:center;align-items:center;z-index:9;border-radius:inherit;pointer-events:none;';
+                ov.innerHTML = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:6px 12px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.3);white-space:nowrap;">OUT OF STOCK</div>';
+                wrap.appendChild(ov);
+                card.querySelectorAll('button,.add-to-cart-btn,.mini-add-btn').forEach(function(b){b.style.opacity='0.4';b.style.pointerEvents='none';});
+            }
+        });
+
+        // 2. Blouse color swatches — "S" icon
+        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'],#exploreStylesSection .opts button[class*='color-swatch-'],#exploreStylesSection [id^='opts-'] .opts button,[onclick*=\"handleBlouseWizardSelection('color'\"]").forEach(function(sw) {
+            if (sw.getAttribute('data-sf-dead')) return;
+            var ck = extractColorName(sw); if (!ck) return;
+            if (stock[BLOUSE_SHARED+'||Color Variant||'+ck] === true) saveAndLock(sw, lockColor);
+        });
+
+        // 3. Blouse sizes — line-through
+        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'],#exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'],[onclick*=\"handleBlouseWizardSelection('size'\"]").forEach(function(btn) {
+            if (btn.getAttribute('data-sf-dead')) return;
+            var lbl = btn.innerText.trim(); if (!lbl) return;
+            if (stock[BLOUSE_SHARED+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
+        });
+
+        // 4. Blouse materials — line-through
+        document.querySelectorAll('#exploreStylesSection .material-chip,#blouse-material-target .material-chip,#blouseMainActions .material-chip').forEach(function(chip) {
+            if (chip.getAttribute('data-sf-dead')) return;
+            var lbl = chip.innerText.trim(); if (!lbl) return;
+            if (stock[BLOUSE_SHARED+'||Material option||'+lbl] === true) saveAndLock(chip, lockAttr);
+        });
+
+        // 5. Non-blouse color circles — "S" icon
+        document.querySelectorAll(".color-circle,[style*='background'][onclick*='color']").forEach(function(c) {
+            if (c.getAttribute('data-sf-dead') || isBlouseEl(c)) return;
+            var img = getProductImg(c); if (!img) return;
+            var ck = extractColorName(c); if (!ck) return;
+            if (stock[img+'||Color Variant||'+ck] === true) saveAndLock(c, lockColor);
+        });
+
+        // 6. Non-blouse sizes — line-through
+        document.querySelectorAll(".size-chip,.size-btn,.quiz-step-btn[onclick*='processWizardStep']").forEach(function(btn) {
+            if (btn.getAttribute('data-sf-dead') || isBlouseEl(btn)) return;
+            var img = getProductImg(btn); if (!img) return;
+            var lbl = btn.innerText.trim(); if (!lbl) return;
+            if (stock[img+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
+        });
+
+        // 7. Non-blouse materials — line-through
+        document.querySelectorAll('.material-chip').forEach(function(chip) {
+            if (chip.getAttribute('data-sf-dead') || isBlouseEl(chip)) return;
+            var img = getProductImg(chip); if (!img) return;
+            var lbl = chip.innerText.trim(); if (!lbl) return;
+            if (stock[img+'||Material option||'+lbl] === true) saveAndLock(chip, lockAttr);
+        });
+
+        // 8. Restore anything no longer stocked-out
+        restoreSweep(stock);
+    }
+
+    // ── FETCH LATEST FROM BACKEND, THEN APPLY ────────────────────
+    function fetchAndApply() {
+        fetch(BACKEND + '/api/get-inventory-cache')
+            .then(function(r){ return r.ok ? r.json() : {}; })
+            .then(function(cache) {
+                if (cache && Object.keys(cache).length > 0) {
+                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache)); } catch(e){}
+                }
+                applySync();
+            })
+            .catch(function(){ applySync(); }); // still apply from localStorage if fetch fails
+    }
+
+    // ── BOOT ─────────────────────────────────────────────────────
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fetchAndApply);
+    } else {
+        fetchAndApply();
+    }
+
+    // Re-fetch every 30 seconds so long-open pages stay current
+    setInterval(fetchAndApply, 30000);
+
+    // React instantly when the admin changes stock in another tab
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEY) applySync();
+    });
+
+    // Watch for DOM changes (lazy-loaded product cards)
+    new MutationObserver(applySync).observe(document.body, { childList: true, subtree: true });
+
+})();
     
 </script>
 </body>
