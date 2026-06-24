@@ -9,6 +9,101 @@ const { Resend } = require('resend');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const session = require('express-session');
+const multer = require('multer');
+const path   = require('path');
+const fs     = require('fs');
+
+// ── STATIC FILE SERVING — add after your other app.use() lines ─
+// This lets the <audio> src URL work in the browser:
+app.use('/voice-notes', express.static(path.join(__dirname, 'public', 'voice-notes')));
+
+// ── MULTER STORAGE CONFIG ─────────────────────────────────────
+const voiceNotesDir = path.join(__dirname, 'public', 'voice-notes');
+fs.mkdirSync(voiceNotesDir, { recursive: true }); // auto-create dir on startup
+
+const voiceStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, voiceNotesDir);
+    },
+    filename: function (req, file, cb) {
+        // e.g.  voice-1718800000000.webm
+        const ext = path.extname(file.originalname) || '.webm';
+        cb(null, 'voice-' + Date.now() + ext);
+    }
+});
+
+const uploadVoice = multer({
+    storage: voiceStorage,
+    limits: { fileSize: 15 * 1024 * 1024 },          // 15 MB max
+    fileFilter: function (req, file, cb) {
+        const allowed = ['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/wav', 'audio/mp4'];
+        cb(null, allowed.includes(file.mimetype) || file.mimetype.startsWith('audio/'));
+    }
+});
+
+// ── POST /api/send-voice-message ──────────────────────────────
+// Called by order.html when the customer stops recording.
+// Saves the audio file, updates the order's chat history in SQLite,
+// and emits a socket event so the admin sees it instantly.
+app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
+    const { orderId, stamp } = req.body;
+
+    if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No audio file received.' });
+    }
+    if (!orderId) {
+        return res.status(400).json({ success: false, error: 'orderId is required.' });
+    }
+
+    const audioUrl  = '/voice-notes/' + req.file.filename;
+    const messageText = '🎙️ Voice note';
+    const msgStamp  = stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Load existing chat history from DB, append the new voice message, save back
+    db.get('SELECT chat_history FROM orders WHERE order_id = ?', [orderId], (err, row) => {
+        if (err || !row) {
+            // Order not found in DB yet — still return success with the URL
+            // (order might be localStorage-only at this point)
+            io.to('admin_room').emit('customer_message_received', {
+                orderId,
+                message:  messageText,
+                isAudio:  true,
+                audioUrl,
+                stamp: msgStamp
+            });
+            return res.json({ success: true, audioUrl });
+        }
+
+        let history = [];
+        try { history = JSON.parse(row.chat_history || '[]'); } catch { history = []; }
+
+        history.push({
+            id:       Date.now(),
+            sender:   'Customer',
+            text:     messageText,
+            isAudio:  true,
+            audioUrl,
+            stamp:    msgStamp
+        });
+
+        db.run(
+            'UPDATE orders SET chat_history = ? WHERE order_id = ?',
+            [JSON.stringify(history), orderId],
+            function (updateErr) {
+                // Notify admin panel via socket
+                io.to('admin_room').emit('customer_message_received', {
+                    orderId,
+                    message:  messageText,
+                    isAudio:  true,
+                    audioUrl,
+                    stamp:    msgStamp
+                });
+
+                res.json({ success: true, audioUrl });
+            }
+        );
+    });
+});
 
 const app = express();
 app.use(cors());
