@@ -2695,7 +2695,8 @@ const subProducts = {
 
     function extractColorName(el) {
         var c = el.getAttribute('data-color-name') || el.getAttribute('title') || '';
-        if (!c) c = extractHex(el.getAttribute('onclick') || '');
+        // Fixed: Look at both active and preserved data-sf-onclick states
+        if (!c) c = extractHex(el.getAttribute('onclick') || el.getAttribute('data-sf-onclick') || '');
         if (!c && el.style && el.style.backgroundColor) c = el.style.backgroundColor.toLowerCase().trim();
         if (!c) { try { var s = window.getComputedStyle(el).backgroundColor; if (s && s !== 'rgba(0, 0, 0, 0)' && s !== 'transparent') c = s.toLowerCase().trim(); } catch(e){} }
         return c ? resolveColorKey(c) : '';
@@ -2775,13 +2776,13 @@ const subProducts = {
         document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
             var type = dead.getAttribute('data-sf-dead');
             if (type === 'color') {
+                var ck = extractColorName(dead);
+                if (!ck) return;
                 if (isBlouseEl(dead)) {
-                    var hex = extractHex(dead.getAttribute('data-sf-onclick')||'');
-                    if (!stock[BLOUSE_SHARED+'||Color Variant||'+resolveColorKey(hex)]) restore(dead);
+                    if (!stock[BLOUSE_SHARED+'||Color Variant||'+ck]) restore(dead);
                 } else {
                     var img = getProductImg(dead); if (!img) return;
-                    var hex2 = extractHex(dead.getAttribute('data-sf-onclick')||'');
-                    if (!stock[img+'||Color Variant||'+resolveColorKey(hex2)]) restore(dead);
+                    if (!stock[img+'||Color Variant||'+ck]) restore(dead);
                 }
             } else {
                 var lbl = dead.innerText.trim(); if (!lbl) return;
@@ -2916,6 +2917,8 @@ const subProducts = {
 
     // ── ENGINE INITIALIZATION ──
     localObserver = new MutationObserver(applySync);
+    // Fixed: Arm the DOM listener immediately to catch initial client-side renders
+    localObserver.observe(document.body, { childList: true, subtree: true });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
