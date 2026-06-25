@@ -584,7 +584,7 @@ app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
 });
 
 // =============================================================
-// INVENTORY CACHE SYNC
+// INVENTORY CACHE SYNC (CRASH-PROOF VERSION)
 // =============================================================
 app.post('/api/sync-inventory', (req, res) => {
     const { cache } = req.body;
@@ -601,24 +601,52 @@ app.post('/api/sync-inventory', (req, res) => {
             return res.json({ success: true });
         }
 
-        const stmt = db.prepare(
-            'INSERT INTO inventory_cache (cache_key, cache_value) VALUES (?, ?)'
-        );
-        entries.forEach(([k, v]) => stmt.run(k, JSON.stringify(v)));
-        stmt.finalize((finalErr) => {
-            if (finalErr) return res.status(500).json({ error: finalErr.message });
-            io.emit('inventory_cache_updated', { cache });
-            res.json({ success: true });
-        });
+        const stmt = db.prepare('INSERT INTO inventory_cache (cache_key, cache_value) VALUES (?, ?)');
+        
+        let index = 0;
+        function insertNext() {
+            if (index >= entries.length) {
+                // All entries processed successfully, now safe to close!
+                stmt.finalize((finalErr) => {
+                    if (finalErr) return res.status(500).json({ error: finalErr.message });
+                    io.emit('inventory_cache_updated', { cache });
+                    res.json({ success: true });
+                });
+                return;
+            }
+
+            const [key, value] = entries[index];
+            stmt.run(key, JSON.stringify(value), (runErr) => {
+                if (runErr) {
+                    stmt.finalize(); // Clean up statement on error
+                    return res.status(500).json({ error: runErr.message });
+                }
+                index++;
+                insertNext(); // Safely process the next item in the array
+            });
+        }
+
+        insertNext(); // Initialize execution chain
     });
 });
 
-app.get('/api/get-inventory-cache', (req, res) => {
-    db.all('SELECT cache_key, cache_value FROM inventory_cache', [], (err, rows) => {
-        if (err) return res.json({});
-        const cache = {};
-        rows.forEach(r => { try { cache[r.cache_key] = JSON.parse(r.cache_value); } catch { } });
-        res.json(cache);
+// ── GET INDIVIDUAL PRODUCT DETAILS FOR BACKEND COUPLING ───────
+app.get('/api/get-product', (req, res) => {
+    const productImg = req.query.img;
+    if (!productImg) return res.status(400).json({ error: 'Product identification parameter is required' });
+
+    // Query your inventory data matrices or serve explicit fallback metadata
+    db.get('SELECT * FROM inventory WHERE product_name LIKE ?', [`%${productImg.split('.')[0]}%`], (err, row) => {
+        if (err || !row) {
+            // Return safe fallback item properties so the page doesn't crash or load infinitely
+            return res.json({
+                title: "Premium Ethnic Wear Saree",
+                category: "Saree",
+                price: "Contact Store",
+                description: "Handcrafted luxury item customized specifically to your style parameters."
+            });
+        }
+        res.json(row);
     });
 });
 
