@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
-<style>    
+<style>
 /* Footer Structural Container Box */
 #footer {
     background-color: #ffffff; /* Matches your clean minimalist aesthetic background */
@@ -903,7 +902,7 @@ footer.show{bottom:0}
 <header>
 <div class="header-left" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;">
     <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
-        <img src="https://www.customizecollection.publicvm.com/Logo.png" alt="Customize Collection Logo" style="height:40px;width:auto;" onerror="this.style.display='none'">
+        <img src="images/logo.png" alt="Customize Collection Logo" style="height:40px;width:auto;" onerror="this.style.display='none'">
 
         <div style="display:flex;flex-direction:column;">
             <span style="font-weight:bold;font-size:1.3em;color:#1e293b;letter-spacing:-0.5px;">
@@ -930,7 +929,7 @@ footer.show{bottom:0}
 </div>
 
     <div class="measurement-tape" style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; max-width: 450px;">
-        <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711699/Tape_z8ecv6.jpg" class="brand-tape-icon" style="width: 20px; height: 20px; object-fit: contain; border-radius: 50%;">
+        <img src="images/Tape.jpeg" class="brand-tape-icon" style="width: 20px; height: 20px; object-fit: contain; border-radius: 50%;">
         <span class="brand-tag-text" style="font-size: 0.8em; color: #475569; line-height: 1.3; font-weight: 500;">
             <p>Required to take your custom</p> <p>measurements. find this at your</p> <p>hardware shop for around ₹20 to ₹40</p>
         </span>
@@ -992,7 +991,7 @@ No products found
 
         <div class="footer-right">
             <div class="delivery-wrapper">
-                <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711697/west_bengal_map_tqadhb.jpg" alt="Delivery Area Maps" class="delivery-image">
+                <img src="images/west_bengal_map.png" alt="Delivery Area Maps" class="delivery-image">
                 
                 <div class="delivery-info">
                     <span class="delivery-title">Our Delivery Area Scope</span>
@@ -2644,325 +2643,117 @@ const subProducts = {
         { name: "Indo Western Dress", img: "https://res.cloudinary.com/dnami0fsz/image/upload/v1781711581/indo2_r1mrqa.png", price: 1049 }
     ]
 };
-// ── CONSOLIDATED LIVE INVENTORY SYNC ENGINE ──
-(function () {
-    'use strict';
+// 1. Declare the global tracker variable ONCE at the top
+let dynamicGridObserver = null;
 
-    const BACKEND = 'https://customize-collection.onrender.com';
-    const STORAGE_KEY = 'storefront_inventory_cache';
-
-    // Admin Panel Color Mapping Matrix
-    const ADMIN_COLOR_MAP = {
-        'red':'Flame Red','#ff5733':'Flame Red','rgb(255, 87, 51)':'Flame Red','rgb(229, 62, 62)':'Flame Red','#e53e3e':'Flame Red',
-        'crimson':'Crimson','#c70039':'Crimson','rgb(199, 0, 57)':'Crimson','rgb(220, 20, 60)':'Crimson','#dc143c':'Crimson',
-        'maroon':'Deep Maroon','#900c3f':'Deep Maroon','rgb(144, 12, 63)':'Deep Maroon','#800000':'Deep Maroon',
-        'plum wine':'Plum Wine','#581845':'Plum Wine','rgb(88, 24, 69)':'Plum Wine','plum':'Plum Wine',
-        'tangerine':'Tangerine','#ff8d1a':'Tangerine','rgb(255, 141, 26)':'Tangerine','#ffa500':'Tangerine',
-        'amber gold':'Amber Gold','#ffc300':'Amber Gold','rgb(255, 195, 0)':'Amber Gold',
-        'mustard yellow':'Mustard Yellow','#eddd53':'Mustard Yellow','rgb(237, 221, 83)':'Mustard Yellow','#ffff00':'Mustard Yellow',
-        'soft lime':'Soft Lime','#add45c':'Soft Lime','rgb(173, 212, 92)':'Soft Lime',
-        'emerald mint':'Emerald Mint','#57c785':'Emerald Mint','rgb(87, 199, 133)':'Emerald Mint',
-        'sea green':'Sea Green','#16a085':'Sea Green','rgb(22, 160, 133)':'Sea Green',
-        'forest green':'Forest Green','#27ae60':'Forest Green','rgb(39, 174, 96)':'Forest Green','#008000':'Forest Green',
-        'teal turquoise':'Teal Turquoise','#00baad':'Teal Turquoise','rgb(0, 186, 173)':'Teal Turquoise','#00ffff':'Teal Turquoise',
-        'ocean slate':'Ocean Slate','#2a7b9b':'Ocean Slate','rgb(42, 123, 155)':'Ocean Slate',
-        'midnight navy':'Midnight Navy','#3d3d6b':'Midnight Navy','rgb(61, 61, 107)':'Midnight Navy','#000080':'Midnight Navy',
-        'dodger blue':'Dodger Blue','#3498db':'Dodger Blue','rgb(52, 152, 219)':'Dodger Blue',
-        'pearl white':'Pearl White','#ecf0f1':'Pearl White','rgb(236, 240, 241)':'Pearl White','#ffffff':'Pearl White',
-        'stone gray':'Stone Gray','#95a5a6':'Stone Gray','rgb(149, 165, 166)':'Stone Gray',
-        'charcoal':'Charcoal','#7f8c8d':'Charcoal','rgb(127, 140, 141)':'Charcoal',
-        'dark slate':'Dark Slate','#34495e':'Dark Slate','rgb(52, 73, 94)':'Dark Slate',
-        'black':'Black','#000000':'Black','rgb(0, 0, 0)':'Black',
-        'amethyst':'Amethyst','#9b59b6':'Amethyst','rgb(155, 89, 182)':'Amethyst',
-        'royal purple':'Royal Purple','#8e44ad':'Royal Purple','rgb(142, 68, 173)':'Royal Purple'
-    };
-
-    const BLOUSE_SHARED = 'BLOUSE_SHARED';
-    let localObserver = null;
-
-    // ── CORE DEEP MATCHING ENGINE ──
-    function checkStock(stock, targetKey) {
-        if (!stock || !targetKey) return false;
-        if (stock[targetKey] === true) return true;
-        
-        // Advanced case-insensitive and whitespace-stripped fallback match
-        var standardizedTarget = targetKey.toLowerCase().replace(/\s+/g, '').trim();
-        for (var k in stock) {
-            if (k.toLowerCase().replace(/\s+/g, '').trim() === standardizedTarget && stock[k] === true) {
-                return true;
-            }
-        }
-        return false;
+function applyIndexGridStockSync() {
+    // Temporarily pause the observer so our changes don't trigger an infinite loop
+    if (dynamicGridObserver) {
+        dynamicGridObserver.disconnect();
     }
 
-    function resolveColorKey(raw) {
-        if (!raw) return '';
-        var lower = raw.toLowerCase().trim();
-        return ADMIN_COLOR_MAP[lower] || lower;
-    }
-
-    function extractHex(onclick) {
-        if (!onclick) return '';
-        var m = onclick.match(/#([0-9A-Fa-f]{6})\b/g);
-        return m && m.length ? m[m.length - 1].toLowerCase() : '';
-    }
-
-    function extractColorName(el) {
-        var c = el.getAttribute('data-color-name') || el.getAttribute('title') || '';
-        if (c.toLowerCase().trim() === 'out of stock') c = ''; 
-        
-        if (!c && el.innerText && el.innerText.length < 25) c = el.innerText.trim();
-        if (!c) c = extractHex(el.getAttribute('onclick') || el.getAttribute('data-sf-onclick') || '');
-        if (!c && el.style && el.style.backgroundColor) c = el.style.backgroundColor.toLowerCase().trim();
-        if (!c) { try { var s = window.getComputedStyle(el).backgroundColor; if (s && s !== 'rgba(0, 0, 0, 0)' && s !== 'transparent') c = s.toLowerCase().trim(); } catch(e){} }
-        return c ? resolveColorKey(c) : '';
-    }
-
-    function getProductImg(el) {
-        if (!el) return '';
-        // Look up regional container boards (cards, modals, drawer systems)
-        var card = el.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .mini-card, .saree-card, .product-card, .saree-sub-product-card, .modal, .drawer, .popup, #exploreStylesSection');
-        if (card) {
-            var i = card.querySelector('img');
-            if (i) return (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
-        }
-        // Page-wide fallback for single product detail focus zones
-        var mainImg = document.querySelector('.main-product-img, #main-product-image, .Explore-Saree-Styles img, .saree-card img, main img');
-        return mainImg ? (mainImg.getAttribute('src')||'').split('/').pop().split('?')[0].trim() : '';
-    }
-
-    function isBlouseEl(el) {
-        return !!(el.closest('#exploreStylesSection') || el.closest('#blouseMainActions') || el.closest('#blouse-topbar-drawer') || el.closest('#blouse-material-target'));
-    }
-
-    function buildSIcon(swatch) {
-        var w = swatch.offsetWidth || 24, h = swatch.offsetHeight || 24;
-        var base = Math.min(w,h), px = Math.max(14, Math.round(base*0.82)), fp = Math.max(8, Math.round(px*0.62));
-        var icon = document.createElement('div');
-        icon.className = 'sf-blocked-icon';
-        icon.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:'+px+'px;height:'+px+'px;background:#e53e3e;border:2px solid #fff;border-radius:50%;z-index:9999;pointer-events:none;box-sizing:border-box;display:flex;align-items:center;justify-content:center;';
-        var span = document.createElement('span');
-        span.style.cssText = 'color:#fff;font-size:'+fp+'px;font-weight:900;font-family:Arial,sans-serif;line-height:1;pointer-events:none;';
-        span.textContent = 'S';
-        icon.appendChild(span);
-        return icon;
-    }
-
-    function lockColor(el) {
-        var c = el.cloneNode(true);
-        c.removeAttribute('onclick');
-        c.setAttribute('data-sf-dead','color');
-        
-        if (el.getAttribute('title') && !el.getAttribute('data-color-name')) {
-            c.setAttribute('data-color-name', el.getAttribute('title'));
-        }
-        
-        c.title = 'Out of Stock';
-        c.setAttribute('aria-disabled','true');
-        c.style.setProperty('pointer-events','none','important');
-        c.style.cursor = 'not-allowed'; c.style.opacity = '0.55'; c.style.filter = 'grayscale(20%)';
-        c.style.position = 'relative'; c.style.overflow = 'visible';
-        c.querySelectorAll('.sf-blocked-icon').forEach(function(e){e.remove();});
-        c.appendChild(buildSIcon(el));
-        el.parentNode.replaceChild(c, el);
-    }
-
-    function lockAttr(el) {
-        var c = el.cloneNode(true);
-        c.removeAttribute('onclick');
-        c.setAttribute('data-sf-dead','attr');
-        c.title = 'Out of Stock';
-        c.setAttribute('aria-disabled','true');
-        c.style.setProperty('pointer-events','none','important');
-        c.style.cursor = 'not-allowed'; c.style.textDecoration = 'line-through';
-        c.style.color = '#aaaaaa'; c.style.opacity = '0.7';
-        el.parentNode.replaceChild(c, el);
-    }
-
-    function restore(el) {
-        el.style.removeProperty('pointer-events');
-        el.style.cursor='pointer'; el.style.opacity=''; el.style.filter='';
-        el.style.textDecoration=''; el.style.color='';
-        el.removeAttribute('aria-disabled'); el.removeAttribute('data-sf-dead');
-        el.querySelectorAll('.sf-blocked-icon').forEach(function(e){e.remove();});
-        var s = el.getAttribute('data-sf-onclick');
-        if (s) { el.setAttribute('onclick', s); el.removeAttribute('data-sf-onclick'); }
-    }
-
-    // ── MAIN UNIFIED SYNC EXECUTION ──
-    function applySync() {
-        if (localObserver) { localObserver.disconnect(); }
-
-        var stock = {};
-        try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e){}
-
-        // 1. Structural Product Styles Overlay Processing
-        document.querySelectorAll('.Explore-Saree-Styles img, [id*="Style"] img, .mini-card-static img, .mini-card img, .saree-card img, .product-card img, main img').forEach(function(img) {
-            var fn = (img.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
-            if (!fn) return;
-            var card = img.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .mini-card, .saree-card, .product-card, .saree-sub-product-card');
-            var wrap = img.parentElement;
-            if (!card || !wrap) return;
-            
-            wrap.querySelectorAll('.sf-oos-badge').forEach(function(e){e.remove();});
-            
-            if (checkStock(stock, fn + '||Entire Product Style||' + fn)) {
-                wrap.style.position = 'relative';
-                var ov = document.createElement('div');
-                ov.className = 'sf-oos-badge';
-                ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);display:flex;justify-content:center;align-items:center;z-index:99;border-radius:inherit;pointer-events:auto;';
-                ov.innerHTML = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:5px 10px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.2);white-space:nowrap;letter-spacing:0.5px;">OUT OF STOCK</div>';
-                
-                ov.onclick = function(e) {
-                    e.preventDefault(); e.stopPropagation();
-                    alert("This style is currently out of stock!");
-                    return false;
-                };
-                wrap.appendChild(ov);
-                
-                card.querySelectorAll('button, .add-to-cart-btn, .mini-add-btn').forEach(function(b){
-                    b.style.opacity='0.4'; b.style.cursor='not-allowed'; b.style.pointerEvents='none';
-                });
-            } else {
-                card.querySelectorAll('button, .add-to-cart-btn, .mini-add-btn').forEach(function(b){
-                    b.style.opacity=''; b.style.cursor=''; b.style.pointerEvents='';
-                });
-            }
-        });
-
-        // 2. Blouse color swatches
-        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .opts button[class*='color-swatch-'], #exploreStylesSection [id^='opts-'] .opts button, [onclick*='handleBlouseWizardSelection(\"color\"']").forEach(function(sw) {
-            if (sw.getAttribute('data-sf-dead')) return;
-            var ck = extractColorName(sw); if (!ck) return;
-            if (checkStock(stock, BLOUSE_SHARED + '||Color Variant||' + ck)) {
-                if (!sw.getAttribute('data-sf-onclick') && sw.getAttribute('onclick')) sw.setAttribute('data-sf-onclick', sw.getAttribute('onclick'));
-                lockColor(sw);
-            }
-        });
-
-        // 3. Blouse sizes
-        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], [onclick*='handleBlouseWizardSelection(\"size\"']").forEach(function(btn) {
-            if (btn.getAttribute('data-sf-dead')) return;
-            var lbl = btn.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, BLOUSE_SHARED + '||Size Option||' + lbl)) {
-                if (!btn.getAttribute('data-sf-onclick') && btn.getAttribute('onclick')) btn.setAttribute('data-sf-onclick', btn.getAttribute('onclick'));
-                lockAttr(btn);
-            }
-        });
-
-        // 4. Blouse materials
-        document.querySelectorAll('#exploreStylesSection .material-chip, #blouse-material-target .material-chip, #blouseMainActions .material-chip').forEach(function(chip) {
-            if (chip.getAttribute('data-sf-dead')) return;
-            var lbl = chip.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, BLOUSE_SHARED + '||Material option||' + lbl)) {
-                if (!chip.getAttribute('data-sf-onclick') && chip.getAttribute('onclick')) chip.setAttribute('data-sf-onclick', chip.getAttribute('onclick'));
-                lockAttr(chip);
-            }
-        });
-
-        // 5. Non-blouse color circles
-        document.querySelectorAll(".color-circle, [style*='background'][onclick*='color']").forEach(function(c) {
-            if (c.getAttribute('data-sf-dead') || isBlouseEl(c)) return;
-            var img = getProductImg(c); if (!img) return;
-            var ck = extractColorName(c); if (!ck) return;
-            if (checkStock(stock, img + '||Color Variant||' + ck)) {
-                if (!c.getAttribute('data-sf-onclick') && c.getAttribute('onclick')) c.setAttribute('data-sf-onclick', c.getAttribute('onclick'));
-                lockColor(c);
-            }
-        });
-
-        // 6. Non-blouse sizes
-        document.querySelectorAll(".size-chip, .size-btn, .quiz-step-btn[onclick*='processWizardStep']").forEach(function(btn) {
-            if (btn.getAttribute('data-sf-dead') || isBlouseEl(btn)) return;
-            var img = getProductImg(btn); if (!img) return;
-            var lbl = btn.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, img + '||Size Option||' + lbl)) {
-                if (!btn.getAttribute('data-sf-onclick') && btn.getAttribute('onclick')) btn.setAttribute('data-sf-onclick', btn.getAttribute('onclick'));
-                lockAttr(btn);
-            }
-        });
-
-        // 7. Non-blouse materials
-        document.querySelectorAll('.material-chip').forEach(function(chip) {
-            if (chip.getAttribute('data-sf-dead') || isBlouseEl(chip)) return;
-            var img = getProductImg(chip); if (!img) return;
-            var lbl = chip.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, img + '||Material option||' + lbl)) {
-                if (!chip.getAttribute('data-sf-onclick') && chip.getAttribute('onclick')) chip.setAttribute('data-sf-onclick', chip.getAttribute('onclick'));
-                lockAttr(chip);
-            }
-        });
-
-        // Clean sweeping loops for entries that transitioned back to active stock
-        document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
-            var type = dead.getAttribute('data-sf-dead');
-            if (type === 'color') {
-                var ck = extractColorName(dead); if (!ck) return;
-                if (isBlouseEl(dead)) {
-                    if (!checkStock(stock, BLOUSE_SHARED + '||Color Variant||' + ck)) restore(dead);
-                } else {
-                    var img = getProductImg(dead); if (!img) return;
-                    if (!checkStock(stock, img + '||Color Variant||' + ck)) restore(dead);
-                }
-            } else {
-                var lbl = dead.innerText.trim(); if (!lbl) return;
-                if (isBlouseEl(dead)) {
-                    if (!checkStock(stock, BLOUSE_SHARED + '||Size Option||' + lbl) && !checkStock(stock, BLOUSE_SHARED + '||Material option||' + lbl)) restore(dead);
-                } else {
-                    var img2 = getProductImg(dead); if (!img2) return;
-                    if (!checkStock(stock, img2 + '||Size Option||' + lbl) && !checkStock(stock, img2 + '||Material option||' + lbl)) restore(dead);
-                }
-            }
-        });
-
-        if (localObserver) { localObserver.observe(document.body, { childList: true, subtree: true }); }
-    }
-
-    function fetchAndApply() {
-        fetch(BACKEND + '/api/get-inventory-cache')
-            .then(function(r){ return r.ok ? r.json() : {}; })
-            .then(function(cache) {
-                console.log('[Sync Engine Hub] Pulled Live Cache Keys:', Object.keys(cache || {}));
-                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache || {})); } catch(e){}
-                applySync();
-            })
-            .catch(function(err){ 
-                console.error('[Sync Engine Hub] Fallback to local storage cache baseline due to network lag.', err);
-                applySync(); 
-            });
-    }
-
-    function connectInventorySocket() {
-        if (typeof io === 'undefined') { setTimeout(connectInventorySocket, 500); return; }
-        try {
-            const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
-            sock.on('inventory_cache_updated', function (data) {
-                if (data && data.cache && typeof data.cache === 'object') {
-                    console.log('[Sync Engine Hub] Live Real-time Socket Refresh Triggered.');
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.cache));
-                    applySync();
-                }
-            });
-        } catch (e) {
-            console.warn('[Inventory Bridge] Socket link fallback active:', e);
-        }
-    }
-
-    // ── INITIALIZATION ENGINE ──
-    localObserver = new MutationObserver(applySync);
-    localObserver.observe(document.body, { childList: true, subtree: true });
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { fetchAndApply(); connectInventorySocket(); });
-    } else {
-        fetchAndApply(); connectInventorySocket();
-    }
-
-    setInterval(fetchAndApply, 30000);
-    window.addEventListener('storage', function(e) { if (e.key === STORAGE_KEY) applySync(); });
-    console.log('[Inventory System] Case-Insensitive Engine Active & Monitoring DOM changes.');
-})();
+    const STORAGE_KEY = "storefront_inventory_cache";
+    const savedStock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
     
+    // Target all sub-style card types rendered inside your dynamic scroll containers
+    const scrollerCards = document.querySelectorAll(".mini-card, .mini-card-static");
+    
+    scrollerCards.forEach(card => {
+        const imgEl = card.querySelector("img");
+        if (!imgEl) return;
+        
+        // Grab the clean image filename to use as the true unique identifier
+        const imgSrc = imgEl.getAttribute("src") || "";
+        const imgFilename = imgSrc.split('/').pop().split('?')[0].trim();
+        if (!imgFilename) return;
+
+        // Matches your fixed admin backend stock structure templates precisely (Filename based)
+        const entireProductKey = `${imgFilename}||Entire Product Style||${imgFilename}`;
+        const isStockedOut = savedStock[entireProductKey] === true;
+        
+        // Clean up pre-existing overlays to avoid visual stacking
+        card.querySelectorAll(".scroller-stockout-badge").forEach(el => el.remove());
+        
+        if (isStockedOut) {
+            // Store the card's original layout positioning state if not already saved
+            if (!card.hasAttribute("data-orig-position")) {
+                card.setAttribute("data-orig-position", card.style.position || "static");
+            }
+            
+            card.style.position = "relative";
+            
+            // Create a perfectly matching blurred layout block mask over the item square
+            const badgeOverlay = document.createElement("div");
+            badgeOverlay.className = "scroller-stockout-badge";
+            badgeOverlay.style.cssText = `
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(255, 255, 255, 0.85); display: flex; flex-direction: column;
+                justify-content: center; align-items: center; z-index: 99;
+                text-align: center; border-radius: inherit; pointer-events: auto;
+            `;
+            
+            // Inject a clean minimalist red banner directly over the element visual grid area
+            badgeOverlay.innerHTML = `
+                <div style="background: #e53e3e; color: #ffffff; font-weight: 800; 
+                            padding: 4px 10px; border-radius: 4px; text-transform: uppercase; 
+                            font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
+                    OUT OF STOCK
+                </div>
+            `;
+            
+            card.appendChild(badgeOverlay);
+            
+            // Inline block actions safely without breaking global javascript variables
+            badgeOverlay.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert("This style is currently out of stock!");
+                return false;
+            };
+
+            // Soft-disable underlying buttons visually without bricking core logic
+            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
+            if (addButton) {
+                addButton.style.opacity = "0.4";
+                addButton.style.cursor = "not-allowed";
+            }
+        } else {
+            // RESTORE ORIGINAL THEME STYLES: This resets the hover rules completely
+            if (card.hasAttribute("data-orig-position")) {
+                card.style.position = card.getAttribute("data-orig-position");
+                card.removeAttribute("data-orig-position");
+            }
+
+            // Restore normal behavior if status is active
+            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
+            if (addButton) {
+                addButton.style.opacity = "";
+                addButton.style.cursor = "";
+            }
+        }
+    });
+
+    // 2. Safely turn the observer back on now that modifications are complete
+    if (dynamicGridObserver) {
+        dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
+    }
+}
+
+// Attach lifecycle listeners to catch initial data load
+document.addEventListener("DOMContentLoaded", () => {
+    // Setup structural tracker engines safely
+    dynamicGridObserver = new MutationObserver(() => applyIndexGridStockSync());
+    dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Smooth phased lifecycles instead of resource-heavy crash intervals
+    setTimeout(applyIndexGridStockSync, 150);
+    setTimeout(applyIndexGridStockSync, 800);
+});
+
+// Sync across multiple admin/index browser tabs instantly
+window.addEventListener("storage", applyIndexGridStockSync);
+
 </script>
+
 </body>
 </html>
