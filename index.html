@@ -2695,7 +2695,9 @@ const subProducts = {
 
     function extractColorName(el) {
         var c = el.getAttribute('data-color-name') || el.getAttribute('title') || '';
-        // Fixed: Look at both active and preserved data-sf-onclick states
+        // FIX: Ignore 'Out of Stock' flag text injected by the engine
+        if (c.toLowerCase().trim() === 'out of stock') c = ''; 
+        
         if (!c) c = extractHex(el.getAttribute('onclick') || el.getAttribute('data-sf-onclick') || '');
         if (!c && el.style && el.style.backgroundColor) c = el.style.backgroundColor.toLowerCase().trim();
         if (!c) { try { var s = window.getComputedStyle(el).backgroundColor; if (s && s !== 'rgba(0, 0, 0, 0)' && s !== 'transparent') c = s.toLowerCase().trim(); } catch(e){} }
@@ -2734,6 +2736,12 @@ const subProducts = {
         var c = el.cloneNode(true);
         c.removeAttribute('onclick');
         c.setAttribute('data-sf-dead','color');
+        
+        // FIX: Cache the active title attribute to data-color-name before overwriting it
+        if (el.getAttribute('title') && !el.getAttribute('data-color-name')) {
+            c.setAttribute('data-color-name', el.getAttribute('title'));
+        }
+        
         c.title = 'Out of Stock';
         c.setAttribute('aria-disabled','true');
         c.style.setProperty('pointer-events','none','important');
@@ -2801,7 +2809,7 @@ const subProducts = {
         if (localObserver) { localObserver.disconnect(); }
 
         var stock = {};
-        try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) {}
+        try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e){}
 
         // 1. Target ALL styles of layout frames across the platform
         document.querySelectorAll('.Explore-Saree-Styles img, [id*="Style"] img, .mini-card-static img, .mini-card img, .saree-card img, .product-card img, main img').forEach(function(img) {
@@ -2839,14 +2847,14 @@ const subProducts = {
         });
 
         // 2. Blouse color swatches
-        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .opts button[class*='color-swatch-'], #exploreStylesSection [id^='opts-'] .opts button, [onclick*=\"handleBlouseWizardSelection('color'\"]").forEach(function(sw) {
+        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .opts button[class*='color-swatch-'], #exploreStylesSection [id^='opts-'] .opts button, [onclick*='handleBlouseWizardSelection(\"color\"']").forEach(function(sw) {
             if (sw.getAttribute('data-sf-dead')) return;
             var ck = extractColorName(sw); if (!ck) return;
             if (stock[BLOUSE_SHARED+'||Color Variant||'+ck] === true) saveAndLock(sw, lockColor);
         });
 
         // 3. Blouse sizes
-        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], [onclick*=\"handleBlouseWizardSelection('size'\"]").forEach(function(btn) {
+        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], [onclick*='handleBlouseWizardSelection(\"size\"']").forEach(function(btn) {
             if (btn.getAttribute('data-sf-dead')) return;
             var lbl = btn.innerText.trim(); if (!lbl) return;
             if (stock[BLOUSE_SHARED+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
@@ -2917,7 +2925,6 @@ const subProducts = {
 
     // ── ENGINE INITIALIZATION ──
     localObserver = new MutationObserver(applySync);
-    // Fixed: Arm the DOM listener immediately to catch initial client-side renders
     localObserver.observe(document.body, { childList: true, subtree: true });
 
     if (document.readyState === 'loading') {
