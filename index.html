@@ -2680,7 +2680,21 @@ const subProducts = {
     const BLOUSE_SHARED = 'BLOUSE_SHARED';
     let localObserver = null;
 
-    // ── CORE UTILITIES ──
+    // ── CORE DEEP MATCHING ENGINE ──
+    function checkStock(stock, targetKey) {
+        if (!stock || !targetKey) return false;
+        if (stock[targetKey] === true) return true;
+        
+        // Advanced case-insensitive and whitespace-stripped fallback match
+        var standardizedTarget = targetKey.toLowerCase().replace(/\s+/g, '').trim();
+        for (var k in stock) {
+            if (k.toLowerCase().replace(/\s+/g, '').trim() === standardizedTarget && stock[k] === true) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function resolveColorKey(raw) {
         if (!raw) return '';
         var lower = raw.toLowerCase().trim();
@@ -2695,9 +2709,9 @@ const subProducts = {
 
     function extractColorName(el) {
         var c = el.getAttribute('data-color-name') || el.getAttribute('title') || '';
-        // FIX: Ignore 'Out of Stock' flag text injected by the engine
         if (c.toLowerCase().trim() === 'out of stock') c = ''; 
         
+        if (!c && el.innerText && el.innerText.length < 25) c = el.innerText.trim();
         if (!c) c = extractHex(el.getAttribute('onclick') || el.getAttribute('data-sf-onclick') || '');
         if (!c && el.style && el.style.backgroundColor) c = el.style.backgroundColor.toLowerCase().trim();
         if (!c) { try { var s = window.getComputedStyle(el).backgroundColor; if (s && s !== 'rgba(0, 0, 0, 0)' && s !== 'transparent') c = s.toLowerCase().trim(); } catch(e){} }
@@ -2705,14 +2719,16 @@ const subProducts = {
     }
 
     function getProductImg(el) {
-        var fb = function() {
-            var i = document.querySelector('.Explore-Saree-Styles img,.saree-card img,main img,.product-card img,.saree-sub-product-card img,.mini-card img,.mini-card-static img');
-            return i ? (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim() : '';
-        };
-        if (!el) return fb();
-        var card = el.closest('.Explore-Saree-Styles,[id*="Style"],.mini-card-static,.mini-card,.saree-card,.product-card,.saree-sub-product-card');
-        if (card) { var i = card.querySelector('img'); if (i) return (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim(); }
-        return fb();
+        if (!el) return '';
+        // Look up regional container boards (cards, modals, drawer systems)
+        var card = el.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .mini-card, .saree-card, .product-card, .saree-sub-product-card, .modal, .drawer, .popup, #exploreStylesSection');
+        if (card) {
+            var i = card.querySelector('img');
+            if (i) return (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
+        }
+        // Page-wide fallback for single product detail focus zones
+        var mainImg = document.querySelector('.main-product-img, #main-product-image, .Explore-Saree-Styles img, .saree-card img, main img');
+        return mainImg ? (mainImg.getAttribute('src')||'').split('/').pop().split('?')[0].trim() : '';
     }
 
     function isBlouseEl(el) {
@@ -2737,7 +2753,6 @@ const subProducts = {
         c.removeAttribute('onclick');
         c.setAttribute('data-sf-dead','color');
         
-        // FIX: Cache the active title attribute to data-color-name before overwriting it
         if (el.getAttribute('title') && !el.getAttribute('data-color-name')) {
             c.setAttribute('data-color-name', el.getAttribute('title'));
         }
@@ -2774,36 +2789,6 @@ const subProducts = {
         if (s) { el.setAttribute('onclick', s); el.removeAttribute('data-sf-onclick'); }
     }
 
-    function saveAndLock(el, fn) {
-        if (!el.getAttribute('data-sf-onclick') && el.getAttribute('onclick'))
-            el.setAttribute('data-sf-onclick', el.getAttribute('onclick'));
-        fn(el);
-    }
-
-    function restoreSweep(stock) {
-        document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
-            var type = dead.getAttribute('data-sf-dead');
-            if (type === 'color') {
-                var ck = extractColorName(dead);
-                if (!ck) return;
-                if (isBlouseEl(dead)) {
-                    if (!stock[BLOUSE_SHARED+'||Color Variant||'+ck]) restore(dead);
-                } else {
-                    var img = getProductImg(dead); if (!img) return;
-                    if (!stock[img+'||Color Variant||'+ck]) restore(dead);
-                }
-            } else {
-                var lbl = dead.innerText.trim(); if (!lbl) return;
-                if (isBlouseEl(dead)) {
-                    if (!stock[BLOUSE_SHARED+'||Size Option||'+lbl] && !stock[BLOUSE_SHARED+'||Material option||'+lbl]) restore(dead);
-                } else {
-                    var img2 = getProductImg(dead); if (!img2) return;
-                    if (!stock[img2+'||Size Option||'+lbl] && !stock[img2+'||Material option||'+lbl]) restore(dead);
-                }
-            }
-        });
-    }
-
     // ── MAIN UNIFIED SYNC EXECUTION ──
     function applySync() {
         if (localObserver) { localObserver.disconnect(); }
@@ -2811,7 +2796,7 @@ const subProducts = {
         var stock = {};
         try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e){}
 
-        // 1. Target ALL styles of layout frames across the platform
+        // 1. Structural Product Styles Overlay Processing
         document.querySelectorAll('.Explore-Saree-Styles img, [id*="Style"] img, .mini-card-static img, .mini-card img, .saree-card img, .product-card img, main img').forEach(function(img) {
             var fn = (img.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
             if (!fn) return;
@@ -2819,9 +2804,9 @@ const subProducts = {
             var wrap = img.parentElement;
             if (!card || !wrap) return;
             
-            wrap.querySelectorAll('.sf-oos-badge, .scroller-stockout-badge').forEach(function(e){e.remove();});
+            wrap.querySelectorAll('.sf-oos-badge').forEach(function(e){e.remove();});
             
-            if (stock[fn+'||Entire Product Style||'+fn] === true) {
+            if (checkStock(stock, fn + '||Entire Product Style||' + fn)) {
                 wrap.style.position = 'relative';
                 var ov = document.createElement('div');
                 ov.className = 'sf-oos-badge';
@@ -2829,8 +2814,7 @@ const subProducts = {
                 ov.innerHTML = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:5px 10px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.2);white-space:nowrap;letter-spacing:0.5px;">OUT OF STOCK</div>';
                 
                 ov.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     alert("This style is currently out of stock!");
                     return false;
                 };
@@ -2850,21 +2834,30 @@ const subProducts = {
         document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .opts button[class*='color-swatch-'], #exploreStylesSection [id^='opts-'] .opts button, [onclick*='handleBlouseWizardSelection(\"color\"']").forEach(function(sw) {
             if (sw.getAttribute('data-sf-dead')) return;
             var ck = extractColorName(sw); if (!ck) return;
-            if (stock[BLOUSE_SHARED+'||Color Variant||'+ck] === true) saveAndLock(sw, lockColor);
+            if (checkStock(stock, BLOUSE_SHARED + '||Color Variant||' + ck)) {
+                if (!sw.getAttribute('data-sf-onclick') && sw.getAttribute('onclick')) sw.setAttribute('data-sf-onclick', sw.getAttribute('onclick'));
+                lockColor(sw);
+            }
         });
 
         // 3. Blouse sizes
         document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], [onclick*='handleBlouseWizardSelection(\"size\"']").forEach(function(btn) {
             if (btn.getAttribute('data-sf-dead')) return;
             var lbl = btn.innerText.trim(); if (!lbl) return;
-            if (stock[BLOUSE_SHARED+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
+            if (checkStock(stock, BLOUSE_SHARED + '||Size Option||' + lbl)) {
+                if (!btn.getAttribute('data-sf-onclick') && btn.getAttribute('onclick')) btn.setAttribute('data-sf-onclick', btn.getAttribute('onclick'));
+                lockAttr(btn);
+            }
         });
 
         // 4. Blouse materials
         document.querySelectorAll('#exploreStylesSection .material-chip, #blouse-material-target .material-chip, #blouseMainActions .material-chip').forEach(function(chip) {
             if (chip.getAttribute('data-sf-dead')) return;
             var lbl = chip.innerText.trim(); if (!lbl) return;
-            if (stock[BLOUSE_SHARED+'||Material option||'+lbl] === true) saveAndLock(chip, lockAttr);
+            if (checkStock(stock, BLOUSE_SHARED + '||Material option||' + lbl)) {
+                if (!chip.getAttribute('data-sf-onclick') && chip.getAttribute('onclick')) chip.setAttribute('data-sf-onclick', chip.getAttribute('onclick'));
+                lockAttr(chip);
+            }
         });
 
         // 5. Non-blouse color circles
@@ -2872,7 +2865,10 @@ const subProducts = {
             if (c.getAttribute('data-sf-dead') || isBlouseEl(c)) return;
             var img = getProductImg(c); if (!img) return;
             var ck = extractColorName(c); if (!ck) return;
-            if (stock[img+'||Color Variant||'+ck] === true) saveAndLock(c, lockColor);
+            if (checkStock(stock, img + '||Color Variant||' + ck)) {
+                if (!c.getAttribute('data-sf-onclick') && c.getAttribute('onclick')) c.setAttribute('data-sf-onclick', c.getAttribute('onclick'));
+                lockColor(c);
+            }
         });
 
         // 6. Non-blouse sizes
@@ -2880,7 +2876,10 @@ const subProducts = {
             if (btn.getAttribute('data-sf-dead') || isBlouseEl(btn)) return;
             var img = getProductImg(btn); if (!img) return;
             var lbl = btn.innerText.trim(); if (!lbl) return;
-            if (stock[img+'||Size Option||'+lbl] === true) saveAndLock(btn, lockAttr);
+            if (checkStock(stock, img + '||Size Option||' + lbl)) {
+                if (!btn.getAttribute('data-sf-onclick') && btn.getAttribute('onclick')) btn.setAttribute('data-sf-onclick', btn.getAttribute('onclick'));
+                lockAttr(btn);
+            }
         });
 
         // 7. Non-blouse materials
@@ -2888,24 +2887,49 @@ const subProducts = {
             if (chip.getAttribute('data-sf-dead') || isBlouseEl(chip)) return;
             var img = getProductImg(chip); if (!img) return;
             var lbl = chip.innerText.trim(); if (!lbl) return;
-            if (stock[img+'||Material option||'+lbl] === true) saveAndLock(chip, lockAttr);
+            if (checkStock(stock, img + '||Material option||' + lbl)) {
+                if (!chip.getAttribute('data-sf-onclick') && chip.getAttribute('onclick')) chip.setAttribute('data-sf-onclick', chip.getAttribute('onclick'));
+                lockAttr(chip);
+            }
         });
 
-        restoreSweep(stock);
+        // Clean sweeping loops for entries that transitioned back to active stock
+        document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
+            var type = dead.getAttribute('data-sf-dead');
+            if (type === 'color') {
+                var ck = extractColorName(dead); if (!ck) return;
+                if (isBlouseEl(dead)) {
+                    if (!checkStock(stock, BLOUSE_SHARED + '||Color Variant||' + ck)) restore(dead);
+                } else {
+                    var img = getProductImg(dead); if (!img) return;
+                    if (!checkStock(stock, img + '||Color Variant||' + ck)) restore(dead);
+                }
+            } else {
+                var lbl = dead.innerText.trim(); if (!lbl) return;
+                if (isBlouseEl(dead)) {
+                    if (!checkStock(stock, BLOUSE_SHARED + '||Size Option||' + lbl) && !checkStock(stock, BLOUSE_SHARED + '||Material option||' + lbl)) restore(dead);
+                } else {
+                    var img2 = getProductImg(dead); if (!img2) return;
+                    if (!checkStock(stock, img2 + '||Size Option||' + lbl) && !checkStock(stock, img2 + '||Material option||' + lbl)) restore(dead);
+                }
+            }
+        });
 
-        if (localObserver) {
-            localObserver.observe(document.body, { childList: true, subtree: true });
-        }
+        if (localObserver) { localObserver.observe(document.body, { childList: true, subtree: true }); }
     }
 
     function fetchAndApply() {
         fetch(BACKEND + '/api/get-inventory-cache')
             .then(function(r){ return r.ok ? r.json() : {}; })
             .then(function(cache) {
+                console.log('[Sync Engine Hub] Pulled Live Cache Keys:', Object.keys(cache || {}));
                 try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache || {})); } catch(e){}
                 applySync();
             })
-            .catch(function(){ applySync(); });
+            .catch(function(err){ 
+                console.error('[Sync Engine Hub] Fallback to local storage cache baseline due to network lag.', err);
+                applySync(); 
+            });
     }
 
     function connectInventorySocket() {
@@ -2914,33 +2938,30 @@ const subProducts = {
             const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
             sock.on('inventory_cache_updated', function (data) {
                 if (data && data.cache && typeof data.cache === 'object') {
+                    console.log('[Sync Engine Hub] Live Real-time Socket Refresh Triggered.');
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(data.cache));
                     applySync();
                 }
             });
         } catch (e) {
-            console.warn('[Inventory Bridge] Socket error:', e);
+            console.warn('[Inventory Bridge] Socket link fallback active:', e);
         }
     }
 
-    // ── ENGINE INITIALIZATION ──
+    // ── INITIALIZATION ENGINE ──
     localObserver = new MutationObserver(applySync);
     localObserver.observe(document.body, { childList: true, subtree: true });
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchAndApply();
-            connectInventorySocket();
-        });
+        document.addEventListener('DOMContentLoaded', function() { fetchAndApply(); connectInventorySocket(); });
     } else {
-        fetchAndApply();
-        connectInventorySocket();
+        fetchAndApply(); connectInventorySocket();
     }
 
     setInterval(fetchAndApply, 30000);
-    window.addEventListener('storage', function(e) {
-        if (e.key === STORAGE_KEY) applySync();
-    });
+    window.addEventListener('storage', function(e) { if (e.key === STORAGE_KEY) applySync(); });
+    console.log('[Inventory System] Case-Insensitive Engine Active & Monitoring DOM changes.');
+})();
 
     console.log('[Inventory System] Unified Engine online.');
 })();
