@@ -9,6 +9,40 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>
+/* Ensure the body wraps cleanly without horizontal overflow breaks */
+html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevents awkward horizontal shaking/scrolling */
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Force container frames to shrink safely on small phone displays */
+.container, .main-wrapper, #exploreStylesSection {
+    width: 100% !important;
+    max-width: 1200px; /* Limits size on desktop */
+    margin: 0 auto;
+    padding: 0 15px; /* Adds comfortable safety margins on mobile edges */
+    box-sizing: border-box;
+}
+
+/* Auto-wrap product display card grids cleanly on mobile screens */
+.product-grid, .Explore-Saree-Styles, .saree-card-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 15px !important;
+}
+
+/* Force product cards to scale down to 2 columns on mobile, instead of squishing */
+@media (max-width: 768px) {
+    .saree-card, .product-card, .mini-card-static {
+        width: calc(50% - 15px) !important; /* Perfect 2-column mobile structure */
+        min-width: 0 !important;
+    }
+}
+    
 /* Footer Structural Container Box */
 #footer {
     background-color: #ffffff; /* Matches your clean minimalist aesthetic background */
