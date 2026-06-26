@@ -111,7 +111,66 @@
         width: 100%;
     }
 }
-    
+
+/* ==========================================================================
+   UPDATED RESPONSIVE HEADER ENGINE
+   ========================================================================== */
+header, .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allows components to drop down cleanly instead of breaking layout */
+    gap: 12px;
+    padding: 10px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    position: relative;
+    z-index: 1000;
+}
+
+/* Ensure the Logo & Brand container stays safe */
+.brand-logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Measurement notice banner auto-resizes cleanly */
+.measurement-notice-banner {
+    flex: 1 1 300px; /* Expands on desktop, drops gracefully below on mobile */
+    max-width: 500px;
+    min-width: 260px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* Action controls menu aligned perfectly */
+.header-actions-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+/* 📱 Mobile Specific Adjustments (Max Width 768px) */
+@media screen and (max-width: 768px) {
+    header, .header-container {
+        flex-direction: row; /* Retains inline brand and cart actions on top row */
+        justify-content: space-between;
+    }
+
+    /* Pushes notice banner down below logo/actions to prevent squishing */
+    .measurement-notice-banner {
+        order: 3; 
+        flex: 1 1 100%;
+        max-width: 100%;
+        margin-top: 4px;
+        text-align: center;
+    }
+}
+   
 /* Footer Structural Container Box */
 #footer {
     background-color: #ffffff; /* Matches your clean minimalist aesthetic background */
