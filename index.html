@@ -3295,10 +3295,13 @@ const subProducts = {
             });
     }
 
-    function connectInventorySocket() {
+function connectInventorySocket() {
         if (typeof io === 'undefined') { setTimeout(connectInventorySocket, 500); return; }
         try {
+            // Your existing socket connection setup
             const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
+            
+            // 1. Your existing cache sync listener
             sock.on('inventory_cache_updated', function (data) {
                 if (data && data.cache && typeof data.cache === 'object') {
                     console.log('[Sync Engine Hub] Live Real-time Socket Refresh Triggered.');
@@ -3306,6 +3309,15 @@ const subProducts = {
                     applySync();
                 }
             });
+
+            // 🔥 EXTRA FIX: Listen for individual product toggle updates from server.js
+            sock.on('product_status_updated', function (data) {
+                console.log('[Sync Engine Hub] Real-time Product Toggle Received:', data);
+                
+                // Trigger your built-in pull system to get the fresh data and refresh the UI
+                fetchAndApply(); 
+            });
+
         } catch (e) {
             console.warn('[Inventory Bridge] Socket link fallback active:', e);
         }
@@ -3325,27 +3337,6 @@ const subProducts = {
     window.addEventListener('storage', function(e) { if (e.key === STORAGE_KEY) applySync(); });
     console.log('[Inventory System] Case-Insensitive Engine Active & Monitoring DOM changes.');
 })();
-
-// 1. Look for this line in your existing code:
-    const socket = io(); 
-
-    // 2. PASTE THE FIX DIRECTLY HERE:
-    socket.on('product_status_updated', (data) => {
-        console.log("Received stock update from server:", data);
-        
-        // If your page uses a local products array, update it
-        if (typeof products !== 'undefined') {
-            const item = products.find(p => p.id === data.id);
-            if (item) item.status = data.status;
-        }
-        
-        // Refresh the visual display so things show as stock-out immediately
-        if (typeof renderProducts === 'function') {
-            renderProducts();
-        } else {
-            location.reload(); // Quick fallback to refresh the page view safely
-        }
-    });
    
 </script>
 </body>
