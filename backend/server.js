@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
 app.use(express.static(path.join(__dirname, '../')));
 
 // =============================================================
-// INVENTORY ROUTES
+// INVENTORY ROUTES (SYNCHRONIZED REAL-TIME VERSION)
 // =============================================================
 app.get('/api/inventory', (req, res) => {
     db.all('SELECT * FROM inventory', [], (err, rows) => res.json(rows));
@@ -174,15 +174,24 @@ app.get('/api/inventory', (req, res) => {
 
 app.post('/api/inventory/toggle', (req, res) => {
     const { id, status } = req.body;
-    db.run('UPDATE inventory SET status = ? WHERE id = ?', [status, id], () => res.json({ success: true }));
-});
+    
+    db.run('UPDATE inventory SET status = ? WHERE id = ?', [status, id], function (err) {
+        if (err) {
+            console.error('Failed to update product stock status:', err.message);
+            return res.status(500).json({ success: false, error: err.message });
+        }
+        
+        console.log(`📦 Real-time Sync: Product ID ${id} set to status ${status}`);
 
-app.get('/api/chat/history/:orderId', (req, res) => {
-    db.all(
-        'SELECT * FROM order_chats WHERE order_id = ? ORDER BY logged_time ASC',
-        [req.params.orderId],
-        (err, rows) => res.json(rows)
-    );
+        // 🔥 THE FIX: Instantly broadcast the updated stock status across the WebSocket pipe
+        // This alerts index.html, product-details.html, and all other templates to adapt immediately.
+        io.emit('product_status_updated', { 
+            id: parseInt(id), 
+            status: parseInt(status) 
+        });
+        
+        res.json({ success: true, id, status });
+    });
 });
 
 // =============================================================
