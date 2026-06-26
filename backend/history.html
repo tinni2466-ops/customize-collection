@@ -1202,8 +1202,14 @@ function toggleGranularStock(attributeType, targetProduct, valueLabel, buttonNod
 document.addEventListener("DOMContentLoaded", renderInventoryCoreManagement);
 
 // Automatically check if the server already knows we are logged in
-window.addEventListener('DOMContentLoaded', () => {
-    // If you already verified recently, the server session handles it, but let's secure the interface view
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch('/api/admin/session', { credentials: 'include' });
+        const data = await res.json();
+        if (data.authenticated) {
+            document.getElementById('twoFactorWall').style.display = 'none';
+        }
+    } catch (e) { /* session check failed — 2FA wall stays */ }
     document.getElementById('twoFactorPinInput').focus();
 });
 
@@ -1217,6 +1223,7 @@ async function submitAdmin2FACode() {
     const response = await fetch('/api/verify-2fa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ token: pinCode })
     });
 
@@ -1242,117 +1249,6 @@ function getCachedOrders(){
   }
 }
 
-const oldLoadAdminOrders = window.loadAdminOrders;
-window.loadAdminOrders = async function(){
-  if (typeof oldLoadAdminOrders === "function") {
-    const originalGetAllOrders = window.getAllOrders;
-
-    window.getAllOrders = async function(){
-      const orders = await originalGetAllOrders();
-      if (Array.isArray(orders)) {
-        localStorage.setItem("allOrdersData", JSON.stringify(orders));
-      }
-      return Array.isArray(orders) ? orders : getCachedOrders();
-    };
-
-    await oldLoadAdminOrders();
-    window.getAllOrders = originalGetAllOrders;
-  }
-};
-
-window.getSelectedOrder = function(){
-  return getCachedOrders().find(o => o.orderId === targetedOrderId) || null;
-};
-
-window.loadSelectedOrderDetails = function(){
-  const box = document.getElementById("admin-order-details");
-  const order = getSelectedOrder();
-  if (!box) return;
-
-  if (!order) {
-    box.innerHTML = "Select an order";
-    return;
-  }
-
-  const items = order.purchasedItems || order.items || [];
-
-  box.innerHTML = `
-    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start;">
-      <div>
-        <div style="font-weight:800;color:#0f172a;">${order.customerName || order.orderId || "Customer"}</div>
-        <div style="font-size:12px;color:#64748b;">Status: ${order.status || "active"}</div>
-      </div>
-      <button onclick="loadSelectedOrderChat()" style="background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:700;cursor:pointer;">CHAT</button>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 8px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
-      <span style="font-weight:700;color:#111;font-size:14px;">Order Price (₹):</span>
-      <input type="number" value="${order.total || order.totalPaid || 0}" oninput="saveDirectOrderPricePatch(this.value)" style="width:140px;padding:5px 7px;border:2px solid #06b6d4;border-radius:4px;font-weight:800;">
-    </div>
-
-    <div style="font-weight:800;color:#111;margin-top:8px;">₹${order.total || order.totalPaid || 0}</div>
-
-    <div style="margin-top:12px;font-size:13px;color:#334155;">
-      ${items.map(item => `
-        <div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9;">
-          <img src="${item.img || item.image || ""}" style="width:58px;height:58px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.style.display='none'">
-          <div>
-            <b>${item.displayName || item.name || "Item"}</b>
-            <div style="font-size:12px;color:#64748b;margin-top:4px;">
-              Material: ${item.material || "Organza"}<br>
-              Color: ${item.color || ""}<br>
-              Size: ${item.size || ""}<br>
-              Notes: ${item.notes || "None"}<br>
-              Qty: ${item.qty || 1}
-            </div>
-          </div>
-        </div>
-      `).join("")}
-    </div>
-
-    ${renderAdminFulfillmentMap(order)}
-  `;
-};
-
-window.saveDirectOrderPricePatch = function(value){
-  const orders = getCachedOrders();
-  const order = orders.find(o => o.orderId === targetedOrderId);
-  if (!order) return;
-
-  const amount = Number(value) || 0;
-  order.total = amount;
-  order.totalPaid = amount;
-  order.baseTotal = amount;
-  order.finalTotal = amount;
-
-  localStorage.setItem("allOrdersData", JSON.stringify(orders));
-};
-
-window.loadSelectedOrderChat = function(){
-  const chatView = document.getElementById("admin-chat-view");
-  const order = getSelectedOrder();
-  if (!chatView) return;
-
-  if (!order) {
-    chatView.innerHTML = `<div style="color:#64748b;text-align:center;padding:20px;">Select an order to view messages.</div>`;
-    return;
-  }
-
-  const messages = order.chatLedgerHistory?.length ? order.chatLedgerHistory : [{
-    sender: "Customer",
-    text: "Order created. You can now message the store about customization.",
-    stamp: order.paymentTimestamp || ""
-  }];
-
-  chatView.innerHTML = messages.map(msg => `
-    <div style="padding:8px 14px;border-radius:12px;max-width:75%;width:fit-content;font-size:14px;margin-bottom:8px;background:${msg.sender === "Owner" ? "#0b57d0" : "#cbd5e1"};color:${msg.sender === "Owner" ? "white" : "#1e293b"};align-self:${msg.sender === "Owner" ? "flex-end" : "flex-start"};">
-      <div style="font-size:11px;font-weight:bold;margin-bottom:3px;">${msg.sender || "Customer"}</div>
-      <div>${msg.text || ""}</div>
-      <div style="font-size:10px;opacity:.75;margin-top:4px;text-align:right;">${msg.stamp || ""}</div>
-    </div>
-  `).join("");
-};
-    
 (function(){
   if (window.adminOrderButtonWorkflowFixInstalled) return;
   window.adminOrderButtonWorkflowFixInstalled = true;
@@ -1394,6 +1290,19 @@ window.loadSelectedOrderChat = function(){
     return orders.find(order => getOrderId(order) === String(targetedOrderId || "")) || null;
   }
 
+  function mergeChatHistories(serverHistory, cachedHistory) {
+    const merged = [];
+    const seen = new Set();
+    [...(Array.isArray(serverHistory) ? serverHistory : []), ...(Array.isArray(cachedHistory) ? cachedHistory : [])].forEach(msg => {
+      const key = String(msg.id || '') + '|' + (msg.text || '') + '|' + (msg.sender || '') + '|' + (msg.stamp || '') + '|' + (msg.audioUrl || '');
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(msg);
+      }
+    });
+    return merged.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+  }
+
   function mergeServerOrdersWithCache(serverOrders){
     const cachedOrders = getCachedOrders();
 
@@ -1403,12 +1312,6 @@ window.loadSelectedOrderChat = function(){
 
       const merged = { ...serverOrder };
       const localFields = [
-        "adminChatStarted",
-        "customizationChatOpened",
-        "customizationChatEnabled",
-        "chatStartedByOwner",
-        "status",
-        "currentPhase",
         "dispatchTimestamp",
         "deliveryTimestamp",
         "isDeliveryFinalized",
@@ -1421,9 +1324,14 @@ window.loadSelectedOrderChat = function(){
         if (cachedOrder[field] !== undefined) merged[field] = cachedOrder[field];
       });
 
-      if (Array.isArray(cachedOrder.chatLedgerHistory) && cachedOrder.chatLedgerHistory.length) {
-        merged.chatLedgerHistory = cachedOrder.chatLedgerHistory;
+      if (serverOrder.chatEnabled) {
+        merged.adminChatStarted = true;
+        merged.customizationChatOpened = true;
+        merged.customizationChatEnabled = true;
+        merged.chatStartedByOwner = true;
       }
+
+      merged.chatLedgerHistory = mergeChatHistories(serverOrder.chatLedgerHistory, cachedOrder.chatLedgerHistory);
 
       if (Array.isArray(cachedOrder.timelineMessages) && cachedOrder.timelineMessages.length) {
         merged.timelineMessages = cachedOrder.timelineMessages;
@@ -1462,6 +1370,7 @@ window.loadSelectedOrderChat = function(){
     return !!(
       order &&
       (
+        order.chatEnabled ||
         order.adminChatStarted ||
         order.customizationChatOpened ||
         order.customizationChatEnabled ||
@@ -1576,11 +1485,19 @@ window.loadSelectedOrderChat = function(){
       order.customizationChatOpened = true;
       order.customizationChatEnabled = true;
       order.chatStartedByOwner = true;
+      order.chatEnabled = true;
       order.status = order.status || "customization_pending";
       ensureChatNotice(order);
     });
 
     if (!order) return;
+
+    fetch('/api/admin/toggle-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ orderId: getOrderId(order), enabled: true })
+    }).catch(() => {});
 
     loadSelectedOrderDetails();
     loadSelectedOrderChat();
@@ -1613,6 +1530,16 @@ window.loadSelectedOrderChat = function(){
 
     field.value = "";
     loadSelectedOrderChat();
+
+    const sentOrder = findSelectedOrder();
+    if (sentOrder) {
+      fetch('/api/admin-send-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderId: getOrderId(sentOrder), message: text, sender: 'Owner' })
+      }).catch(() => {});
+    }
   };
 
   window.acceptSelectedOrderForDelivery = acceptSelectedOrderForDelivery = function(){
@@ -1650,6 +1577,16 @@ window.loadSelectedOrderChat = function(){
 
     loadSelectedOrderDetails();
     loadSelectedOrderChat();
+
+    const accepted = findSelectedOrder();
+    if (accepted) {
+      fetch('/api/admin-update-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderId: getOrderId(accepted), action: 'accept' })
+      }).catch(() => {});
+    }
   };
 
   window.markSelectedOrderDone = markSelectedOrderDone = function(){
@@ -1693,6 +1630,16 @@ window.loadSelectedOrderChat = function(){
 
     loadSelectedOrderDetails();
     loadSelectedOrderChat();
+
+    const doneOrder = findSelectedOrder();
+    if (doneOrder) {
+      fetch('/api/admin-update-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderId: getOrderId(doneOrder), action: 'done' })
+      }).catch(() => {});
+    }
   };
 
   window.saveDirectOrderPricePatch = saveDirectOrderPricePatch = function(value){
@@ -3794,7 +3741,33 @@ const sareeMaterials = {
 (function () {
     'use strict';
 
-    const BACKEND = 'https://customize-collection.onrender.com';
+    const BACKEND = window.location.origin;
+
+    function mergeIncomingChatMessage(data) {
+        if (!data || !data.orderId) return;
+        try {
+            const list = JSON.parse(localStorage.getItem('allOrdersData') || '[]');
+            if (!Array.isArray(list)) return;
+            const idx = list.findIndex(o => o.orderId === data.orderId);
+            if (idx < 0) return;
+            list[idx].chatLedgerHistory = Array.isArray(list[idx].chatLedgerHistory) ? list[idx].chatLedgerHistory : [];
+            const entry = {
+                id: data.id || Date.now(),
+                sender: data.sender || data.senderRole || 'Customer',
+                text: data.text || data.message || '',
+                stamp: data.stamp || data.timestamp || '',
+                audioUrl: data.audioUrl || '',
+                isAudio: !!(data.isAudio || data.audioUrl)
+            };
+            const dup = list[idx].chatLedgerHistory.some(m =>
+                (entry.id && m.id === entry.id) ||
+                (entry.audioUrl && m.audioUrl === entry.audioUrl) ||
+                (m.text === entry.text && m.stamp === entry.stamp && (m.sender || '') === (entry.sender || ''))
+            );
+            if (!dup) list[idx].chatLedgerHistory.push(entry);
+            localStorage.setItem('allOrdersData', JSON.stringify(list));
+        } catch (e) { /* ignore cache merge errors */ }
+    }
 
     // ── 1. FIX showAdminRenderedBubble ───────────────────────────
     window.showAdminRenderedBubble = function (role, text, stamp, audioUrl) {
@@ -3852,87 +3825,26 @@ const sareeMaterials = {
         try {
             adminSocket = io(BACKEND, { transports: ['polling', 'websocket'] });
             adminSocket.on('connect', () => { adminSocket.emit('join_admin_channel'); });
-            adminSocket.on('customer_message_received', () => {
+            adminSocket.on('customer_message_received', (data) => {
+                mergeIncomingChatMessage(data);
+                if (data && data.orderId === targetedOrderId && typeof loadSelectedOrderChat === 'function') {
+                    loadSelectedOrderChat();
+                }
                 if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            });
+            adminSocket.on('receive_chat_message', (data) => {
+                mergeIncomingChatMessage(data);
+                if (data && data.orderId === targetedOrderId && typeof loadSelectedOrderChat === 'function') {
+                    loadSelectedOrderChat();
+                } else if (typeof loadAdminOrders === 'function') {
+                    loadAdminOrders();
+                }
             });
         } catch (e) { console.warn('[Admin Bridge] Socket error:', e); }
     }
     connectAdminSocket();
 
-    // ── 4. SAFE ORDER CACHE HELPERS ─────────────────────────────
-    function getOrderFromCache(orderId) {
-        try {
-            const list = JSON.parse(localStorage.getItem('allOrdersData') || '[]');
-            return Array.isArray(list) ? list.find(o => o.orderId === orderId) : null;
-        } catch { return null; }
-    }
-
-    function saveOrderToCache(updatedOrder) {
-        try {
-            let list = [];
-            try { list = JSON.parse(localStorage.getItem('allOrdersData') || '[]'); } catch { }
-            const idx = list.findIndex(o => o.orderId === updatedOrder.orderId);
-            if (idx >= 0) list[idx] = updatedOrder; else list.push(updatedOrder);
-            localStorage.setItem('allOrdersData', JSON.stringify(list));
-        } catch { }
-    }
-
-    // ── 5. REPLACE transmitAdminResponseText ─────────────────────
-    window.transmitAdminResponseText = function () {
-        const field = document.getElementById('admin-chat-input');
-        if (!field) return;
-        const txt = field.value.trim();
-        if (!txt) return;
-
-        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
-        if (!orderId) { alert('Select an order first'); return; }
-
-        const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        const order = getOrderFromCache(orderId);
-        if (order) {
-            order.chatLedgerHistory = order.chatLedgerHistory || [];
-            order.chatLedgerHistory.push({ id: Date.now(), sender: 'Owner', text: txt, stamp });
-            saveOrderToCache(order);
-        }
-
-        field.value = '';
-        if (typeof loadAdminOrders === 'function') loadAdminOrders();
-
-        fetch(BACKEND + '/api/admin-send-chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, message: txt, sender: 'Owner' })
-        }).catch(() => {});
-    };
-
-    // ── 6. PATCH acceptSelectedOrderForDelivery ──────────────────
-    const _origAccept = window.acceptSelectedOrderForDelivery;
-    window.acceptSelectedOrderForDelivery = function () {
-        if (typeof _origAccept === 'function') _origAccept();
-        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
-        if (!orderId) return;
-        fetch(BACKEND + '/api/admin-update-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, action: 'accept' })
-        }).catch(() => {});
-    };
-
-    // ── 7. PATCH markSelectedOrderDone ───────────────────────────
-    const _origDone = window.markSelectedOrderDone;
-    window.markSelectedOrderDone = function () {
-        if (typeof _origDone === 'function') _origDone();
-        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
-        if (!orderId) return;
-        fetch(BACKEND + '/api/admin-update-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, action: 'done' })
-        }).catch(() => {});
-    };
-
-    // ── 8. INTERCEPT inventory localStorage → sync to backend ────
+    // ── 4. INTERCEPT inventory localStorage → sync to backend ────
     const _origSetItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) {
         _origSetItem.call(this, key, value);
@@ -3963,242 +3875,7 @@ const sareeMaterials = {
     console.log('[Admin Bridge v2] Loaded.');
 })();
 
-// ── MAIN SYNC & GATING ENGINE (Part 7) ──
-(function () {
-    'use strict';
-    // ... [Keep all your color maps, lock helpers, and gating logic intact here] ...
-
-    // ==========================================================================
-    // RE-EXECUTION LIFE CYCLE ENGINE
-    // ==========================================================================
-    function initializeInventorySyncEngine() {
-        applyMasterStockSync();
-        patchRandomFunctions();
-        initBlouseButtonGating();
-        initSubProductButtonGating();
-        new MutationObserver(applyMasterStockSync).observe(document.body, { childList: true, subtree: true });
-    }
-
-    window.applyMasterStockSync = applyMasterStockSync;
-    window.addEventListener("storage", applyMasterStockSync);
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initializeInventorySyncEngine);
-    } else {
-        initializeInventorySyncEngine();
-    }
-})();
-
-(function () {
-    'use strict';
-
-    const BACKEND = 'https://customize-collection.onrender.com';
-
-    // ── 1. FIX showAdminRenderedBubble ───────────────────────────
-    //    Original only checks isOwner (Owner / owner).
-    //    System messages fell to "Customer" branch — now they render
-    //    as a centred italic notification row.
-    //    Audio messages get a real <audio> element.
-    window.showAdminRenderedBubble = function (role, text, stamp, audioUrl) {
-        const container = document.getElementById('admin-chat-view');
-        if (!container) return;
-
-        const isOwner  = role === 'Owner' || role === 'owner';
-        const isSystem = role === 'System' || role === 'system';
-        const bubble   = document.createElement('div');
-        bubble.style.flexShrink = '0'; // prevent flex from squishing bubbles
-
-        if (isSystem) {
-            // ── System notification row ──
-            bubble.style.cssText =
-                'text-align:center;font-size:11px;color:#64748b;font-style:italic;' +
-                'padding:3px 6px;margin:2px 0;word-wrap:break-word;';
-            bubble.innerHTML =
-                `<span>${text || ''}</span>` +
-                (stamp ? `&ensp;<span style="font-size:10px;opacity:0.65;">${stamp}</span>` : '');
-        } else {
-            // ── Chat bubble ──
-            bubble.style.cssText =
-                'padding:8px 14px;border-radius:12px;max-width:75%;width:fit-content;' +
-                'font-size:14px;word-wrap:break-word;margin-bottom:4px;' +
-                (isOwner
-                    ? 'background:#0b57d0;align-self:flex-end;color:white;margin-left:auto;'
-                    : 'background:#cbd5e1;align-self:flex-start;color:#1e293b;');
-
-            let bodyHtml = `<div>${text || ''}</div>`;
-
-            if (audioUrl) {
-                // Real audio player for voice notes
-                bodyHtml +=
-                    `<audio controls style="margin-top:6px;width:180px;height:32px;" src="${audioUrl}"></audio>`;
-            }
-
-            bubble.innerHTML =
-                `<div style="font-size:11px;font-weight:bold;margin-bottom:3px;">
-                    ${isOwner ? 'Owner' : 'Customer'}
-                </div>` +
-                bodyHtml +
-                `<div style="font-size:10px;opacity:0.75;margin-top:4px;text-align:right;">${stamp || ''}</div>`;
-        }
-
-        container.appendChild(bubble);
-        // Scroll to bottom after paint — works even inside flex containers
-        requestAnimationFrame(() => { container.scrollTop = container.scrollHeight; });
-    };
-
-    // ── 2. FIX loadSelectedOrderChat to pass audioUrl + final scroll ─
-    const _origLoadChat = window.loadSelectedOrderChat;
-    window.loadSelectedOrderChat = function () {
-        const chatView = document.getElementById('admin-chat-view');
-        const order    = (typeof getSelectedOrder === 'function') ? getSelectedOrder() : null;
-
-        if (!chatView) { if (typeof _origLoadChat === 'function') _origLoadChat(); return; }
-
-        chatView.innerHTML = '';
-
-        if (!order) {
-            chatView.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">Select an order to view messages.</div>';
-            return;
-        }
-
-        (order.chatLedgerHistory || []).forEach(msg => {
-            window.showAdminRenderedBubble(msg.sender, msg.text, msg.stamp, msg.audioUrl || '');
-        });
-
-        // Final scroll after all bubbles have been appended
-        setTimeout(() => { chatView.scrollTop = chatView.scrollHeight; }, 30);
-    };
-
-    // ── 3. ADMIN SOCKET CONNECTION ───────────────────────────────
-    let adminSocket = null;
-    function connectAdminSocket() {
-        if (typeof io === 'undefined') { setTimeout(connectAdminSocket, 500); return; }
-        try {
-            adminSocket = io(BACKEND, { transports: ['polling', 'websocket'] });
-            adminSocket.on('connect', () => {
-                adminSocket.emit('join_admin_channel');
-            });
-            // Refresh order list when customer sends any message
-            adminSocket.on('customer_message_received', () => {
-                if (typeof loadAdminOrders === 'function') loadAdminOrders();
-            });
-        } catch (e) {
-            console.warn('[Admin Bridge] Socket error:', e);
-        }
-    }
-    connectAdminSocket();
-
-    // ── 4. SAFE ORDER CACHE HELPERS ─────────────────────────────
-    function getOrderFromCache(orderId) {
-        try {
-            const list = JSON.parse(localStorage.getItem('allOrdersData') || '[]');
-            return Array.isArray(list) ? list.find(o => o.orderId === orderId) : null;
-        } catch { return null; }
-    }
-
-    function saveOrderToCache(updatedOrder) {
-        try {
-            let list = [];
-            try { list = JSON.parse(localStorage.getItem('allOrdersData') || '[]'); } catch { }
-            const idx = list.findIndex(o => o.orderId === updatedOrder.orderId);
-            if (idx >= 0) list[idx] = updatedOrder; else list.push(updatedOrder);
-            localStorage.setItem('allOrdersData', JSON.stringify(list));
-        } catch { }
-    }
-
-    // ── 5. REPLACE transmitAdminResponseText ─────────────────────
-    //    Original calls getAllOrders() without await — broken.
-    //    Uses localStorage cache + backend API instead.
-    window.transmitAdminResponseText = function () {
-        const field = document.getElementById('admin-chat-input');
-        if (!field) return;
-        const txt = field.value.trim();
-        if (!txt) return;
-
-        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
-        if (!orderId) { alert('Select an order first'); return; }
-
-        const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        // Update localStorage immediately for instant UI feedback
-        const order = getOrderFromCache(orderId);
-        if (order) {
-            order.chatLedgerHistory = order.chatLedgerHistory || [];
-            order.chatLedgerHistory.push({ id: Date.now(), sender: 'Owner', text: txt, stamp });
-            saveOrderToCache(order);
-        }
-
-        field.value = '';
-        if (typeof loadAdminOrders === 'function') loadAdminOrders();
-
-        // POST to backend → server emits receive_chat_message to customer socket room
-        fetch(BACKEND + '/api/admin-send-chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, message: txt, sender: 'Owner' })
-        }).catch(() => {});
-    };
-
-    // ── 6. PATCH acceptSelectedOrderForDelivery ──────────────────
-    const _origAccept = window.acceptSelectedOrderForDelivery;
-    window.acceptSelectedOrderForDelivery = function () {
-        if (typeof _origAccept === 'function') _origAccept();
-        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
-        if (!orderId) return;
-        fetch(BACKEND + '/api/admin-update-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, action: 'accept' })
-        }).catch(() => {});
-    };
-
-    // ── 7. PATCH markSelectedOrderDone ───────────────────────────
-    const _origDone = window.markSelectedOrderDone;
-    window.markSelectedOrderDone = function () {
-        if (typeof _origDone === 'function') _origDone();
-        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
-        if (!orderId) return;
-        fetch(BACKEND + '/api/admin-update-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, action: 'done' })
-        }).catch(() => {});
-    };
-
-    // ── 8. INTERCEPT inventory localStorage → sync to backend ────
-    const _origSetItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (key, value) {
-        _origSetItem.call(this, key, value);
-        if (key === 'storefront_inventory_cache') {
-            try {
-                fetch(BACKEND + '/api/sync-inventory', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cache: JSON.parse(value) })
-                }).catch(() => {});
-            } catch { }
-        }
-    };
-
-    // ── 9. LOAD INITIAL INVENTORY FROM BACKEND ───────────────────
-    (async function () {
-        try {
-            const res = await fetch(BACKEND + '/api/get-inventory-cache');
-            if (!res.ok) return;
-            const cache = await res.json();
-            if (cache && Object.keys(cache).length > 0) {
-                _origSetItem.call(localStorage, 'storefront_inventory_cache', JSON.stringify(cache));
-                if (typeof renderInventoryCoreManagement === 'function') renderInventoryCoreManagement();
-            }
-        } catch { }
-    })();
-
-    console.log('[Admin Bridge v2] Loaded.');
-})();
-
-(function () {
-    'use strict';
-    const ADMIN_COLOR_MAP = {
+</script>
         "red": "Flame Red", "#ff5733": "Flame Red", "rgb(255, 87, 51)": "Flame Red", "rgb(229, 62, 62)": "Flame Red", "#e53e3e": "Flame Red",
         "crimson": "Crimson", "#c70039": "Crimson", "rgb(199, 0, 57)": "Crimson", "rgb(220, 20, 60)": "Crimson", "#dc143c": "Crimson",
         "maroon": "Deep Maroon", "#900c3f": "Deep Maroon", "rgb(144, 12, 63)": "Deep Maroon", "#800000": "Deep Maroon",
@@ -4725,7 +4402,7 @@ const sareeMaterials = {
     }
 
 })();
-    
+
 </script>
 </body>
 </html>
