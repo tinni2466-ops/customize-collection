@@ -3325,7 +3325,26 @@ const subProducts = {
     window.addEventListener('storage', function(e) { if (e.key === STORAGE_KEY) applySync(); });
     console.log('[Inventory System] Case-Insensitive Engine Active & Monitoring DOM changes.');
 })();
+
+// Listen for real-time stock overrides sent from server.js
+socket.on('product_status_updated', (data) => {
+    console.log("Received stock update from server:", data);
     
+    // 1. Update your local client-side array item if you maintain one
+    if (typeof products !== 'undefined') {
+        const item = products.find(p => p.id === data.id);
+        if (item) item.status = data.status;
+    }
+    
+    // 2. Re-trigger your localized rendering logic to update buttons/badges
+    if (typeof renderProducts === 'function') {
+        renderProducts();
+    } else {
+        // Fallback: If on product-details.html, modify button or reload state safely
+        location.reload(); 
+    }
+});
+   
 </script>
 </body>
 </html>
