@@ -10,6 +10,51 @@
 
 <style>
 /* ==========================================================================
+   📱 MEASUREMENT BANNER MOBILE TEXT REFITTING ENGINE
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+    
+    /* Forces the banner container to adapt to full viewport width safely */
+    header .measurement-tape {
+        display: flex !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 8px 12px !important;
+        gap: 10px !important;
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px !important; /* Slightly optimized corner radius for mobile grids */
+    }
+
+    /* Shrinks the icon slightly so it takes up less horizontal row space */
+    header .brand-tape-icon {
+        width: 18px !important;
+        height: 18px !important;
+        flex-shrink: 0 !important; /* Keeps icon perfectly circular without squishing */
+    }
+
+    /* Allows the text block container to dynamically size down and fill the row */
+    header .brand-tag-text {
+        font-size: 11px !important; /* Re-calibrates font scale for sharp legibility */
+        line-height: 1.4 !important;
+        white-space: normal !important; /* Overrides any line clipping policies */
+        flex: 1 !important; /* Authorizes full width usage within the row bounds */
+    }
+
+    /* Unlocks your individual hardcoded <p> tags so they wrap fluidly as a regular paragraph */
+    header .brand-tag-text p {
+        display: inline !important;
+        margin: 0 !important;
+    }
+
+    /* Guarantees clean spacing between your inline paragraph segments */
+    header .brand-tag-text p:not(:last-child)::after {
+        content: " " !important;
+    }
+}
+   
+/* ==========================================================================
    1. DEFAULT DESKTOP BASE STYLES
    ========================================================================== */
 header {
