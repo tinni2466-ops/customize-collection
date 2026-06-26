@@ -8,7 +8,167 @@
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
-<style>    
+<style>  
+/* ==========================================================================
+   GLOBAL LAYOUT ENGINE RESET & COMPATIBILITY PADDING
+   ========================================================================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Keeps footer strictly structural at bottom if content is short */
+    background-color: #f8fafc;
+    font-family: system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+/* ==========================================================================
+   UPDATED ADAPTIVE HEADER SYSTEM (Zero-Breakout Layout)
+   ========================================================================== */
+#siteHeader {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 4%;
+    box-sizing: border-box;
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap; /* Allows components to wrap gracefully on mobile viewports */
+    gap: 16px;
+}
+
+/* Brand Branding text rules */
+.brand-logo-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.5px;
+}
+
+.brand-accent {
+    color: #e67e22; /* Matches your core theme color signature */
+}
+
+/* Location Selector Box Styles */
+.header-delivery-box {
+    flex: 1 1 220px;
+    max-width: 280px;
+}
+
+.delivery-search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 30px;
+    padding: 6px 14px;
+    gap: 8px;
+}
+
+.location-icon {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.location-input-field {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-size: 13px;
+    color: #334155;
+    outline: none;
+}
+
+/* Adaptive Middle Banner Styling */
+.measurement-notice-banner {
+    flex: 2 1 340px;
+    max-width: 520px;
+    background-color: #f0f7ff;
+    border: 1px solid #d0e7ff;
+    border-radius: 12px;
+    padding: 8px 16px;
+    box-sizing: border-box;
+}
+
+.banner-inner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.measurement-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.banner-text {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #1e40af;
+    font-weight: 500;
+}
+
+/* Action Controls Navigation Group (Menu + Cart) */
+.header-actions-menu {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.menu-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.cart-icon-wrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+.action-cart-icon {
+    font-size: 20px;
+    color: #1e293b;
+}
+
+.cart-counter-badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 50%;
+    padding: 2px 6px;
+    min-width: 18px;
+    text-align: center;
+}
+   
 /* ==========================================================================
    NON-FLOATING RESPONSIVE FOOTER STYLES
    ========================================================================== */
