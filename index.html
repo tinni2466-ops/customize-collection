@@ -96,7 +96,106 @@ header .cart-badge {
     text-align: center;
 }
 
+/* ==========================================================================
+   📱 MOBILE RESPONSIVE OPTIMIZATION OVERRIDES (Screen width 768px and below)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+    
+    /* 1. Reset Header Layout Wrapper */
+    header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+    }
 
+    /* 2. Strip parent element behavior so its children can flow into flex row orders */
+    header .header-left {
+        display: contents !important;
+    }
+
+    /* ROW 1 LEFT SIDE: Website Logo & Shrink Brand Name */
+    header .header-left > a {
+        order: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important; /* Reduces gap between logo and text */
+        flex-shrink: 1 !important;
+    }
+
+    /* Scales down logo image slightly to make room for action items */
+    header .header-left > a img {
+        height: 30px !important; 
+    }
+
+    /* Adjusts size of "CustomizeCollection" text */
+    header .header-left > a span {
+        font-size: 1.05em !important; 
+        white-space: nowrap !important;
+    }
+
+    /* ROW 1 RIGHT SIDE: Combine Login, Dropdown Menu, & Cart in One Row Slot */
+    header .header-right {
+        order: 2 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important; /* Tighter button gaps to guarantee single-row fit */
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Compact action button styles */
+    header .header-right .icon-btn {
+        font-size: 13px !important;
+        gap: 4px !important;
+    }
+
+    /* ROW 2: Drop Location Box underneath row 1 (100% width) */
+    header .header-location-container {
+        order: 3 !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 4px !important;
+    }
+
+    header .search-box {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ROW 3: Measurement tape alert banner adaptive reflow */
+    header .measurement-tape {
+        order: 4 !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 8px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    header .brand-tag-text {
+        font-size: 0.78em !important;
+        line-height: 1.4 !important;
+        width: 100% !important;
+    }
+
+    /* Forces your custom rigid <p> paragraphs to behave like responsive fluid inline text */
+    header .brand-tag-text p {
+        display: inline !important;
+        margin: 0 !important;
+    }
+
+    /* Inserts a safe tracking space between each forced inline word paragraph block */
+    header .brand-tag-text p:not(:last-child)::after {
+        content: " " !important;
+    }
+}
+   
 /* ==========================================================================
    2. 📱 MOBILE RESPONSIVE ENGINE (Aligns Elements into Target Corner Slot)
    ========================================================================== */
