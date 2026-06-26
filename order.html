@@ -1,4 +1,3 @@
-<!-- order.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -596,31 +595,31 @@
 
 <div class="container">
 
-    <header>
+            <header>
         <div class="brand">
             <h1>Customize<span>Collection</span></h1>
             <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 2px;">Order Management Workspace</p>
         </div>
         
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px;">
-            <button onclick="window.location.href='index.html'" 
-                    class="transition-colors duration-200" 
-                    style="cursor: pointer; background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" 
-                    title="Go to Home">
-                <i class="fa fa-home" style="font-size: 20px; color: #000000;"></i>
-            </button>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+    <button onclick="window.location.href='index.html'" 
+            class="transition-colors duration-200" 
+            style="cursor: pointer; background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" 
+            title="Go to Home">
+        <i class="fa fa-home" style="font-size: 20px; color: #000000;"></i>
+    </button>
 
-            <div class="role-selector-widget" style="align-items: center;">
-                <button class="role-btn" id="clear-order-btn" onclick="clearOldOrder()" style="background-color: #ffebee; color: #c62828; margin-right: 5px; font-weight: bold; border: 1px solid #ffcdd2;">
-                    <i class="fa fa-trash-can"></i> Clear Old Order
-                </button>
-                <button class="role-btn active" id="role-customer-btn" onclick="switchActiveRoleScope('Customer')">
-                    <i class="fa fa-user"></i> Customer Mode
-                </button>
-                <button class="role-btn" id="role-owner-btn" onclick="switchActiveRoleScope('Owner')">
-                    <i class="fa fa-user-gear"></i> Owner Mode
-                </button>
-            </div>
+        <div class="role-selector-widget" style="align-items: center;">
+            <!-- New Clear Old Order Button -->
+            <button class="role-btn" id="clear-order-btn" onclick="clearOldOrder()" style="background-color: #ffebee; color: #c62828; margin-right: 5px; font-weight: bold; border: 1px solid #ffcdd2;">
+                <i class="fa fa-trash-can"></i> Clear Old Order
+            </button>
+            <button class="role-btn active" id="role-customer-btn" onclick="switchActiveRoleScope('Customer')">
+                <i class="fa fa-user"></i> Customer Mode
+            </button>
+            <button class="role-btn" id="role-owner-btn" onclick="switchActiveRoleScope('Owner')">
+                <i class="fa fa-user-gear"></i> Owner Mode
+            </button>
         </div>
     </header>
 
@@ -642,7 +641,8 @@
         </div>
 
         <div class="chat-container" id="chat-workspace-frame">
-            <div class="chat-ledger" id="chat-history-scroll-box"></div>
+            <div class="chat-ledger" id="chat-history-scroll-box">
+                </div>
 
             <div class="chat-input-console">
                 <button type="button" class="console-action-icon-btn" title="Record Voice Note" id="mic-action-trigger" onclick="toggleVoiceRecordingStateLoop()">
@@ -663,18 +663,20 @@
         </div>
     </section>
 
-    <section id="panel-phase-1-card" class="phase-panel active">
+    <section id="panel-phase-1" class="phase-panel active">
         <div class="panel-title">
             <i class="fa fa-credit-card" style="color: var(--primary-color);"></i>
-            Confirmation Desk 
+             Confirmation Desk 
         </div>
 
-        <div class="order-summary-wrapper" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-            <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 700;">
-                <i class="fa fa-basket-shopping" style="color: var(--primary-color);"></i> Order Items Overview
-            </h4>
-            <div id="orderItemsContainer"></div>
-        </div>
+<div class="order-summary-wrapper" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+    <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 700;">
+        <i class="fa fa-basket-shopping" style="color: var(--primary-color);"></i> Order Items Overview
+    </h4>
+    
+    <div id="orderItemsContainer"></div>
+
+</div>
 
         <div id="wrapper-card-form" class="credit-card-inputs-sub">
             <div class="form-group">
@@ -702,48 +704,62 @@
         </button>
     </section>
 
-    <section id="panel-phase-1-upi" class="phase-panel active">
+    <section id="panel-phase-1" class="phase-panel active">
         <div class="panel-title">
-            <i class="fa fa-qrcode" style="color: var(--primary-color);"></i>
+            <i class="fa fa-credit-card" style="color: var(--primary-color);"></i>
             Payment Settlement
         </div>
         
         <div id="wrapper-upi-form">
-            <div class="form-group">
-                <label>Check-out Payment Methods</label>
-                <div class="upi-apps" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
-                        <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711605/phonepe-icon_nzqmv8.png" alt="PhonePe" style="height: 16px; width: auto; vertical-align: middle;">
-                        <span>PhonePe</span>
-                    </div>
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
-                        <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711619/google-pay-icon_qxr2qb.png" alt="Google Pay" style="height: 16px; width: auto; vertical-align: middle;">
-                        <span>Google Pay</span>
-                    </div>
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
-                        <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711599/Paytm-Logo.wine_josixq.svg" alt="Paytm" style="height: 14px; width: auto; vertical-align: middle;">
-                        <span>Paytm</span>
-                    </div>
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="BHIM UPI" style="height: 12px; width: auto; vertical-align: middle;">
-                        <span>BHIM UPI</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+            
+    <div class="form-group">
+        <label>Check-out Payment Methods</label>
 
-        <div class="form-group">
-            <label>Scan QR Code</label>
-            <div class="qr-payment-box">
-                <img id="paymentQR" src="images/payment-qr.png" alt="Payment QR">
-                <p>Scan using PhonePe, Google Pay, Paytm or BHIM UPI</p>
-            </div>
-        </div>
+        <div class="upi-apps" style="display: flex; flex-wrap: wrap; gap: 10px;">
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eaeaea;">
-            <span style="font-weight: 700; color: #555; font-size: 15px;">Settlement Amount Due:</span>
-            <span id="gatewaySettlementTotal" style="font-size: 22px; font-weight: 800; color: #000;">₹0</span>
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="images/phonepe-icon.png" alt="PhonePe" style="height: 16px; width: auto; vertical-align: middle;">
+                <span>PhonePe</span>
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="images/google-pay-icon.png" alt="Google Pay" style="height: 16px; width: auto; vertical-align: middle;">
+                <span>Google Pay</span>
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="images/Paytm-Logo.wine.svg" alt="Paytm" style="height: 14px; width: auto; vertical-align: middle;">
+                <span>Paytm</span>
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #334155; font-size: 13px; font-weight: 500;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="BHIM UPI" style="height: 12px; width: auto; vertical-align: middle;">
+                <span>BHIM UPI</span>
+            </div>
+
         </div>
+    </div>
+</div>
+
+    <div class="form-group">
+        <label>Scan QR Code</label>
+
+        <div class="qr-payment-box">
+            <img id="paymentQR"
+                 src="images/payment-qr.png"
+                 alt="Payment QR">
+
+            <p>Scan using PhonePe, Google Pay, Paytm or BHIM UPI</p>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eaeaea;">
+        <span style="font-weight: 700; color: #555; font-size: 15px;">Settlement Amount Due:</span>
+        <span id="gatewaySettlementTotal" style="font-size: 22px; font-weight: 800; color: #000;">₹0</span>
+    </div>
+
+</div>
+
     </section>
 
     <section id="panel-phase-3" class="phase-panel">
@@ -1050,34 +1066,27 @@ function loadAppState() {
         rebuildLogisticsMilestoneTimeline();
     }
 
-// =========================================================
-// RENDERING & VISIBILITY INTERFACE CONTROL LOGIC
-// =========================================================
+// ==========================================
+// 2 & 12. PERMISSIONS & CONDITIONAL RENDER CHECKS
+// ==========================================
 function renderUI() {
     const currentOrder = getCurrentActiveOrder();
     
-    // Selecting distinct structural hooks
-    const panelPhase1Card = document.getElementById("panel-phase-1-card");
-    const panelPhase1Upi = document.getElementById("panel-phase-1-upi");
+    const panelPhase1 = document.getElementById("panel-phase-1");
     const panelPhase2 = document.getElementById("panel-phase-2");
     const timelineContainer = document.getElementById("timelineContainer");
     const otpSection = document.getElementById("otpSection");
     const statusBanner = document.getElementById("statusBanner");
 
-    // 🛑 FALLBACK STRUCTURAL BLOCK: No order context available (Initial State)
+    // 🛑 FALLBACK CASE: If no active order exists yet (Initial State / Cleared State)
     if (!currentOrder) {
         if (panelPhase2) {
             panelPhase2.style.display = "block";
             panelPhase2.classList.add("active");
         }
-        // ✅ FORCED VISIBILITY: Ensure card confirmation and UPI drawer show up initially
-        if (panelPhase1Card) {
-            panelPhase1Card.style.display = "block";
-            panelPhase1Card.classList.add("active");
-        }
-        if (panelPhase1Upi) {
-            panelPhase1Upi.style.display = "block";
-            panelPhase1Upi.classList.add("active");
+        if (panelPhase1) {
+            panelPhase1.style.display = "block";
+            panelPhase1.classList.add("active");
         }
         if (otpSection) otpSection.style.display = "none";
         if (statusBanner) statusBanner.innerHTML = "";
@@ -1087,27 +1096,34 @@ function renderUI() {
     const currentStatus = currentOrder.status;
     const currentTimeline = currentOrder.timeline;
 
-    // =========================================================
-    // MODIFIED FORCED DISPLAY TUNNEL (Guarantees Payout visibility)
-    // =========================================================
-    if (panelPhase2) {
-        panelPhase2.style.display = "block";
-        panelPhase2.classList.add("active");
-    }
-    
-    // ✅ Always leave both payment components unhidden and injected safely onto the workspace
-    if (panelPhase1Card) {
-        panelPhase1Card.style.display = "block";
-        panelPhase1Card.classList.add("active");
-    }
-    if (panelPhase1Upi) {
-        panelPhase1Upi.style.display = "block";
-        panelPhase1Upi.classList.add("active");
+    // ==========================================
+    // SWAPPED PANEL DISPLAY CONTROLLER
+    // ==========================================
+    if (currentStatus === ORDER_STATUS.PAYMENT_PENDING || currentStatus === "payment_processing") {
+        // Show both Text Box (Phase 2) and Payment (Phase 1)
+        if (panelPhase2) {
+            panelPhase2.style.display = "block";
+            panelPhase2.classList.add("active");
+        }
+        if (panelPhase1) {
+            panelPhase1.style.display = "block";
+            panelPhase1.classList.add("active");
+        }
+    } else {
+        // Payment complete: Hide payment panels, show only customization & chat workspace
+        if (panelPhase2) {
+            panelPhase2.style.display = "block";
+            panelPhase2.classList.add("active");
+        }
+        if (panelPhase1) {
+            panelPhase1.style.display = "none";
+            panelPhase1.classList.remove("active");
+        }
     }
 
-    // =========================================================
-    // DATA LAYER RENDERING (Timelines, OTP, Banner elements)
-    // =========================================================
+    // ==========================================
+    // TIMELINE RENDERING
+    // ==========================================
     if (timelineContainer && currentTimeline) {
         timelineContainer.innerHTML = currentTimeline.map(node => `
             <div class="timeline-step" style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
@@ -1117,6 +1133,9 @@ function renderUI() {
         `).join("");
     }
 
+    // ==========================================
+    // DELIVERY OTP INPUT PRESENTATION
+    // ==========================================
     if (currentStatus === ORDER_STATUS.SHIPPED) {
         if (otpSection) {
             otpSection.style.display = "block";
@@ -1132,6 +1151,9 @@ function renderUI() {
         if (otpSection) otpSection.style.display = "none";
     }
 
+    // ==========================================
+    // CUSTOMER HAPPINESS COMPLETION BANNER
+    // ==========================================
     if (currentStatus === ORDER_STATUS.DELIVERED) {
         if (statusBanner) {
             statusBanner.innerHTML = `
@@ -1276,52 +1298,8 @@ function handlePaymentSuccess(purchasedItems, orderTotal) {
     }
 
     /**
-     * Voice Processing Mock Console Engine Tasks
+     * Voice recording is handled by Order Backend Bridge (MediaRecorder + upload).
      */
-    function toggleVoiceRecordingStateLoop() {
-        const textField = document.getElementById('chat-text-message-field');
-        const recordFeedback = document.getElementById('voice-recording-console-feedback');
-        const micIcon = document.getElementById('mic-action-trigger');
-
-        if (!systemApplicationState.isVoiceRecording) {
-            systemApplicationState.isVoiceRecording = true;
-            textField.style.display = 'none';
-            recordFeedback.style.display = 'flex';
-            micIcon.style.background = '#ffe3e3';
-        } else {
-            systemApplicationState.isVoiceRecording = false;
-            textField.style.display = 'block';
-            recordFeedback.style.display = 'none';
-            micIcon.style.background = 'none';
-        }
-    }
-
-        function finalizeVoiceNoteCaptureOutput() {
-        // New Rule: Only customer checking is restricted if the cart/overview has no products
-        if (systemApplicationState.currentRole === 'Customer') {
-            const orderItemsContainer = document.getElementById('orderItemsContainer');
-            const hasProducts = orderItemsContainer && orderItemsContainer.children.length > 0;
-            
-            if (!hasProducts) {
-                alert("Your Selected Items Overview is empty. You must have at least one product in your overview to send voice notes.");
-                return;
-            }
-        }
-
-        const currentLocalTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        systemApplicationState.chatLedgerHistory.push({
-            id: Date.now(),
-            sender: systemApplicationState.currentRole,
-            text: `🎙️ Voice Customization Note captured successfully. Codec asset verified sequence compiled.`,
-            isAudio: true,
-            stamp: currentLocalTime
-        });
-
-        toggleVoiceRecordingStateLoop();
-        saveStateToLocalStorageCache();
-        rebuildChatLedgerUIStream();
-    }
 
     /**
      * Rebuilds Chat Stream Layout View Components Non-Destructively
@@ -1450,50 +1428,6 @@ function handlePaymentSuccess(purchasedItems, orderTotal) {
 // Run this function at the bottom of your code to process layout on load
 loadAppState(); 
 renderUI();
-
-    // ✅ FIXED: Leaving it blank automatically resolves to the correct origin natively
-const socket = io({
-    transports: ['polling', 'websocket'],
-    withCredentials: true
-});
-    const currentOrderId = "ORDER_1001"; // Dynamically update this based on your selected active tracking code order parameters
-    const userRole = "customer"; // Identifies this window interface node as the client user instance
-
-    document.addEventListener("DOMContentLoaded", () => {
-        socket.emit('join_order_channel', currentOrderId);
-        
-        // Fetch message logs upon window execution frame initialization
-        fetch(`https://www.customizecollection.publicvm.com/api/chat/history/${activeOrderId}`)
-            .then(res => res.json())
-            .then(history => {
-                history.forEach(msg => displayRenderedChatMessageNode(msg.sender_role, msg.message_content));
-            });
-    });
-
-    function transmitCustomerChatMessage() {
-        const field = document.getElementById('chat-text-input-field');
-        const text = field.value.trim();
-        if(!text) return;
-
-        socket.emit('send_chat_message', { orderId: currentOrderId, senderRole: userRole, message: text });
-        field.value = '';
-    }
-
-    socket.on('receive_chat_message', (data) => {
-        if(data.orderId === currentOrderId) {
-            displayRenderedChatMessageNode(data.senderRole, data.message);
-        }
-    });
-
-    function displayRenderedChatMessageNode(role, msg) {
-        const view = document.getElementById('chat-messages-viewport');
-        const element = document.createElement('div');
-        const alignment = role === 'customer' ? 'background: #cbd5e1; align-self: flex-start; color: #1e293b;' : 'background: #0b57d0; align-self: flex-end; color: white;';
-        element.style = `padding: 8px 14px; border-radius: 12px; max-width: 75%; width: fit-content; font-size: 14px; word-wrap: break-word; ${alignment}`;
-        element.innerText = msg;
-        view.appendChild(element);
-        view.scrollTop = view.scrollHeight;
-    }
 
 // ==========================================================================
 // MULTI-ITEM DISPLAY LOGIC ENGINE WITH COLOR CAPTURE FALLBACK
@@ -1668,6 +1602,18 @@ function loadStateCacheFromLocalStorage() {
     }
 }
 
+// 2. Fixes the error: processSecurePaymentExecutionPipeline is not defined
+function processSecurePaymentExecutionPipeline() {
+    console.log("Stitching old checkout trigger to new verification layer...");
+    if (typeof handlePaymentSuccess === "function") {
+        // Automatically grabs your cart and total variables if defined, or runs defaults safely
+        const targetedCart = typeof cart !== 'undefined' ? cart : [];
+        const targetedTotal = typeof totalAmount !== 'undefined' ? totalAmount : 0;
+        
+        handlePaymentSuccess(targetedCart, targetedTotal);
+    }
+}
+
 // 3. Automated Error-Catch Initializer Wrap
 document.addEventListener("DOMContentLoaded", () => {
     try {
@@ -1807,51 +1753,27 @@ function switchActiveRoleScope(targetRole){
     renderUI();
 }
 
-// 👇 1. MAKE SURE 'async' IS EXACTLY HERE
-async function processSecurePaymentExecutionPipeline() {
+function processSecurePaymentExecutionPipeline(){
     const purchasedItems = getCheckoutItemsForOrder();
     const orderTotal = getCheckoutTotalForOrder();
 
-    if (purchasedItems.length === 0) {
-        return; 
+    if(purchasedItems.length === 0){
+        alert("No checkout products found.");
+        return;
     }
 
     const newOrder = createNewOrderObject(purchasedItems, orderTotal);
 
-    try {
-        // ✅ FIXED: Use a relative path so the browser never passes through a domain redirect loop!
-const response = await fetch('/api/submit-order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        customer_name: document.getElementById("customer-name-input")?.value || "Guest Buyer",
-        items: JSON.stringify(newOrder.purchasedItems), 
-        total_price: newOrder.total
-    })
-});
+    allOrders.push(newOrder);
+    activeOrderId = newOrder.orderId;
 
-        const data = await response.json();
+    saveAppState();
+    syncSystemStateFromActiveOrder();
+    renderUI();
 
-        if (!data.success) {
-            alert("Database Error: " + data.error);
-            return;
-        }
-
-        newOrder.orderId = data.orderId;
-        if (typeof allOrders !== 'undefined') allOrders.push(newOrder);
-        activeOrderId = newOrder.orderId;
-
-        if (typeof saveAppState === 'function') saveAppState();
-        if (typeof syncSystemStateFromActiveOrder === 'function') syncSystemStateFromActiveOrder();
-        if (typeof renderUI === 'function') renderUI();
-
-        alert(`Order confirmed securely! Your Order ID is: #${data.orderId}`);
-
-    } catch (err) {
-        console.error("Network delivery interface failure:", err);
-    }
+    alert("Order confirmed. You can now message the store.");
 }
-    
+
 function dispatchConsoleChatMessage(){
     syncSystemStateFromActiveOrder();
 
@@ -2087,37 +2009,30 @@ function clearOldOrderAndShowPayment(){
     displayCartProductsOnOrderPage();
 }
 
-function addClearOldOrderButton() {
-    // Look for the container element where the button lives
-    const container = document.getElementById("clear-button-container"); 
-    if (!container) return;
+function addClearOldOrderButton(){
+    const panel2 = document.getElementById("panel-phase-2");
+    if(!panel2) return;
 
-    // ✅ FIXED: Explicitly create and define the 'btn' variable so it never throws an Uncaught ReferenceError
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.id = "clear-old-order-btn";
-    btn.innerText = "Clear Previous Order Cache";
-    
+    if(document.getElementById("clear-old-order-btn")) return;
+
     btn.style.cssText = `
-        padding: 8px 14px;
-        background-color: #ef4444;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        margin-top: 10px;
+        background:#111827;
+        color:#fff;
+        border:none;
+        padding:10px 14px;
+        border-radius:4px;
+        font-weight:700;
+        cursor:pointer;
+        margin-left:10px;
     `;
 
-    btn.onclick = function() {
-        localStorage.clear();
-        alert("Cache cleared successfully. Please reload the page.");
-        window.location.reload();
-    };
+    const newOrderBox = document.getElementById("new-order-action-box");
 
-    // Clean container out and append the newly declared button safely
-    container.innerHTML = "";
-    container.appendChild(btn);
+    if(newOrderBox){
+        newOrderBox.appendChild(btn);
+    } else {
+        panel2.prepend(btn);
+    }
 }
 
 function hideFulfillmentMapForNow(){
@@ -2884,553 +2799,409 @@ function clearOldOrder() {
     displayCartProductsOnOrderPage();
 })();
 
+// ======================================================
+// ORDER BACKEND BRIDGE — payment, chat lock, voice, sockets
+// ======================================================
 (function () {
     'use strict';
+    if (window.orderBackendBridgeInstalled) return;
+    window.orderBackendBridgeInstalled = true;
 
-    const BACKEND = 'https://customize-collection.onrender.com';
+    const BACKEND = window.location.origin;
+    let orderChatEnabled = false;
+    let orderSocket = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
 
-    // ── 1. FIX hideFulfillmentMapForNow ─────────────────────────
-    //    The original function ALWAYS hides panel-phase-3.
-    //    We replace it with a conditional version: only hide when
-    //    the order hasn't been accepted/delivered yet.
-    window.hideFulfillmentMapForNow = function () {
-        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-        const isAccepted = order && (
-            order.currentPhase >= 3 ||
-            order.status === 'delivery_active' ||
-            order.status === 'delivered'
-        );
-        if (isAccepted) return; // Keep visible — admin already accepted
-        const panel3 = document.getElementById('panel-phase-3');
-        if (panel3) { panel3.style.display = 'none'; panel3.classList.remove('active'); }
-    };
-
-    // ── 2. FORCE-SHOW FULFILLMENT PANEL WITH CORRECT STATE ──────
-    function showFulfillmentPanel(order) {
-        const p1  = document.getElementById('panel-phase-1');
-        const p1c = document.getElementById('panel-phase-1-card');
-        const p1u = document.getElementById('panel-phase-1-upi');
-        const p2  = document.getElementById('panel-phase-2');
-        const p3  = document.getElementById('panel-phase-3');
-
-        if (p1)  p1.style.display  = 'none';
-        if (p1c) p1c.style.display = 'none';
-        if (p1u) p1u.style.display = 'none';
-        if (p2)  { p2.style.display = 'block'; p2.classList.add('active'); }
-        if (p3)  { p3.style.display = 'block'; p3.classList.add('active'); }
-
-        // Lock the chat input so customers can't type once accepted
-        const chatFrame = document.getElementById('chat-workspace-frame');
-        if (chatFrame) chatFrame.classList.add('locked-state');
-
-        // Populate milestone timestamps
-        const stamp1     = document.getElementById('stamp-time-milestone-1');
-        const stamp2     = document.getElementById('stamp-time-milestone-2');
-        const stamp3     = document.getElementById('stamp-time-milestone-3');
-        const node2      = document.getElementById('node-milestone-2');
-        const node3      = document.getElementById('node-milestone-3');
-        const banner     = document.getElementById('banner-fulfillment-final');
-        const gfxLine    = document.getElementById('timeline-graphics-wrapper');
-
-        if (stamp1) stamp1.innerText = order.paymentTimestamp  || '--:--';
-        if (stamp2) stamp2.innerText = order.dispatchTimestamp || 'In Progress';
-
-        const isDelivered = order.status === 'delivered' || order.isDeliveryFinalized;
-
-        if (isDelivered) {
-            if (node2)   node2.className = 'milestone-node-item completed';
-            if (node3)   node3.className = 'milestone-node-item completed';
-            if (stamp3)  stamp3.innerText = order.deliveryTimestamp || 'Delivered';
-            if (banner)  banner.style.display = 'flex';
-            if (gfxLine) gfxLine.classList.add('pipeline-completed');
-        } else {
-            if (node2)   node2.className = 'milestone-node-item active';
-            if (node3)   node3.className = 'milestone-node-item';
-            if (stamp3)  stamp3.innerText = 'Awaiting Arrival';
-            if (banner)  banner.style.display = 'none';
-            if (gfxLine) gfxLine.classList.remove('pipeline-completed');
-        }
+    function getActiveOrderId() {
+        return activeOrderId || localStorage.getItem('activeOrderId') || '';
     }
 
-    // ── 3. APPLY STATUS CHANGE (from socket or API poll) ────────
-    function applyStatusChange(data, order) {
-        if (!order) return;
+    function mergeOrderFromServer(serverOrder) {
+        if (!serverOrder || !serverOrder.orderId) return;
 
-// Expanded to capture 'accept', 'accepted', and 'delivery_active'
-        if (data.action === 'accepted' || data.action === 'accept' || data.status === 'delivery_active') {
-            const stamp = data.dispatchTimestamp || data.stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            order.status           = 'delivery_active';
-            order.currentPhase     = 3;
-            order.dispatchTimestamp = stamp;
-            if (window.systemApplicationState) {
-                window.systemApplicationState.currentPhase      = 3;
-                window.systemApplicationState.dispatchTimestamp = stamp;
-            }
-            pushSystemMsg(order, 'Owner accepted the order. Delivery process activated.');
-        }
-
-        // Expanded to capture 'delivered', 'done', and status tracking values
-        if (data.action === 'delivered' || data.action === 'done' || data.status === 'delivered') {
-            const stamp = data.deliveryTimestamp || data.stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            order.status               = 'delivered';
-            order.isDeliveryFinalized  = true;
-            order.deliveryTimestamp    = stamp;
-            order.currentPhase         = 3; // Ensures phase is updated symmetrically
-            if (window.systemApplicationState) {
-                window.systemApplicationState.isDeliveryFinalized = true;
-                window.systemApplicationState.deliveryTimestamp   = stamp;
-                window.systemApplicationState.currentPhase        = 3;
-            }
-            pushSystemMsg(order, 'Owner marked the package as complete.');
-        }
-
-        if (typeof saveAppState === 'function') saveAppState();
-        showFulfillmentPanel(order);
-        if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
-    }
-
-    function pushSystemMsg(order, text) {
-        order.chatLedgerHistory = order.chatLedgerHistory || [];
-        if (!order.chatLedgerHistory.some(m => m.text === text)) {
-            const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            order.chatLedgerHistory.push({ id: Date.now(), sender: 'System', text, stamp });
-        }
-    }
-
-    // ── 4. SOCKET CONNECTION ─────────────────────────────────────
-    let _socket = null;
-
-    function connectSocket() {
-        const orderId = localStorage.getItem('activeOrderId');
-        if (!orderId) { setTimeout(connectSocket, 2000); return; }
-        if (typeof io === 'undefined') { setTimeout(connectSocket, 500); return; }
-
-        try {
-            // Reuse the existing socket if already connected (order.html already calls io())
-            _socket = (window.socket && window.socket.connected) ? window.socket : io(BACKEND, {
-                transports: ['polling', 'websocket'],
-                withCredentials: true
-            });
-
-            // Use the base event name string directly to clean listeners reliably
-            _socket.off('connect');
-            _socket.on('connect', function () {
-                _socket.emit('join_order_channel', orderId);
-            });
-            if (_socket.connected) _socket.emit('join_order_channel', orderId);
-
-            // Clear standard channel attachments completely before re-binding
-            _socket.off('receive_chat_message');
-            _socket.on('receive_chat_message', function (data) {
-                if (data.orderId !== orderId) return;
-                const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-                if (!order) return;
-                order.chatLedgerHistory = order.chatLedgerHistory || [];
-                // Deduplicate by id
-                if (!order.chatLedgerHistory.some(m => m.id === data.id)) {
-                    order.chatLedgerHistory.push({
-                        id:     data.id || Date.now(),
-                        sender: data.sender || 'Owner',
-                        text:   data.message || data.text || '',
-                        stamp:  data.stamp || ''
-                    });
-                    if (typeof saveAppState === 'function') saveAppState();
-                    if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
-                }
-            });
-
-// Assign instance globally so all other scripts use this exact pipeline
-            window.socket = _socket;
-
-            // Catch the primary status update channel
-            _socket.off('order_status_changed.bridge');
-            _socket.on('order_status_changed', function (data) {
-                if (data.orderId !== orderId) return;
-                const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-                applyStatusChange(data, order);
-            });
-
-            // Catch alternative naming conventions seamlessly on the same socket
-            _socket.off('order_status_update.bridge');
-            _socket.on('order_status_update', function (data) {
-                if (data.orderId !== orderId) return;
-                const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-                applyStatusChange(data, order);
-            });
-
-        } catch (e) {
-            console.warn('[Order Bridge] Socket error:', e);
-        }
-    }
-
-    // ── 5. BACKEND POLLING (4-second fallback) ───────────────────
-    //    Keeps the page in sync even when socket drops or admin
-    //    is on a different domain/device without socket support.
-    let _lastChatLen = -1;
-    let _lastPhase   = -1;
-
-    async function pollOrderFromBackend() {
-        const orderId = localStorage.getItem('activeOrderId');
-        if (!orderId) return;
-
-        try {
-            const res = await fetch(BACKEND + '/api/order/' + encodeURIComponent(orderId));
-            if (!res.ok) return;
-            const fresh = await res.json();
-            if (!fresh || !fresh.orderId) return;
-
-            const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-            if (!order) return;
-
-            // Build a deduplicated map of chat messages to protect local items from getting overwritten
-            const localChatMap = new Map(order.chatLedgerHistory?.map(m => [m.id || m.text, m]) || []);
-            
-            // Loop through incoming server updates and insert or update them safely
-            (fresh.chatLedgerHistory || []).forEach(remoteMsg => {
-                localChatMap.set(remoteMsg.id || remoteMsg.text, remoteMsg);
-            });
-
-            // Convert back to a sequentially sorted array
-            const mergedChatHistory = Array.from(localChatMap.values());
-
-            // Merge fresh properties cleanly without dropping local-first logs
-            Object.assign(order, {
-                status:              fresh.status,
-                currentPhase:        fresh.currentPhase,
-                chatLedgerHistory:   mergedChatHistory,
-                dispatchTimestamp:   fresh.dispatchTimestamp  || order.dispatchTimestamp,
-                deliveryTimestamp:   fresh.deliveryTimestamp  || order.deliveryTimestamp,
-                isDeliveryFinalized: fresh.isDeliveryFinalized || order.isDeliveryFinalized
-            });
-            
-            if (typeof saveAppState === 'function') saveAppState();
-
-            const newPhase   = fresh.currentPhase;
-            const newChatLen = (fresh.chatLedgerHistory || []).length;
-            const isAccepted = newPhase >= 3 || fresh.status === 'delivery_active' || fresh.status === 'delivered';
-
-            // Only force a heavy layout redraw if the phase transition actually just happened
-            if (isAccepted && (_lastPhase < 3)) {
-                if (window.systemApplicationState) window.systemApplicationState.currentPhase = 3;
-                if (typeof showFulfillmentPanel === 'function') showFulfillmentPanel(order);
-            } else if (isAccepted) {
-                // Safe check: If the panel was accidentally hidden or dropped by an unrelated script render, restore it without rewriting DOM elements blindly
-                const panel = document.getElementById('fulfillment-panel-container') || document.querySelector('.fulfillment-card');
-                if (panel && panel.style.display === 'none') {
-                    if (typeof showFulfillmentPanel === 'function') showFulfillmentPanel(order);
-                }
-            }
-
-            if (newChatLen !== _lastChatLen) {
-                _lastChatLen = newChatLen;
-                if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
-            }
-
-            _lastPhase = newPhase;
-
-        } catch { /* Backend offline — socket + localStorage poller still work */ }
-    }
-
-// Replaced fixed interval loops with sequential execution threads to prevent request compounding
-    function runAdaptivePollingQueue() {
-        setTimeout(async () => {
-            await pollOrderFromBackend();
-            runAdaptivePollingQueue(); // Recurse cleanly only after resolution attempt completes
-        }, 4000);
-    }
-
-    // Replace your old initialization trigger inside the final block:
-    function init() {
-        connectSocket();
-
-        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-        if (order) {
-            const isAccepted = order.currentPhase >= 3 ||
-                               order.status === 'delivery_active' ||
-                               order.status === 'delivered';
-            if (isAccepted) showFulfillmentPanel(order);
-        }
-
-        // Kick off your self-correcting sequence instead of fixed execution intervals
-        runAdaptivePollingQueue();
-    }
-
-    // ── 6. PATCH dispatchConsoleChatMessage ──────────────────────
-    //    Also POST customer messages to backend so admin receives them
-    //    via socket (admin_room) and they persist cross-browser.
-// Guard against multiple execution instances creating circular evaluation loops
-    if (!window.dispatchConsoleChatMessage?.isPatched) {
-        const _origDispatch = window.dispatchConsoleChatMessage;
-        window.dispatchConsoleChatMessage = function () {
-            if (typeof _origDispatch === 'function') _origDispatch.apply(this, arguments);
-
-            const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-            if (!order) return;
-            
-            const msgs = order.chatLedgerHistory || [];
-            const lastCustomerMsg = [...msgs].reverse().find(m => m.sender === 'Customer' || (!m.sender && !m.isAudio));
-            if (!lastCustomerMsg || !lastCustomerMsg.text) return;
-
-            fetch(BACKEND + '/api/customer-send-chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: order.orderId, message: lastCustomerMsg.text })
-            }).catch(() => {});
+        const idx = allOrders.findIndex(o => o.orderId === serverOrder.orderId);
+        const mapped = {
+            orderId: serverOrder.orderId,
+            customerName: serverOrder.customerName,
+            customerEmail: serverOrder.customerEmail,
+            status: serverOrder.status,
+            currentPhase: serverOrder.currentPhase,
+            purchasedItems: serverOrder.purchasedItems || serverOrder.items || [],
+            total: serverOrder.total,
+            chatLedgerHistory: serverOrder.chatLedgerHistory || [],
+            timeline: serverOrder.timeline || [],
+            paymentTimestamp: serverOrder.paymentTimestamp,
+            dispatchTimestamp: serverOrder.dispatchTimestamp,
+            deliveryTimestamp: serverOrder.deliveryTimestamp,
+            isDeliveryFinalized: serverOrder.isDeliveryFinalized,
+            chatEnabled: !!serverOrder.chatEnabled
         };
-        window.dispatchConsoleChatMessage.isPatched = true;
-    };
 
-    // ── 7. INIT ──────────────────────────────────────────────────
-    function init() {
-        connectSocket();
-
-        // If order already in accepted/delivered state on load, show panel immediately
-        const order = (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
-        if (order) {
-            const isAccepted = order.currentPhase >= 3 ||
-                               order.status === 'delivery_active' ||
-                               order.status === 'delivered';
-            if (isAccepted) showFulfillmentPanel(order);
-        }
-
-        // Kick off first backend poll immediately
-        pollOrderFromBackend();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        setTimeout(init, 100); // yield to existing scripts first
-    }
-
-    console.log('[Order Bridge] Loaded — ACCEPT/DONE/CHAT connected.');
-})();
-
-(function () {
-    'use strict';
-
-    const BACKEND = 'https://customize-collection.onrender.com';
-
-    // ──────────────────────────────────────────────────────────────
-    // 1. REAL VOICE RECORDING WITH MediaRecorder API
-    // ──────────────────────────────────────────────────────────────
-    let _mediaRecorder  = null;
-    let _audioChunks    = [];
-    let _isRecording    = false;
-
-    // Replace the fake toggle function with a real one
-    window.toggleVoiceRecordingStateLoop = async function () {
-        const textField      = document.getElementById('chat-text-message-field');
-        const recordFeedback = document.getElementById('voice-recording-console-feedback');
-        const micIcon        = document.getElementById('mic-action-trigger');
-
-        if (!_isRecording) {
-            // ── START RECORDING ──────────────────────────────────
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                _audioChunks   = [];
-                // Saccadic fallback selection to accommodate Apple iOS environments seamlessly
-                let mimeType = 'audio/webm;codecs=opus';
-                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/webm';
-                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4'; // Standard iOS Safari container
-                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = '';          // Use browser default fallback
-
-                const options = mimeType ? { mimeType } : {};
-                _mediaRecorder = new MediaRecorder(stream, options);
-                
-                // Track dynamic extensions for the subsequent upload payload construction
-                const dynamicExt = mimeType.includes('mp4') ? 'mp4' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
-
-                _mediaRecorder.ondataavailable = function (e) {
-                    if (e.data && e.data.size > 0) _audioChunks.push(e.data);
-                };
-
-                _mediaRecorder.onstop = async function () {
-                    // Release microphone
-                    stream.getTracks().forEach(t => t.stop());
-
-                    const blob = new Blob(_audioChunks, { type: mimeType });
-                    _audioChunks = [];
-                    await _uploadVoiceBlob(blob, mimeType);
-                };
-
-                _mediaRecorder.start();
-                _isRecording = true;
-
-                // Update UI to show "recording" state
-                if (window.systemApplicationState)
-                    window.systemApplicationState.isVoiceRecording = true;
-                if (textField)      textField.style.display      = 'none';
-                if (recordFeedback) recordFeedback.style.display  = 'flex';
-                if (micIcon)        micIcon.style.background      = '#ffe3e3';
-
-            } catch (err) {
-                console.error('[Voice] getUserMedia error:', err);
-                alert('Microphone access denied. Please allow microphone permission in your browser and try again.');
-            }
-
+        if (idx >= 0) {
+            allOrders[idx] = Object.assign({}, allOrders[idx], mapped);
         } else {
-            // ── STOP RECORDING (triggers onstop → _uploadVoiceBlob) ──
-            _isRecording = false;
-
-            if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
-                _mediaRecorder.stop(); // fires onstop asynchronously
-            }
-
-            // Reset UI
-            if (window.systemApplicationState)
-                window.systemApplicationState.isVoiceRecording = false;
-            if (textField)      textField.style.display      = 'block';
-            if (recordFeedback) recordFeedback.style.display  = 'none';
-            if (micIcon)        micIcon.style.background      = 'none';
+            allOrders.push(mapped);
         }
-    };
 
-    // Upload audio blob → backend → get audioUrl back
-    async function _uploadVoiceBlob(blob, mimeType) {
-        const currentOrder =
-            (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        orderChatEnabled = mapped.chatEnabled;
+        localStorage.setItem('allOrdersData', JSON.stringify(allOrders));
+        if (typeof saveAppState === 'function') saveAppState();
+        if (typeof syncSystemStateFromActiveOrder === 'function') syncSystemStateFromActiveOrder();
+    }
 
-        if (!currentOrder) {
-            alert('Confirm your order first before sending voice notes.');
+    async function refreshOrderFromServer(orderId) {
+        const id = orderId || getActiveOrderId();
+        if (!id) return;
+
+        try {
+            const res = await fetch(BACKEND + '/api/order/' + encodeURIComponent(id), {
+                credentials: 'include'
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            mergeOrderFromServer(data);
+            if (typeof rebuildChatLedgerUIStream === 'function') rebuildChatLedgerUIStream();
+            syncChatLockUI();
+        } catch (e) {
+            console.warn('[Order Bridge] refresh failed', e);
+        }
+    }
+
+    function syncChatLockUI() {
+        const isCustomer = !isOwnerLoggedIn();
+        const allowed = !isCustomer || orderChatEnabled;
+        const input = document.getElementById('chat-text-message-field');
+        const mic = document.getElementById('mic-action-trigger');
+
+        if (input) {
+            input.disabled = isCustomer && !allowed;
+            input.placeholder = allowed
+                ? 'Type your message...'
+                : 'Waiting for store to open chat...';
+        }
+
+        if (mic) {
+            mic.style.opacity = allowed ? '1' : '0.45';
+            mic.style.pointerEvents = allowed ? 'auto' : 'none';
+            mic.style.cursor = allowed ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    function connectOrderSocket(orderId) {
+        if (typeof io === 'undefined') {
+            setTimeout(function () { connectOrderSocket(orderId); }, 500);
             return;
         }
 
-        const stamp    = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-// Evaluate real container signatures to prevent mobile payload corruption
-        let ext = 'webm';
-        if (mimeType.includes('mp4')) ext = 'mp4';
-        else if (mimeType.includes('ogg')) ext = 'ogg';
-        else if (mimeType.includes('wav')) ext = 'wav';
-        const formData = new FormData();
-        formData.append('audio',   blob, 'voice-note.' + ext);
-        formData.append('orderId', currentOrder.orderId);
-        formData.append('stamp',   stamp);
-
         try {
-            const res  = await fetch(BACKEND + '/api/send-voice-message', {
-                method: 'POST',
-                body:   formData
-            });
-            const data = await res.json();
-
-            if (!data.success) {
-                alert('Voice note upload failed. Please try again.');
-                return;
+            if (orderSocket) {
+                orderSocket.disconnect();
+                orderSocket = null;
             }
 
-            // Add the voice message to the local chat history
-            currentOrder.chatLedgerHistory = currentOrder.chatLedgerHistory || [];
-            currentOrder.chatLedgerHistory.push({
-                id:       Date.now(),
-                sender:   'Customer',
-                text:     '🎙️ Voice note',
-                isAudio:  true,
-                audioUrl: BACKEND + data.audioUrl,   // full URL for playback
-                stamp
+            orderSocket = io(BACKEND, { transports: ['polling', 'websocket'] });
+
+            orderSocket.on('connect', function () {
+                orderSocket.emit('join_order_channel', orderId);
             });
 
-            if (typeof saveAppState === 'function')               saveAppState();
-            if (typeof rebuildChatLedgerUIStream === 'function')  rebuildChatLedgerUIStream();
+            orderSocket.on('receive_chat_message', function (data) {
+                if (data && data.orderId === getActiveOrderId()) {
+                    refreshOrderFromServer(data.orderId);
+                }
+            });
 
-        } catch (err) {
-            console.error('[Voice] Upload failed:', err);
-            alert('Failed to send voice note. Please check your connection.');
+            orderSocket.on('chat_status_updated', function (data) {
+                if (!data || data.orderId !== getActiveOrderId()) return;
+                orderChatEnabled = !!data.chatEnabled;
+                const order = getCurrentActiveOrder();
+                if (order) order.chatEnabled = orderChatEnabled;
+                syncChatLockUI();
+                refreshOrderFromServer(data.orderId);
+            });
+
+            orderSocket.on('order_status_changed', function (data) {
+                if (data && data.orderId === getActiveOrderId()) {
+                    refreshOrderFromServer(data.orderId);
+                }
+            });
+        } catch (e) {
+            console.warn('[Order Bridge] socket error', e);
         }
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // 2. REBUILD CHAT STREAM — show real <audio> player for voice msgs
-    // ──────────────────────────────────────────────────────────────
-    // Wraps the existing rebuildChatLedgerUIStream so audio messages
-    // get a real <audio controls> element instead of a fake waveform.
-    const _origRebuild = window.rebuildChatLedgerUIStream;
-    window.rebuildChatLedgerUIStream = function () {
-        // Run the original first to populate the box
-        if (typeof _origRebuild === 'function') _origRebuild();
+    const _origPayment = window.processSecurePaymentExecutionPipeline;
+    window.processSecurePaymentExecutionPipeline = async function () {
+        const purchasedItems = getCheckoutItemsForOrder();
+        const orderTotal = getCheckoutTotalForOrder();
 
-        // Then upgrade any fake audio placeholders to real players
+        if (purchasedItems.length === 0) {
+            alert('No checkout products found.');
+            return;
+        }
+
+        try {
+            const res = await fetch(BACKEND + '/api/submit-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    customer_name: getGoogleCustomerName(),
+                    customer_email: getGoogleCustomerEmail(),
+                    items: purchasedItems,
+                    total_price: orderTotal
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                alert(data.error || 'Could not submit order to server.');
+                return;
+            }
+
+            const newOrder = createNewOrderObject(purchasedItems, orderTotal);
+            newOrder.orderId = data.orderId;
+            newOrder.chatEnabled = false;
+            orderChatEnabled = false;
+
+            allOrders.push(newOrder);
+            activeOrderId = data.orderId;
+            localStorage.setItem('activeOrderId', activeOrderId);
+            saveAppState();
+            syncSystemStateFromActiveOrder();
+            connectOrderSocket(activeOrderId);
+            syncChatLockUI();
+            renderUI();
+
+            alert('Order confirmed. The store will enable chat when ready for customization.');
+        } catch (e) {
+            console.error(e);
+            alert('Network error submitting order. Please try again.');
+        }
+    };
+
+    const _origDispatch = window.dispatchConsoleChatMessage;
+    window.dispatchConsoleChatMessage = async function () {
+        syncSystemStateFromActiveOrder();
+
+        const inputField = document.getElementById('chat-text-message-field');
+        const textValue = inputField ? inputField.value.trim() : '';
+        if (!textValue) return;
+
+        const currentOrder = getCurrentActiveOrder();
+        if (!currentOrder) {
+            alert('Confirm the order first before sending messages.');
+            return;
+        }
+
+        if (!isOwnerLoggedIn()) {
+            if (!orderChatEnabled) {
+                alert('The store has not opened chat yet. Please wait for the owner to click CHAT.');
+                return;
+            }
+
+            try {
+                const res = await fetch(BACKEND + '/api/customer-send-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        orderId: currentOrder.orderId,
+                        message: textValue
+                    })
+                });
+
+                if (res.status === 403) {
+                    orderChatEnabled = false;
+                    syncChatLockUI();
+                    alert('Chat is currently locked by the store.');
+                    return;
+                }
+
+                if (!res.ok) throw new Error('send failed');
+
+                inputField.value = '';
+                await refreshOrderFromServer(currentOrder.orderId);
+                return;
+            } catch (e) {
+                alert('Failed to send message. Please try again.');
+                return;
+            }
+        }
+
+        if (typeof _origDispatch === 'function') {
+            _origDispatch();
+        }
+    };
+
+    window.rebuildChatLedgerUIStream = function () {
         const historyBox = document.getElementById('chat-history-scroll-box');
         if (!historyBox) return;
 
-        const currentOrder =
-            (typeof getCurrentActiveOrder === 'function') ? getCurrentActiveOrder() : null;
+        const currentOrder = getCurrentActiveOrder();
         const messages = currentOrder ? (currentOrder.chatLedgerHistory || []) : [];
 
-// Fix: Isolate and collect only elements containing voice indicators
-        const audioNodes = Array.from(historyBox.children).filter(node => 
-            node.querySelector('.audio-attachment-player') || 
-            node.textContent.includes('🎙️ Voice note')
-        );
-        
-        // Filter out target data objects
-        const audioMessages = messages.filter(msg => msg.isAudio && msg.audioUrl);
+        historyBox.innerHTML = '';
 
-        // Process sequentially through isolated structural blocks
-        audioMessages.forEach((msg, index) => {
-            const node = audioNodes[index];
-            if (!node) return;
-            
-            if (!node.querySelector('audio')) {
-                const player = document.createElement('audio');
-                player.controls      = true;
-                player.src           = msg.audioUrl;
-                player.style.cssText = 'display:block;margin-top:6px;width:180px;height:32px;';
-                
-                const fakeWave = node.querySelector('.audio-attachment-player');
-                if (fakeWave) {
-                    fakeWave.replaceWith(player);
+        messages.forEach(function (msg) {
+            const node = document.createElement('div');
+
+            if (msg.sender === 'System') {
+                node.className = 'msg-system';
+                node.innerText = msg.text || '';
+            } else {
+                node.className = 'msg-bubble ' + (msg.sender === 'Owner' ? 'owner' : 'customer');
+
+                let bodyHtml = '';
+                if (msg.audioUrl || msg.isAudio) {
+                    bodyHtml = '<audio controls style="margin-top:6px;width:100%;max-width:240px;height:36px;" src="' + (msg.audioUrl || '') + '"></audio>';
                 } else {
-                    node.appendChild(player);
+                    bodyHtml = '<span>' + (msg.text || '') + '</span>';
                 }
+
+                node.innerHTML =
+                    '<span class="msg-sender-tag">' +
+                    (msg.sender === 'Owner' ? 'Workshop Owner' : 'Customer') +
+                    '</span>' +
+                    bodyHtml +
+                    '<span class="msg-meta">' + (msg.stamp || msg.timestamp || '') + '</span>';
             }
+
+            historyBox.appendChild(node);
         });
+
+        historyBox.scrollTop = historyBox.scrollHeight;
+        syncChatLockUI();
     };
 
-    // ──────────────────────────────────────────────────────────────
-    // 3. FIX CUSTOMER NAME — use Google account name
-    // ──────────────────────────────────────────────────────────────
-    // The original processSecurePaymentExecutionPipeline uses:
-    //   customer_name: document.getElementById("customer-name-input")?.value || "Guest Buyer"
-    // We intercept fetch() to swap in the real Google account name.
-// Lock the fetch injection engine to prevent circular reference compilation errors
-    if (!window.fetch?.isPatched) {
-        const _origFetch = window.fetch;
-        window.fetch = async function (url, options, ...rest) {
-            if (
-                typeof url === 'string' &&
-                url.includes('/api/submit-order') &&
-                options && options.body && 
-                typeof options.body === 'string' // Ensure it's stringified JSON data
-            ) {
-                try {
-                    const body = JSON.parse(options.body);
-                    const googleName = (typeof getGoogleCustomerName === 'function')
-                        ? getGoogleCustomerName()
-                        : (localStorage.getItem('googleUserName') || '');
+    async function uploadVoiceNote(blob, orderId) {
+        const fd = new FormData();
+        fd.append('audio', blob, 'voice-' + Date.now() + '.webm');
+        fd.append('orderId', orderId);
+        fd.append('stamp', new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
-                    if (!body.customer_name || body.customer_name === 'Guest Buyer') {
-                        body.customer_name = googleName.trim() || 'Customer';
-                    }
+        const res = await fetch(BACKEND + '/api/send-voice-message', {
+            method: 'POST',
+            body: fd,
+            credentials: 'include'
+        });
 
-                    const googleEmail = (typeof getGoogleCustomerEmail === 'function')
-                        ? getGoogleCustomerEmail()
-                        : (localStorage.getItem('googleUserEmail') || '');
-                    if (googleEmail && !body.customer_email) {
-                        body.customer_email = googleEmail.trim();
-                    }
+        if (res.status === 403) {
+            orderChatEnabled = false;
+            syncChatLockUI();
+            alert('Chat is locked. Wait for the store to enable messaging.');
+            return false;
+        }
 
-                    options = Object.assign({}, options, { body: JSON.stringify(body) });
-                } catch (e) { console.warn('[Order Fix] Body intercept parse skip:', e); }
+        if (!res.ok) {
+            alert('Failed to upload voice note.');
+            return false;
+        }
+
+        await refreshOrderFromServer(orderId);
+        return true;
+    }
+
+    window.toggleVoiceRecordingStateLoop = async function () {
+        const currentOrder = getCurrentActiveOrder();
+
+        if (!currentOrder) {
+            alert('Confirm the order first before recording voice notes.');
+            return;
+        }
+
+        if (!isOwnerLoggedIn() && !orderChatEnabled) {
+            alert('The store has not opened chat yet.');
+            return;
+        }
+
+        const textField = document.getElementById('chat-text-message-field');
+        const recordFeedback = document.getElementById('voice-recording-console-feedback');
+        const micIcon = document.getElementById('mic-action-trigger');
+
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = function (e) {
+                    if (e.data && e.data.size) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async function () {
+                    stream.getTracks().forEach(function (t) { t.stop(); });
+                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    await uploadVoiceNote(blob, currentOrder.orderId);
+                    isRecording = false;
+                    if (window.systemApplicationState) window.systemApplicationState.isVoiceRecording = false;
+                    if (textField) textField.style.display = 'block';
+                    if (recordFeedback) recordFeedback.style.display = 'none';
+                    if (micIcon) micIcon.style.background = 'none';
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                if (window.systemApplicationState) window.systemApplicationState.isVoiceRecording = true;
+                if (textField) textField.style.display = 'none';
+                if (recordFeedback) recordFeedback.style.display = 'flex';
+                if (micIcon) micIcon.style.background = '#ffe3e3';
+            } catch (err) {
+                alert('Microphone access denied or unavailable.');
             }
-            return _origFetch.call(this, url, options, ...rest);
-        };
-        window.fetch.isPatched = true;
+        } else if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
     };
 
-    console.log('[Order Page Fixes v2] Loaded.');
+    window.finalizeVoiceNoteCaptureOutput = function () {
+        const currentOrder = getCurrentActiveOrder();
+        if (!currentOrder) {
+            alert('Confirm the order first before recording voice notes.');
+            return;
+        }
+        if (!isOwnerLoggedIn() && !orderChatEnabled) {
+            alert('The store has not opened chat yet.');
+            return;
+        }
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            return;
+        }
+        alert('Tap the microphone first to start recording, then press Save.');
+    };
+
+    const _origRenderUI = window.renderUI;
+    if (typeof _origRenderUI === 'function') {
+        window.renderUI = function () {
+            _origRenderUI.apply(this, arguments);
+            syncChatLockUI();
+        };
+    }
+
+    function bootOrderBridge() {
+        const id = getActiveOrderId();
+        if (id) {
+            connectOrderSocket(id);
+            refreshOrderFromServer(id);
+            setInterval(function () { refreshOrderFromServer(id); }, 8000);
+        } else {
+            syncChatLockUI();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootOrderBridge);
+    } else {
+        bootOrderBridge();
+    }
+
+    console.log('[Order Backend Bridge] Loaded.');
 })();
-    
+
 </script>
 
 </body>
