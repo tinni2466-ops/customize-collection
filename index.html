@@ -10,6 +10,155 @@
 
 <style>
 /* ==========================================================================
+   1. DEFAULT DESKTOP BASE STYLES
+   ========================================================================== */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 4%;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+}
+
+header .icon-btn {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+/* Base Dropdown Menu Styles */
+header .dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 180px;
+    display: none; /* Controlled by your existing JS toggle */
+}
+
+/* Base Location Box Search Layout */
+header .search-box {
+    display: flex;
+    align-items: center;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    gap: 8px;
+    width: 100%;
+}
+
+header .search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: #334155;
+    font-weight: 600;
+    width: 100%;
+}
+
+header .search-box i {
+    color: #000000;
+}
+
+/* Cart Badge Base Alignment */
+header .cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 50%;
+    padding: 1px 5px;
+    min-width: 14px;
+    text-align: center;
+}
+
+
+/* ==========================================================================
+   2. 📱 MOBILE RESPONSIVE ENGINE (Aligns Elements into Target Corner Slot)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+    
+    header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 12px 16px !important;
+    }
+
+    /* Unwraps the parent container so child elements can rearrange freely */
+    header .header-left {
+        display: contents !important;
+    }
+
+    /* Row 1 Left Side: Locks your Logo link element inside top left corner */
+    header .header-left > a {
+        order: 1 !important;
+        flex: 0 1 auto !important;
+    }
+
+    /* Row 1 Right Side: Pushes Profile, Menu, & Cart into the designated slot */
+    header .header-right {
+        order: 2 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 14px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Row 2: Wraps location input element cleanly onto its own line block */
+    header .header-location-container {
+        order: 3 !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 2px !important;
+    }
+
+    /* Row 3: Wraps tape text segment beneath location elements smoothly */
+    header .measurement-tape {
+        order: 4 !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Cleans up paragraphs inside the measurement banner to flow in one block */
+    header .brand-tag-text p {
+        display: inline !important;
+        margin: 0 !important;
+    }
+}
+   
+/* ==========================================================================
    UPDATED RESPONSIVE HEADER ENGINE
    ========================================================================== */
 header, .header-container {
