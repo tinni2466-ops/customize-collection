@@ -8,175 +8,21 @@
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
-<style>  
+<style>    
 /* ==========================================================================
-   RESPONSIVE FOOTER FLOW ARCHITECTURE
+   FIXED RESPONSIVE FOOTER STYLES
    ========================================================================== */
-#footer {
-    width: 100%;
-    clear: both; /* Prevents floated grids from crashing into the footer */
-    position: relative; /* Forces standard non-floating document alignment */
-    background: #ffffff;
-    padding: 40px 20px;
-    margin-top: 50px; /* Generates standard space beneath product cards */
-    box-sizing: border-box;
-    border-top: 1px solid #e2e8f0;
-}
 
-.footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 40px;
-    flex-wrap: wrap; /* Allows sections to collapse on small mobile devices */
-}
-
-/* About Text Panel styling */
-.footer-left {
-    flex: 1 1 500px; 
-    min-width: 280px;
-}
-
-.footer-left p {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #334155;
-    margin: 0;
-    white-space: normal;
-    word-wrap: break-word; /* Forces breaking on boundary limits rather than cutting off */
-    overflow-wrap: break-word;
-}
-
-/* Map Graphics and Social Panel layout */
-.footer-right {
-    flex: 1 1 400px;
-    min-width: 280px;
-}
-
-.delivery-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.delivery-image {
-    width: 110px; /* Sets crisp explicit dimension constraints */
-    height: auto;
-    max-width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    object-fit: cover;
-}
-
-.delivery-info {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.delivery-title {
-    font-weight: 700;
-    font-size: 15px;
-    color: #1e293b;
-    letter-spacing: 0.3px;
-}
-
-.footer-social-icons {
-    display: flex;
-    gap: 14px;
-}
-
-.footer-social-icons a {
-    color: #64748b;
-    font-size: 18px;
-    transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.footer-social-icons a:hover {
-    color: #e67e22; /* Matches your brand Accent orange color scheme */
-    transform: translateY(-1px);
-}
-
-/* 📱 Responsive Mobile Breakpoint Optimization */
-@media screen and (max-width: 768px) {
-    .footer-container {
-        flex-direction: column;
-        gap: 30px;
-    }
-    
-    .delivery-wrapper {
-        width: 100%;
-    }
-}
-
-/* ==========================================================================
-   UPDATED RESPONSIVE HEADER ENGINE
-   ========================================================================== */
-header, .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap; /* Allows components to drop down cleanly instead of breaking layout */
-    gap: 12px;
-    padding: 10px 16px;
-    width: 100%;
-    box-sizing: border-box;
-    background: #ffffff;
-    position: relative;
-    z-index: 1000;
-}
-
-/* Ensure the Logo & Brand container stays safe */
-.brand-logo-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-/* Measurement notice banner auto-resizes cleanly */
-.measurement-notice-banner {
-    flex: 1 1 300px; /* Expands on desktop, drops gracefully below on mobile */
-    max-width: 500px;
-    min-width: 260px;
-    margin: 0 auto;
-    box-sizing: border-box;
-}
-
-/* Action controls menu aligned perfectly */
-.header-actions-menu {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-}
-
-/* 📱 Mobile Specific Adjustments (Max Width 768px) */
-@media screen and (max-width: 768px) {
-    header, .header-container {
-        flex-direction: row; /* Retains inline brand and cart actions on top row */
-        justify-content: space-between;
-    }
-
-    /* Pushes notice banner down below logo/actions to prevent squishing */
-    .measurement-notice-banner {
-        order: 3; 
-        flex: 1 1 100%;
-        max-width: 100%;
-        margin-top: 4px;
-        text-align: center;
-    }
-}
-   
 /* Footer Structural Container Box */
 #footer {
-    background-color: #ffffff; /* Matches your clean minimalist aesthetic background */
-    padding: 30px 5%;
+    background-color: #ffffff; 
+    padding: 40px 5%;
     border-top: 1px solid #e2e8f0;
     font-family: inherit;
+    clear: both;        /* Forces the footer to stay completely underneath floating product grids */
+    position: relative; /* Eliminates accidental floating viewport overlays */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Flexbox Matrix for Left and Right distribution alignment */
@@ -223,7 +69,7 @@ header, .header-container {
     width: 65px;
     height: 65px;
     object-fit: cover;
-    border-radius: 8px; /* Smooth elegant rounding corner profile */
+    border-radius: 8px; 
     border: 1px solid #cbd5e1;
     background: #f8fafc;
 }
@@ -239,7 +85,7 @@ header, .header-container {
     font-size: 14px;
     font-weight: 600;
     color: #1e293b;
-    white-space: nowrap;
+    white-space: normal; /* FIXED: Allows text lines to drop down safely instead of clipping on mobile devices */
 }
 
 /* Beautiful Social Icon Placements Underneath Delivery Text Elements */
@@ -250,7 +96,7 @@ header, .header-container {
 }
 
 .footer-social-icons a {
-    color: #64748b; /* Ash Gray/Slate hue accent color matching */
+    color: #64748b; 
     font-size: 16px;
     transition: color 0.2s ease;
     text-decoration: none;
@@ -258,7 +104,7 @@ header, .header-container {
 
 /* Interactive Hover Color Adjustments */
 .footer-social-icons a:hover {
-    color: #0b57d0; /* Dynamic branding accent tracking highlight click colors */
+    color: #0b57d0; 
 }
 
 /* Mobile Screens Optimization Responsive Framework */
@@ -266,13 +112,19 @@ header, .header-container {
     .footer-container {
         flex-direction: column;
         text-align: center;
-        gap: 25px;
+        gap: 30px;
     }
     .footer-left p {
         text-align: center;
     }
     .footer-right {
         justify-content: center;
+        width: 100%;
+    }
+    .delivery-wrapper {
+        flex-direction: row; /* Keeps your map preview image and text cleanly side-by-side on mobile display boundaries */
+        justify-content: center;
+        text-align: left;
     }
 }
 
@@ -1146,14 +998,8 @@ No products found
 </p>
 </main>
 
-<main class="main-storefront-layout">
-    <section id="exploreStylesSection"> ... </section>
-    <div class="product-grid"> ... </div>
-</main> 
-
 <footer id="footer">
     <div class="footer-container">
-        
         <div class="footer-left">
             <p><strong>About Us:</strong> Welcome to our platform, where your unique imagination and style enthusiasm come to life. We specialize in crafting completely customized clothing tailored exactly to your vision. To bring these bespoke designs to reality with the highest level of craftsmanship, each piece requires dedicated time and resources. Our detailed creation process typically spans between 7 to 52 days, ensuring that every stitch meets your expectations.</p>
         </div>
@@ -1172,7 +1018,6 @@ No products found
                 </div>
             </div>
         </div>
-
     </div>
 </footer>
 
