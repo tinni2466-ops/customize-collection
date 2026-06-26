@@ -10,32 +10,28 @@
 
 <style>    
 /* ==========================================================================
-   FIXED RESPONSIVE FOOTER STYLES
+   NON-FLOATING RESPONSIVE FOOTER STYLES
    ========================================================================== */
-
-/* Footer Structural Container Box */
 #footer {
+    width: 100%;
     background-color: #ffffff; 
     padding: 40px 5%;
     border-top: 1px solid #e2e8f0;
-    font-family: inherit;
-    clear: both;        /* Forces the footer to stay completely underneath floating product grids */
-    position: relative; /* Eliminates accidental floating viewport overlays */
-    width: 100%;
+    clear: both;        /* Safely terminates any grid component floats */
+    position: relative; /* Removes all absolute/fixed floating windows behavior */
     box-sizing: border-box;
+    margin-top: auto;   /* Forces structural pinning below products content */
 }
 
-/* Flexbox Matrix for Left and Right distribution alignment */
 .footer-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 40px;
     max-width: 1200px;
     margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
 }
 
-/* Left side Column: Text Adjustments */
 .footer-left {
     flex: 1;
     min-width: 300px;
@@ -44,12 +40,11 @@
 .footer-left p {
     font-size: 14px;
     line-height: 1.6;
-    color: #334155;
+    color: #475569;
     margin: 0;
     text-align: justify;
 }
 
-/* Right side Column: Layout for delivery block */
 .footer-right {
     display: flex;
     align-items: center;
@@ -57,14 +52,12 @@
     flex-shrink: 0;
 }
 
-/* Horizontal delivery wrapper container link blocks */
 .delivery-wrapper {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
 }
 
-/* 1:1 Ratio Hardened Vector Image Constraints */
 .delivery-image {
     width: 65px;
     height: 65px;
@@ -74,7 +67,6 @@
     background: #f8fafc;
 }
 
-/* Info container layout positioning stacked columns text + badges */
 .delivery-info {
     display: flex;
     flex-direction: column;
@@ -83,46 +75,72 @@
 
 .delivery-title {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     color: #1e293b;
-    white-space: normal; /* FIXED: Allows text lines to drop down safely instead of clipping on mobile devices */
+    white-space: normal; /* FIXED: Prevents horizontal overflow blowout on phone displays */
 }
 
-/* Beautiful Social Icon Placements Underneath Delivery Text Elements */
 .footer-social-icons {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
 }
 
 .footer-social-icons a {
     color: #64748b; 
-    font-size: 16px;
-    transition: color 0.2s ease;
+    font-size: 18px;
+    transition: color 0.2s ease, transform 0.2s ease;
     text-decoration: none;
 }
 
-/* Interactive Hover Color Adjustments */
 .footer-social-icons a:hover {
-    color: #0b57d0; 
+    color: #0b57d0; /* Highlight accent tint */
+    transform: translateY(-1px);
 }
 
-/* Mobile Screens Optimization Responsive Framework */
+/* ==========================================================================
+   📱 MOBILE & TABLET RESPONSIVE DEVIATION SETTINGS
+   ========================================================================== */
+@media (max-width: 991px) {
+    /* Shifts measurement bar centered on medium displays */
+    .measurement-notice-banner {
+        order: 3;
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+}
+
 @media (max-width: 768px) {
+    /* Header layout transformation for narrow screen dimensions */
+    .header-container {
+        justify-content: space-between;
+        gap: 12px;
+    }
+    
+    .header-delivery-box {
+        order: 4;
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+    
+    /* Footer layout transformation for centered mobile orientation */
     .footer-container {
         flex-direction: column;
         text-align: center;
         gap: 30px;
     }
+    
     .footer-left p {
         text-align: center;
     }
+    
     .footer-right {
         justify-content: center;
         width: 100%;
     }
+    
     .delivery-wrapper {
-        flex-direction: row; /* Keeps your map preview image and text cleanly side-by-side on mobile display boundaries */
+        flex-direction: row; 
         justify-content: center;
         text-align: left;
     }
