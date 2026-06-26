@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,381 +8,25 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>
-/* ==========================================================================
-   📱 MEASUREMENT BANNER MOBILE TEXT REFITTING ENGINE
-   ========================================================================== */
-@media screen and (max-width: 768px) {
-    
-    /* Forces the banner container to adapt to full viewport width safely */
-    header .measurement-tape {
-        display: flex !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 8px 12px !important;
-        gap: 10px !important;
-        background: #f8fafc !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 12px !important; /* Slightly optimized corner radius for mobile grids */
-    }
-
-    /* Shrinks the icon slightly so it takes up less horizontal row space */
-    header .brand-tape-icon {
-        width: 18px !important;
-        height: 18px !important;
-        flex-shrink: 0 !important; /* Keeps icon perfectly circular without squishing */
-    }
-
-    /* Allows the text block container to dynamically size down and fill the row */
-    header .brand-tag-text {
-        font-size: 11px !important; /* Re-calibrates font scale for sharp legibility */
-        line-height: 1.4 !important;
-        white-space: normal !important; /* Overrides any line clipping policies */
-        flex: 1 !important; /* Authorizes full width usage within the row bounds */
-    }
-
-    /* Unlocks your individual hardcoded <p> tags so they wrap fluidly as a regular paragraph */
-    header .brand-tag-text p {
-        display: inline !important;
-        margin: 0 !important;
-    }
-
-    /* Guarantees clean spacing between your inline paragraph segments */
-    header .brand-tag-text p:not(:last-child)::after {
-        content: " " !important;
-    }
-}
-   
-/* ==========================================================================
-   1. DEFAULT DESKTOP BASE STYLES
-   ========================================================================== */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 4%;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: system-ui, -apple-system, sans-serif;
-}
-
-header .header-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    position: relative;
-}
-
-header .icon-btn {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 600;
-    color: #1e293b;
-    font-size: 14px;
-}
-
-/* Base Dropdown Menu Styles */
-header .dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    min-width: 180px;
-    display: none; /* Controlled by your existing JS toggle */
-}
-
-/* Base Location Box Search Layout */
-header .search-box {
-    display: flex;
-    align-items: center;
-    background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 6px 12px;
-    gap: 8px;
-    width: 100%;
-}
-
-header .search-box input {
-    border: none;
-    background: transparent;
-    outline: none;
-    font-size: 13px;
-    color: #334155;
-    font-weight: 600;
-    width: 100%;
-}
-
-header .search-box i {
-    color: #000000;
-}
-
-/* Cart Badge Base Alignment */
-header .cart-badge {
-    position: absolute;
-    top: -8px;
-    right: -10px;
-    background-color: #ef4444;
-    color: #ffffff;
-    font-size: 9px;
-    font-weight: 700;
-    border-radius: 50%;
-    padding: 1px 5px;
-    min-width: 14px;
-    text-align: center;
-}
-
-/* ==========================================================================
-   📱 MOBILE RESPONSIVE OPTIMIZATION OVERRIDES (Screen width 768px and below)
-   ========================================================================== */
-@media screen and (max-width: 768px) {
-    
-    /* 1. Reset Header Layout Wrapper */
-    header {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 8px !important;
-        padding: 10px 12px !important;
-    }
-
-    /* 2. Strip parent element behavior so its children can flow into flex row orders */
-    header .header-left {
-        display: contents !important;
-    }
-
-    /* ROW 1 LEFT SIDE: Website Logo & Shrink Brand Name */
-    header .header-left > a {
-        order: 1 !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important; /* Reduces gap between logo and text */
-        flex-shrink: 1 !important;
-    }
-
-    /* Scales down logo image slightly to make room for action items */
-    header .header-left > a img {
-        height: 30px !important; 
-    }
-
-    /* Adjusts size of "CustomizeCollection" text */
-    header .header-left > a span {
-        font-size: 1.05em !important; 
-        white-space: nowrap !important;
-    }
-
-    /* ROW 1 RIGHT SIDE: Combine Login, Dropdown Menu, & Cart in One Row Slot */
-    header .header-right {
-        order: 2 !important;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 10px !important; /* Tighter button gaps to guarantee single-row fit */
-        margin-left: auto !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Compact action button styles */
-    header .header-right .icon-btn {
-        font-size: 13px !important;
-        gap: 4px !important;
-    }
-
-    /* ROW 2: Drop Location Box underneath row 1 (100% width) */
-    header .header-location-container {
-        order: 3 !important;
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-top: 4px !important;
-    }
-
-    header .search-box {
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* ROW 3: Measurement tape alert banner adaptive reflow */
-    header .measurement-tape {
-        order: 4 !important;
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 8px 12px !important;
-        border-radius: 12px !important;
-    }
-
-    header .brand-tag-text {
-        font-size: 0.78em !important;
-        line-height: 1.4 !important;
-        width: 100% !important;
-    }
-
-    /* Forces your custom rigid <p> paragraphs to behave like responsive fluid inline text */
-    header .brand-tag-text p {
-        display: inline !important;
-        margin: 0 !important;
-    }
-
-    /* Inserts a safe tracking space between each forced inline word paragraph block */
-    header .brand-tag-text p:not(:last-child)::after {
-        content: " " !important;
-    }
-}
-   
-/* ==========================================================================
-   2. 📱 MOBILE RESPONSIVE ENGINE (Aligns Elements into Target Corner Slot)
-   ========================================================================== */
-@media screen and (max-width: 768px) {
-    
-    header {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 12px !important;
-        padding: 12px 16px !important;
-    }
-
-    /* Unwraps the parent container so child elements can rearrange freely */
-    header .header-left {
-        display: contents !important;
-    }
-
-    /* Row 1 Left Side: Locks your Logo link element inside top left corner */
-    header .header-left > a {
-        order: 1 !important;
-        flex: 0 1 auto !important;
-    }
-
-    /* Row 1 Right Side: Pushes Profile, Menu, & Cart into the designated slot */
-    header .header-right {
-        order: 2 !important;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 14px !important;
-        margin-left: auto !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Row 2: Wraps location input element cleanly onto its own line block */
-    header .header-location-container {
-        order: 3 !important;
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-top: 2px !important;
-    }
-
-    /* Row 3: Wraps tape text segment beneath location elements smoothly */
-    header .measurement-tape {
-        order: 4 !important;
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Cleans up paragraphs inside the measurement banner to flow in one block */
-    header .brand-tag-text p {
-        display: inline !important;
-        margin: 0 !important;
-    }
-}
-   
-/* ==========================================================================
-   UPDATED RESPONSIVE HEADER ENGINE
-   ========================================================================== */
-header, .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap; /* Allows components to drop down cleanly instead of breaking layout */
-    gap: 12px;
-    padding: 10px 16px;
-    width: 100%;
-    box-sizing: border-box;
-    background: #ffffff;
-    position: relative;
-    z-index: 1000;
-}
-
-/* Ensure the Logo & Brand container stays safe */
-.brand-logo-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-/* Measurement notice banner auto-resizes cleanly */
-.measurement-notice-banner {
-    flex: 1 1 300px; /* Expands on desktop, drops gracefully below on mobile */
-    max-width: 500px;
-    min-width: 260px;
-    margin: 0 auto;
-    box-sizing: border-box;
-}
-
-/* Action controls menu aligned perfectly */
-.header-actions-menu {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-}
-
-/* 📱 Mobile Specific Adjustments (Max Width 768px) */
-@media screen and (max-width: 768px) {
-    header, .header-container {
-        flex-direction: row; /* Retains inline brand and cart actions on top row */
-        justify-content: space-between;
-    }
-
-    /* Pushes notice banner down below logo/actions to prevent squishing */
-    .measurement-notice-banner {
-        order: 3; 
-        flex: 1 1 100%;
-        max-width: 100%;
-        margin-top: 4px;
-        text-align: center;
-    }
-}
-   
-/* ==========================================================================
-   NON-FLOATING RESPONSIVE FOOTER STYLES
-   ========================================================================== */
+/* Footer Structural Container Box */
 #footer {
-    width: 100%;
-    background-color: #ffffff; 
-    padding: 40px 5%;
+    background-color: #ffffff; /* Matches your clean minimalist aesthetic background */
+    padding: 30px 5%;
     border-top: 1px solid #e2e8f0;
-    clear: both;        /* Safely terminates any grid component floats */
-    position: relative; /* Removes all absolute/fixed floating windows behavior */
-    box-sizing: border-box;
-    margin-top: auto;   /* Forces structural pinning below products content */
+    font-family: inherit;
 }
 
+/* Flexbox Matrix for Left and Right distribution alignment */
 .footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
     max-width: 1200px;
     margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 40px;
 }
 
+/* Left side Column: Text Adjustments */
 .footer-left {
     flex: 1;
     min-width: 300px;
@@ -392,11 +35,12 @@ header, .header-container {
 .footer-left p {
     font-size: 14px;
     line-height: 1.6;
-    color: #475569;
+    color: #334155;
     margin: 0;
     text-align: justify;
 }
 
+/* Right side Column: Layout for delivery block */
 .footer-right {
     display: flex;
     align-items: center;
@@ -404,21 +48,24 @@ header, .header-container {
     flex-shrink: 0;
 }
 
+/* Horizontal delivery wrapper container link blocks */
 .delivery-wrapper {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 15px;
 }
 
+/* 1:1 Ratio Hardened Vector Image Constraints */
 .delivery-image {
     width: 65px;
     height: 65px;
     object-fit: cover;
-    border-radius: 8px; 
+    border-radius: 8px; /* Smooth elegant rounding corner profile */
     border: 1px solid #cbd5e1;
     background: #f8fafc;
 }
 
+/* Info container layout positioning stacked columns text + badges */
 .delivery-info {
     display: flex;
     flex-direction: column;
@@ -427,27 +74,28 @@ header, .header-container {
 
 .delivery-title {
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     color: #1e293b;
-    white-space: normal; /* Prevents horizontal overflow blowout on phone displays */
+    white-space: nowrap;
 }
 
+/* Beautiful Social Icon Placements Underneath Delivery Text Elements */
 .footer-social-icons {
     display: flex;
-    gap: 14px;
+    gap: 12px;
     align-items: center;
 }
 
 .footer-social-icons a {
-    color: #64748b; 
-    font-size: 18px;
-    transition: color 0.2s ease, transform 0.2s ease;
+    color: #64748b; /* Ash Gray/Slate hue accent color matching */
+    font-size: 16px;
+    transition: color 0.2s ease;
     text-decoration: none;
 }
 
+/* Interactive Hover Color Adjustments */
 .footer-social-icons a:hover {
-    color: #0b57d0; 
-    transform: translateY(-1px);
+    color: #0b57d0; /* Dynamic branding accent tracking highlight click colors */
 }
 
 /* Mobile Screens Optimization Responsive Framework */
@@ -455,27 +103,16 @@ header, .header-container {
     .footer-container {
         flex-direction: column;
         text-align: center;
-        gap: 30px;
+        gap: 25px;
     }
-    
     .footer-left p {
         text-align: center;
     }
-    
     .footer-right {
         justify-content: center;
-        width: 100%;
-    }
-    
-    .delivery-wrapper {
-        flex-direction: row; 
-        justify-content: center;
-        text-align: left;
     }
 }
 
-   
-   
 /* Keeps the dropdown container absolutely pinned beneath the relative wrapper */
 .location-wrapper-relative {
     position: relative;
@@ -1265,7 +902,7 @@ footer.show{bottom:0}
 <header>
 <div class="header-left" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;">
     <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
-        <img src="https://www.customizecollection.publicvm.com/Logo.png" alt="Customize Collection Logo" style="height:40px;width:auto;" onerror="this.style.display='none'">
+        <img src="images/logo.png" alt="Customize Collection Logo" style="height:40px;width:auto;" onerror="this.style.display='none'">
 
         <div style="display:flex;flex-direction:column;">
             <span style="font-weight:bold;font-size:1.3em;color:#1e293b;letter-spacing:-0.5px;">
@@ -1292,7 +929,7 @@ footer.show{bottom:0}
 </div>
 
     <div class="measurement-tape" style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; max-width: 450px;">
-        <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711699/Tape_z8ecv6.jpg" class="brand-tape-icon" style="width: 20px; height: 20px; object-fit: contain; border-radius: 50%;">
+        <img src="images/Tape.jpeg" class="brand-tape-icon" style="width: 20px; height: 20px; object-fit: contain; border-radius: 50%;">
         <span class="brand-tag-text" style="font-size: 0.8em; color: #475569; line-height: 1.3; font-weight: 500;">
             <p>Required to take your custom</p> <p>measurements. find this at your</p> <p>hardware shop for around ₹20 to ₹40</p>
         </span>
@@ -1344,31 +981,30 @@ footer.show{bottom:0}
 <p id="noResult" style="text-align:center;display:none;margin-top:10px;color:#333;">
 No products found
 </p>
-   <footer id="footer">
+</main>
+
+<footer id="footer">
     <div class="footer-container">
-        
         <div class="footer-left">
             <p><strong>About Us:</strong> Welcome to our platform, where your unique imagination and style enthusiasm come to life. We specialize in crafting completely customized clothing tailored exactly to your vision. To bring these bespoke designs to reality with the highest level of craftsmanship, each piece requires dedicated time and resources. Our detailed creation process typically spans between 7 to 52 days, ensuring that every stitch meets your expectations.</p>
         </div>
 
         <div class="footer-right">
             <div class="delivery-wrapper">
-                <img src="https://res.cloudinary.com/dnami0fsz/image/upload/v1781711697/west_bengal_map_tqadhb.jpg" alt="Delivery Area Maps" class="delivery-image">
+                <img src="images/west_bengal_map.png" alt="Delivery Area Maps" class="delivery-image">
                 
                 <div class="delivery-info">
                     <span class="delivery-title">Our Delivery Area Scope</span>
                     <div class="footer-social-icons">
-                        <a href="#" target="_blank" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                        <a href="#" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="mailto:your-email@domain.com" aria-label="Email Address"><i class="fa fa-envelope"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="mailto:your-email@domain.com"><i class="fa fa-envelope"></i></a>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </footer>
-</main>
 
 <div class="overlay" id="overlay">
 <div class="panel">
@@ -2262,23 +1898,42 @@ const sareeSubStyles = [
     { name: "Ready-to-Wear Saree", img: "https://res.cloudinary.com/dnami0fsz/image/upload/v1781711609/Ready-to-Wear-Saree_o1tbek.png", price: 1199 }
 ];
 
-// 🛑 SECURITY GATE: New function to intercept clicks for non-logged in users
+function getImgFilenameFromSrc(imgSrc) {
+    return (imgSrc || "").split("/").pop().split("?")[0].trim();
+}
+
+function isWholeProductStockedOut(img) {
+    const STORAGE_KEY = "storefront_inventory_cache";
+    let stock = {};
+    try {
+        stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) {
+        stock = {};
+    }
+
+    const imgFilename = getImgFilenameFromSrc(img);
+    if (!imgFilename) return false;
+
+    return stock[imgFilename + "||Entire Product Style||" + imgFilename] === true;
+}
+
+// 🛑 SECURITY GATE: login check + block stocked-out whole styles
 function handleProtectedAddToCart(name, price, img) {
     const loginStatus = localStorage.getItem("isLoggedIn");
-    
+
     if (loginStatus !== "true") {
-        // Simple notification alert
         alert("Please log in to your account to add items to your cart!");
-        // Redirect to login page
         window.location.href = "login.html";
         return;
     }
-    
-    // If logged in, safely forward data to your original addToCart logic
+
+    if (isWholeProductStockedOut(img)) {
+        alert("This style is currently out of stock and cannot be added to your cart.");
+        return;
+    }
+
     if (typeof addToCart === "function") {
         addToCart(name, price, img);
-    } else {
-        console.log("Original addToCart function not found, but user is logged in.");
     }
 }
 
@@ -3007,337 +2662,117 @@ const subProducts = {
         { name: "Indo Western Dress", img: "https://res.cloudinary.com/dnami0fsz/image/upload/v1781711581/indo2_r1mrqa.png", price: 1049 }
     ]
 };
-// ── CONSOLIDATED LIVE INVENTORY SYNC ENGINE ──
-(function () {
-    'use strict';
+// 1. Declare the global tracker variable ONCE at the top
+let dynamicGridObserver = null;
 
-    const BACKEND = 'https://customize-collection.onrender.com';
-    const STORAGE_KEY = 'storefront_inventory_cache';
+function applyIndexGridStockSync() {
+    // Temporarily pause the observer so our changes don't trigger an infinite loop
+    if (dynamicGridObserver) {
+        dynamicGridObserver.disconnect();
+    }
 
-    // Admin Panel Color Mapping Matrix
-    const ADMIN_COLOR_MAP = {
-        'red':'Flame Red','#ff5733':'Flame Red','rgb(255, 87, 51)':'Flame Red','rgb(229, 62, 62)':'Flame Red','#e53e3e':'Flame Red',
-        'crimson':'Crimson','#c70039':'Crimson','rgb(199, 0, 57)':'Crimson','rgb(220, 20, 60)':'Crimson','#dc143c':'Crimson',
-        'maroon':'Deep Maroon','#900c3f':'Deep Maroon','rgb(144, 12, 63)':'Deep Maroon','#800000':'Deep Maroon',
-        'plum wine':'Plum Wine','#581845':'Plum Wine','rgb(88, 24, 69)':'Plum Wine','plum':'Plum Wine',
-        'tangerine':'Tangerine','#ff8d1a':'Tangerine','rgb(255, 141, 26)':'Tangerine','#ffa500':'Tangerine',
-        'amber gold':'Amber Gold','#ffc300':'Amber Gold','rgb(255, 195, 0)':'Amber Gold',
-        'mustard yellow':'Mustard Yellow','#eddd53':'Mustard Yellow','rgb(237, 221, 83)':'Mustard Yellow','#ffff00':'Mustard Yellow',
-        'soft lime':'Soft Lime','#add45c':'Soft Lime','rgb(173, 212, 92)':'Soft Lime',
-        'emerald mint':'Emerald Mint','#57c785':'Emerald Mint','rgb(87, 199, 133)':'Emerald Mint',
-        'sea green':'Sea Green','#16a085':'Sea Green','rgb(22, 160, 133)':'Sea Green',
-        'forest green':'Forest Green','#27ae60':'Forest Green','rgb(39, 174, 96)':'Forest Green','#008000':'Forest Green',
-        'teal turquoise':'Teal Turquoise','#00baad':'Teal Turquoise','rgb(0, 186, 173)':'Teal Turquoise','#00ffff':'Teal Turquoise',
-        'ocean slate':'Ocean Slate','#2a7b9b':'Ocean Slate','rgb(42, 123, 155)':'Ocean Slate',
-        'midnight navy':'Midnight Navy','#3d3d6b':'Midnight Navy','rgb(61, 61, 107)':'Midnight Navy','#000080':'Midnight Navy',
-        'dodger blue':'Dodger Blue','#3498db':'Dodger Blue','rgb(52, 152, 219)':'Dodger Blue',
-        'pearl white':'Pearl White','#ecf0f1':'Pearl White','rgb(236, 240, 241)':'Pearl White','#ffffff':'Pearl White',
-        'stone gray':'Stone Gray','#95a5a6':'Stone Gray','rgb(149, 165, 166)':'Stone Gray',
-        'charcoal':'Charcoal','#7f8c8d':'Charcoal','rgb(127, 140, 141)':'Charcoal',
-        'dark slate':'Dark Slate','#34495e':'Dark Slate','rgb(52, 73, 94)':'Dark Slate',
-        'black':'Black','#000000':'Black','rgb(0, 0, 0)':'Black',
-        'amethyst':'Amethyst','#9b59b6':'Amethyst','rgb(155, 89, 182)':'Amethyst',
-        'royal purple':'Royal Purple','#8e44ad':'Royal Purple','rgb(142, 68, 173)':'Royal Purple'
-    };
-
-    const BLOUSE_SHARED = 'BLOUSE_SHARED';
-    let localObserver = null;
-
-    // ── CORE DEEP MATCHING ENGINE ──
-    function checkStock(stock, targetKey) {
-        if (!stock || !targetKey) return false;
-        if (stock[targetKey] === true) return true;
+    const STORAGE_KEY = "storefront_inventory_cache";
+    const savedStock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    
+    // Target all sub-style card types rendered inside your dynamic scroll containers
+    const scrollerCards = document.querySelectorAll(".mini-card, .mini-card-static");
+    
+    scrollerCards.forEach(card => {
+        const imgEl = card.querySelector("img");
+        if (!imgEl) return;
         
-        // Advanced case-insensitive and whitespace-stripped fallback match
-        var standardizedTarget = targetKey.toLowerCase().replace(/\s+/g, '').trim();
-        for (var k in stock) {
-            if (k.toLowerCase().replace(/\s+/g, '').trim() === standardizedTarget && stock[k] === true) {
-                return true;
+        // Grab the clean image filename to use as the true unique identifier
+        const imgSrc = imgEl.getAttribute("src") || "";
+        const imgFilename = imgSrc.split('/').pop().split('?')[0].trim();
+        if (!imgFilename) return;
+
+        // Matches your fixed admin backend stock structure templates precisely (Filename based)
+        const entireProductKey = `${imgFilename}||Entire Product Style||${imgFilename}`;
+        const isStockedOut = savedStock[entireProductKey] === true;
+        
+        // Clean up pre-existing overlays to avoid visual stacking
+        card.querySelectorAll(".scroller-stockout-badge").forEach(el => el.remove());
+        
+        if (isStockedOut) {
+            // Store the card's original layout positioning state if not already saved
+            if (!card.hasAttribute("data-orig-position")) {
+                card.setAttribute("data-orig-position", card.style.position || "static");
             }
-        }
-        return false;
-    }
-
-    function resolveColorKey(raw) {
-        if (!raw) return '';
-        var lower = raw.toLowerCase().trim();
-        return ADMIN_COLOR_MAP[lower] || lower;
-    }
-
-    function extractHex(onclick) {
-        if (!onclick) return '';
-        var m = onclick.match(/#([0-9A-Fa-f]{6})\b/g);
-        return m && m.length ? m[m.length - 1].toLowerCase() : '';
-    }
-
-    function extractColorName(el) {
-        var c = el.getAttribute('data-color-name') || el.getAttribute('title') || '';
-        if (c.toLowerCase().trim() === 'out of stock') c = ''; 
-        
-        if (!c && el.innerText && el.innerText.length < 25) c = el.innerText.trim();
-        if (!c) c = extractHex(el.getAttribute('onclick') || el.getAttribute('data-sf-onclick') || '');
-        if (!c && el.style && el.style.backgroundColor) c = el.style.backgroundColor.toLowerCase().trim();
-        if (!c) { try { var s = window.getComputedStyle(el).backgroundColor; if (s && s !== 'rgba(0, 0, 0, 0)' && s !== 'transparent') c = s.toLowerCase().trim(); } catch(e){} }
-        return c ? resolveColorKey(c) : '';
-    }
-
-    function getProductImg(el) {
-        if (!el) return '';
-        // Look up regional container boards (cards, modals, drawer systems)
-        var card = el.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .mini-card, .saree-card, .product-card, .saree-sub-product-card, .modal, .drawer, .popup, #exploreStylesSection');
-        if (card) {
-            var i = card.querySelector('img');
-            if (i) return (i.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
-        }
-        // Page-wide fallback for single product detail focus zones
-        var mainImg = document.querySelector('.main-product-img, #main-product-image, .Explore-Saree-Styles img, .saree-card img, main img');
-        return mainImg ? (mainImg.getAttribute('src')||'').split('/').pop().split('?')[0].trim() : '';
-    }
-
-    function isBlouseEl(el) {
-        return !!(el.closest('#exploreStylesSection') || el.closest('#blouseMainActions') || el.closest('#blouse-topbar-drawer') || el.closest('#blouse-material-target'));
-    }
-
-    function buildSIcon(swatch) {
-        var w = swatch.offsetWidth || 24, h = swatch.offsetHeight || 24;
-        var base = Math.min(w,h), px = Math.max(14, Math.round(base*0.82)), fp = Math.max(8, Math.round(px*0.62));
-        var icon = document.createElement('div');
-        icon.className = 'sf-blocked-icon';
-        icon.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:'+px+'px;height:'+px+'px;background:#e53e3e;border:2px solid #fff;border-radius:50%;z-index:9999;pointer-events:none;box-sizing:border-box;display:flex;align-items:center;justify-content:center;';
-        var span = document.createElement('span');
-        span.style.cssText = 'color:#fff;font-size:'+fp+'px;font-weight:900;font-family:Arial,sans-serif;line-height:1;pointer-events:none;';
-        span.textContent = 'S';
-        icon.appendChild(span);
-        return icon;
-    }
-
-    function lockColor(el) {
-        var c = el.cloneNode(true);
-        c.removeAttribute('onclick');
-        c.setAttribute('data-sf-dead','color');
-        
-        if (el.getAttribute('title') && !el.getAttribute('data-color-name')) {
-            c.setAttribute('data-color-name', el.getAttribute('title'));
-        }
-        
-        c.title = 'Out of Stock';
-        c.setAttribute('aria-disabled','true');
-        c.style.setProperty('pointer-events','none','important');
-        c.style.cursor = 'not-allowed'; c.style.opacity = '0.55'; c.style.filter = 'grayscale(20%)';
-        c.style.position = 'relative'; c.style.overflow = 'visible';
-        c.querySelectorAll('.sf-blocked-icon').forEach(function(e){e.remove();});
-        c.appendChild(buildSIcon(el));
-        el.parentNode.replaceChild(c, el);
-    }
-
-    function lockAttr(el) {
-        var c = el.cloneNode(true);
-        c.removeAttribute('onclick');
-        c.setAttribute('data-sf-dead','attr');
-        c.title = 'Out of Stock';
-        c.setAttribute('aria-disabled','true');
-        c.style.setProperty('pointer-events','none','important');
-        c.style.cursor = 'not-allowed'; c.style.textDecoration = 'line-through';
-        c.style.color = '#aaaaaa'; c.style.opacity = '0.7';
-        el.parentNode.replaceChild(c, el);
-    }
-
-    function restore(el) {
-        el.style.removeProperty('pointer-events');
-        el.style.cursor='pointer'; el.style.opacity=''; el.style.filter='';
-        el.style.textDecoration=''; el.style.color='';
-        el.removeAttribute('aria-disabled'); el.removeAttribute('data-sf-dead');
-        el.querySelectorAll('.sf-blocked-icon').forEach(function(e){e.remove();});
-        var s = el.getAttribute('data-sf-onclick');
-        if (s) { el.setAttribute('onclick', s); el.removeAttribute('data-sf-onclick'); }
-    }
-
-    // ── MAIN UNIFIED SYNC EXECUTION ──
-    function applySync() {
-        if (localObserver) { localObserver.disconnect(); }
-
-        var stock = {};
-        try { stock = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e){}
-
-        // 1. Structural Product Styles Overlay Processing
-        document.querySelectorAll('.Explore-Saree-Styles img, [id*="Style"] img, .mini-card-static img, .mini-card img, .saree-card img, .product-card img, main img').forEach(function(img) {
-            var fn = (img.getAttribute('src')||'').split('/').pop().split('?')[0].trim();
-            if (!fn) return;
-            var card = img.closest('.Explore-Saree-Styles, [id*="Style"], .mini-card-static, .mini-card, .saree-card, .product-card, .saree-sub-product-card');
-            var wrap = img.parentElement;
-            if (!card || !wrap) return;
             
-            wrap.querySelectorAll('.sf-oos-badge').forEach(function(e){e.remove();});
+            card.style.position = "relative";
             
-            if (checkStock(stock, fn + '||Entire Product Style||' + fn)) {
-                wrap.style.position = 'relative';
-                var ov = document.createElement('div');
-                ov.className = 'sf-oos-badge';
-                ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);display:flex;justify-content:center;align-items:center;z-index:99;border-radius:inherit;pointer-events:auto;';
-                ov.innerHTML = '<div style="background:#e53e3e;color:#fff;font-weight:800;padding:5px 10px;border-radius:4px;text-transform:uppercase;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,0.2);white-space:nowrap;letter-spacing:0.5px;">OUT OF STOCK</div>';
-                
-                ov.onclick = function(e) {
-                    e.preventDefault(); e.stopPropagation();
-                    alert("This style is currently out of stock!");
-                    return false;
-                };
-                wrap.appendChild(ov);
-                
-                card.querySelectorAll('button, .add-to-cart-btn, .mini-add-btn').forEach(function(b){
-                    b.style.opacity='0.4'; b.style.cursor='not-allowed'; b.style.pointerEvents='none';
-                });
-            } else {
-                card.querySelectorAll('button, .add-to-cart-btn, .mini-add-btn').forEach(function(b){
-                    b.style.opacity=''; b.style.cursor=''; b.style.pointerEvents='';
-                });
-            }
-        });
-
-        // 2. Blouse color swatches
-        document.querySelectorAll("#step-panel-colors span[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .opts button[class*='color-swatch-'], #exploreStylesSection [id^='opts-'] .opts button, [onclick*='handleBlouseWizardSelection(\"color\"']").forEach(function(sw) {
-            if (sw.getAttribute('data-sf-dead')) return;
-            var ck = extractColorName(sw); if (!ck) return;
-            if (checkStock(stock, BLOUSE_SHARED + '||Color Variant||' + ck)) {
-                if (!sw.getAttribute('data-sf-onclick') && sw.getAttribute('onclick')) sw.setAttribute('data-sf-onclick', sw.getAttribute('onclick'));
-                lockColor(sw);
-            }
-        });
-
-        // 3. Blouse sizes
-        document.querySelectorAll("#step-panel-sizes button[onclick*='handleBlouseWizardSelection'], #exploreStylesSection .quiz-step-btn[onclick*='processWizardStep'], [onclick*='handleBlouseWizardSelection(\"size\"']").forEach(function(btn) {
-            if (btn.getAttribute('data-sf-dead')) return;
-            var lbl = btn.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, BLOUSE_SHARED + '||Size Option||' + lbl)) {
-                if (!btn.getAttribute('data-sf-onclick') && btn.getAttribute('onclick')) btn.setAttribute('data-sf-onclick', btn.getAttribute('onclick'));
-                lockAttr(btn);
-            }
-        });
-
-        // 4. Blouse materials
-        document.querySelectorAll('#exploreStylesSection .material-chip, #blouse-material-target .material-chip, #blouseMainActions .material-chip').forEach(function(chip) {
-            if (chip.getAttribute('data-sf-dead')) return;
-            var lbl = chip.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, BLOUSE_SHARED + '||Material option||' + lbl)) {
-                if (!chip.getAttribute('data-sf-onclick') && chip.getAttribute('onclick')) chip.setAttribute('data-sf-onclick', chip.getAttribute('onclick'));
-                lockAttr(chip);
-            }
-        });
-
-        // 5. Non-blouse color circles
-        document.querySelectorAll(".color-circle, [style*='background'][onclick*='color']").forEach(function(c) {
-            if (c.getAttribute('data-sf-dead') || isBlouseEl(c)) return;
-            var img = getProductImg(c); if (!img) return;
-            var ck = extractColorName(c); if (!ck) return;
-            if (checkStock(stock, img + '||Color Variant||' + ck)) {
-                if (!c.getAttribute('data-sf-onclick') && c.getAttribute('onclick')) c.setAttribute('data-sf-onclick', c.getAttribute('onclick'));
-                lockColor(c);
-            }
-        });
-
-        // 6. Non-blouse sizes
-        document.querySelectorAll(".size-chip, .size-btn, .quiz-step-btn[onclick*='processWizardStep']").forEach(function(btn) {
-            if (btn.getAttribute('data-sf-dead') || isBlouseEl(btn)) return;
-            var img = getProductImg(btn); if (!img) return;
-            var lbl = btn.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, img + '||Size Option||' + lbl)) {
-                if (!btn.getAttribute('data-sf-onclick') && btn.getAttribute('onclick')) btn.setAttribute('data-sf-onclick', btn.getAttribute('onclick'));
-                lockAttr(btn);
-            }
-        });
-
-        // 7. Non-blouse materials
-        document.querySelectorAll('.material-chip').forEach(function(chip) {
-            if (chip.getAttribute('data-sf-dead') || isBlouseEl(chip)) return;
-            var img = getProductImg(chip); if (!img) return;
-            var lbl = chip.innerText.trim(); if (!lbl) return;
-            if (checkStock(stock, img + '||Material option||' + lbl)) {
-                if (!chip.getAttribute('data-sf-onclick') && chip.getAttribute('onclick')) chip.setAttribute('data-sf-onclick', chip.getAttribute('onclick'));
-                lockAttr(chip);
-            }
-        });
-
-        // Clean sweeping loops for entries that transitioned back to active stock
-        document.querySelectorAll('[data-sf-dead]').forEach(function(dead) {
-            var type = dead.getAttribute('data-sf-dead');
-            if (type === 'color') {
-                var ck = extractColorName(dead); if (!ck) return;
-                if (isBlouseEl(dead)) {
-                    if (!checkStock(stock, BLOUSE_SHARED + '||Color Variant||' + ck)) restore(dead);
-                } else {
-                    var img = getProductImg(dead); if (!img) return;
-                    if (!checkStock(stock, img + '||Color Variant||' + ck)) restore(dead);
-                }
-            } else {
-                var lbl = dead.innerText.trim(); if (!lbl) return;
-                if (isBlouseEl(dead)) {
-                    if (!checkStock(stock, BLOUSE_SHARED + '||Size Option||' + lbl) && !checkStock(stock, BLOUSE_SHARED + '||Material option||' + lbl)) restore(dead);
-                } else {
-                    var img2 = getProductImg(dead); if (!img2) return;
-                    if (!checkStock(stock, img2 + '||Size Option||' + lbl) && !checkStock(stock, img2 + '||Material option||' + lbl)) restore(dead);
-                }
-            }
-        });
-
-        if (localObserver) { localObserver.observe(document.body, { childList: true, subtree: true }); }
-    }
-
-    function fetchAndApply() {
-        fetch(BACKEND + '/api/get-inventory-cache')
-            .then(function(r){ return r.ok ? r.json() : {}; })
-            .then(function(cache) {
-                console.log('[Sync Engine Hub] Pulled Live Cache Keys:', Object.keys(cache || {}));
-                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cache || {})); } catch(e){}
-                applySync();
-            })
-            .catch(function(err){ 
-                console.error('[Sync Engine Hub] Fallback to local storage cache baseline due to network lag.', err);
-                applySync(); 
-            });
-    }
-
-function connectInventorySocket() {
-        if (typeof io === 'undefined') { setTimeout(connectInventorySocket, 500); return; }
-        try {
-            // Your existing socket connection setup
-            const sock = io(BACKEND, { transports: ['polling', 'websocket'] });
+            // Create a perfectly matching blurred layout block mask over the item square
+            const badgeOverlay = document.createElement("div");
+            badgeOverlay.className = "scroller-stockout-badge";
+            badgeOverlay.style.cssText = `
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(255, 255, 255, 0.85); display: flex; flex-direction: column;
+                justify-content: center; align-items: center; z-index: 99;
+                text-align: center; border-radius: inherit; pointer-events: auto;
+            `;
             
-            // 1. Your existing cache sync listener
-            sock.on('inventory_cache_updated', function (data) {
-                if (data && data.cache && typeof data.cache === 'object') {
-                    console.log('[Sync Engine Hub] Live Real-time Socket Refresh Triggered.');
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.cache));
-                    applySync();
-                }
-            });
+            // Inject a clean minimalist red banner directly over the element visual grid area
+            badgeOverlay.innerHTML = `
+                <div style="background: #e53e3e; color: #ffffff; font-weight: 800; 
+                            padding: 4px 10px; border-radius: 4px; text-transform: uppercase; 
+                            font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
+                    OUT OF STOCK
+                </div>
+            `;
+            
+            card.appendChild(badgeOverlay);
+            
+            // Inline block actions safely without breaking global javascript variables
+            badgeOverlay.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert("This style is currently out of stock!");
+                return false;
+            };
 
-            // 🔥 EXTRA FIX: Listen for individual product toggle updates from server.js
-            sock.on('product_status_updated', function (data) {
-                console.log('[Sync Engine Hub] Real-time Product Toggle Received:', data);
-                
-                // Trigger your built-in pull system to get the fresh data and refresh the UI
-                fetchAndApply(); 
-            });
+            // Soft-disable underlying buttons visually without bricking core logic
+            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
+            if (addButton) {
+                addButton.style.opacity = "0.4";
+                addButton.style.cursor = "not-allowed";
+            }
+        } else {
+            // RESTORE ORIGINAL THEME STYLES: This resets the hover rules completely
+            if (card.hasAttribute("data-orig-position")) {
+                card.style.position = card.getAttribute("data-orig-position");
+                card.removeAttribute("data-orig-position");
+            }
 
-        } catch (e) {
-            console.warn('[Inventory Bridge] Socket link fallback active:', e);
+            // Restore normal behavior if status is active
+            const addButton = card.querySelector("button, .add-to-cart-btn, .mini-add-btn");
+            if (addButton) {
+                addButton.style.opacity = "";
+                addButton.style.cursor = "";
+            }
         }
+    });
+
+    // 2. Safely turn the observer back on now that modifications are complete
+    if (dynamicGridObserver) {
+        dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
     }
+}
 
-    // ── INITIALIZATION ENGINE ──
-    localObserver = new MutationObserver(applySync);
-    localObserver.observe(document.body, { childList: true, subtree: true });
+// Attach lifecycle listeners to catch initial data load
+document.addEventListener("DOMContentLoaded", () => {
+    // Setup structural tracker engines safely
+    dynamicGridObserver = new MutationObserver(() => applyIndexGridStockSync());
+    dynamicGridObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Smooth phased lifecycles instead of resource-heavy crash intervals
+    setTimeout(applyIndexGridStockSync, 150);
+    setTimeout(applyIndexGridStockSync, 800);
+});
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { fetchAndApply(); connectInventorySocket(); });
-    } else {
-        fetchAndApply(); connectInventorySocket();
-    }
+// Sync across multiple admin/index browser tabs instantly
+window.addEventListener("storage", applyIndexGridStockSync);
 
-    setInterval(fetchAndApply, 30000);
-    window.addEventListener('storage', function(e) { if (e.key === STORAGE_KEY) applySync(); });
-    console.log('[Inventory System] Case-Insensitive Engine Active & Monitoring DOM changes.');
-})();
-   
 </script>
+
 </body>
 </html>
