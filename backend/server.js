@@ -592,6 +592,28 @@ app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
     });
 });
 
+// ── GET CURRENT INVENTORY CACHE FROM DATABASE ──────────────────
+app.get('/api/get-inventory-cache', (req, res) => {
+    db.all('SELECT * FROM inventory_cache', [], (err, rows) => {
+        if (err) {
+            console.error('Failed to fetch inventory cache:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        // Reconstruct the cache object from the database rows
+        const cache = {};
+        rows.forEach(row => {
+            try {
+                cache[row.cache_key] = JSON.parse(row.cache_value);
+            } catch (e) {
+                cache[row.cache_key] = row.cache_value;
+            }
+        });
+
+        res.json(cache);
+    });
+});
+
 // =============================================================
 // INVENTORY CACHE SYNC (CRASH-PROOF VERSION)
 // =============================================================
