@@ -10,93 +10,105 @@
 
 <style>  
 /* ==========================================================================
-   UPDATED INLINE DOCUMENT FLOW FOOTER
+   RESPONSIVE FOOTER FLOW ARCHITECTURE
    ========================================================================== */
-.site-storefront-footer {
+#footer {
     width: 100%;
-    clear: both; /* Forces footer to strictly stay below floated product grids */
-    position: relative; /* Removes any floating absolute/fixed behaviors */
-    display: block;
-    background: #f8fafc;
-    padding: 30px 20px;
-    margin-top: 50px; /* Generates a clean breathing space beneath product cards */
+    clear: both; /* Prevents floated grids from crashing into the footer */
+    position: relative; /* Forces standard non-floating document alignment */
+    background: #ffffff;
+    padding: 40px 20px;
+    margin-top: 50px; /* Generates standard space beneath product cards */
     box-sizing: border-box;
     border-top: 1px solid #e2e8f0;
 }
 
-.footer-inner-content {
+.footer-container {
     max-width: 1200px;
     margin: 0 auto;
-    width: 100%;
-    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+    flex-wrap: wrap; /* Allows sections to collapse on small mobile devices */
 }
 
-/* Prevents right-side horizontal text-cutoffs on mobile */
-.footer-inner-content p {
+/* About Text Panel styling */
+.footer-left {
+    flex: 1 1 500px; 
+    min-width: 280px;
+}
+
+.footer-left p {
     font-size: 14px;
     line-height: 1.6;
     color: #334155;
-    word-wrap: break-word; /* Allows proper wrapping on phone screen boundaries */
+    margin: 0;
     white-space: normal;
-    margin-bottom: 20px;
+    word-wrap: break-word; /* Forces breaking on boundary limits rather than cutting off */
+    overflow-wrap: break-word;
 }
-   
-/* ==========================================================================
-   UPDATED RESPONSIVE HEADER ENGINE
-   ========================================================================== */
-header, .header-container {
+
+/* Map Graphics and Social Panel layout */
+.footer-right {
+    flex: 1 1 400px;
+    min-width: 280px;
+}
+
+.delivery-wrapper {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Allows components to drop down cleanly instead of breaking layout */
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.delivery-image {
+    width: 110px; /* Sets crisp explicit dimension constraints */
+    height: auto;
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    object-fit: cover;
+}
+
+.delivery-info {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
-    padding: 10px 16px;
-    width: 100%;
-    box-sizing: border-box;
-    background: #ffffff;
-    position: relative;
-    z-index: 1000;
 }
 
-/* Ensure the Logo & Brand container stays safe */
-.brand-logo-wrapper {
+.delivery-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1e293b;
+    letter-spacing: 0.3px;
+}
+
+.footer-social-icons {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
+    gap: 14px;
 }
 
-/* Measurement notice banner auto-resizes cleanly */
-.measurement-notice-banner {
-    flex: 1 1 300px; /* Expands on desktop, drops gracefully below on mobile */
-    max-width: 500px;
-    min-width: 260px;
-    margin: 0 auto;
-    box-sizing: border-box;
+.footer-social-icons a {
+    color: #64748b;
+    font-size: 18px;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
-/* Action controls menu aligned perfectly */
-.header-actions-menu {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
+.footer-social-icons a:hover {
+    color: #e67e22; /* Matches your brand Accent orange color scheme */
+    transform: translateY(-1px);
 }
 
-/* 📱 Mobile Specific Adjustments (Max Width 768px) */
+/* 📱 Responsive Mobile Breakpoint Optimization */
 @media screen and (max-width: 768px) {
-    header, .header-container {
-        flex-direction: row; /* Retains inline brand and cart actions on top row */
-        justify-content: space-between;
+    .footer-container {
+        flex-direction: column;
+        gap: 30px;
     }
-
-    /* Pushes notice banner down below logo/actions to prevent squishing */
-    .measurement-notice-banner {
-        order: 3; 
-        flex: 1 1 100%;
-        max-width: 100%;
-        margin-top: 4px;
-        text-align: center;
+    
+    .delivery-wrapper {
+        width: 100%;
     }
 }
     
@@ -1075,8 +1087,14 @@ No products found
 </p>
 </main>
 
+<main class="main-storefront-layout">
+    <section id="exploreStylesSection"> ... </section>
+    <div class="product-grid"> ... </div>
+</main> 
+
 <footer id="footer">
     <div class="footer-container">
+        
         <div class="footer-left">
             <p><strong>About Us:</strong> Welcome to our platform, where your unique imagination and style enthusiasm come to life. We specialize in crafting completely customized clothing tailored exactly to your vision. To bring these bespoke designs to reality with the highest level of craftsmanship, each piece requires dedicated time and resources. Our detailed creation process typically spans between 7 to 52 days, ensuring that every stitch meets your expectations.</p>
         </div>
@@ -1095,21 +1113,6 @@ No products found
                 </div>
             </div>
         </div>
-    </div>
-<main class="main-storefront-layout">
-    
-    <section id="exploreStylesSection"> ... </section>
-    <div class="product-grid"> ... </div>
-
-</main> <footer class="site-storefront-footer">
-    <div class="footer-inner-content">
-        
-        <h3>About Us:</h3>
-        <p>Welcome to our platform, where your unique imagination and style enthusiasm come to life...</p>
-        
-        <div class="delivery-scope-section">
-            <h4>Our Delivery Area Scope</h4>
-            </div>
 
     </div>
 </footer>
