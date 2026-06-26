@@ -3325,6 +3325,27 @@ const subProducts = {
     window.addEventListener('storage', function(e) { if (e.key === STORAGE_KEY) applySync(); });
     console.log('[Inventory System] Case-Insensitive Engine Active & Monitoring DOM changes.');
 })();
+
+// 1. Look for this line in your existing code:
+    const socket = io(); 
+
+    // 2. PASTE THE FIX DIRECTLY HERE:
+    socket.on('product_status_updated', (data) => {
+        console.log("Received stock update from server:", data);
+        
+        // If your page uses a local products array, update it
+        if (typeof products !== 'undefined') {
+            const item = products.find(p => p.id === data.id);
+            if (item) item.status = data.status;
+        }
+        
+        // Refresh the visual display so things show as stock-out immediately
+        if (typeof renderProducts === 'function') {
+            renderProducts();
+        } else {
+            location.reload(); // Quick fallback to refresh the page view safely
+        }
+    });
    
 </script>
 </body>
