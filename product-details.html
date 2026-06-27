@@ -2982,30 +2982,44 @@ const params = new URLSearchParams(window.location.search);
 // Capture parameter from either link type structure safely
 const rawParam = params.get("item") || params.get("category");
 
-let product;
+let product = null;
 
-if (rawParam) {
+// Ensure productData exists and is an array before looping
+if (typeof productData !== 'undefined' && Array.isArray(productData) && rawParam) {
+    
     // Decode percent encodings and normalize to a lowercase, trimmed string
     const cleanURLName = decodeURIComponent(rawParam).toLowerCase().trim();
     console.log("URL parameter found. Searching array for normalized name:", cleanURLName);
 
-    // Find entry by converting product names inside your array to lowercase too
-    product = productData.find(p => p.name.toLowerCase().trim() === cleanURLName);
+    // Find entry using Optional Chaining (?.) for extra security
+    product = productData.find(p => p?.name?.toLowerCase().trim() === cleanURLName);
     
-    // 💡 EXTRA SAFETY CHECK: If it can't find an exact string group match, 
-    // try a partial match (e.g., if URL says "saree", find "Silk Saree" group)
+    // 💡 EXTRA SAFETY CHECK: Try a partial match safely
     if (!product) {
-        product = productData.find(p => p.name.toLowerCase().trim().includes(cleanURLName) || cleanURLName.includes(p.name.toLowerCase().trim()));
+        product = productData.find(p => {
+            const pName = p?.name?.toLowerCase().trim();
+            if (!pName) return false;
+            return pName.includes(cleanURLName) || cleanURLName.includes(pName);
+        });
+    }
+} else if (!rawParam) {
+    console.warn("No 'item' or 'category' URL parameters were provided.");
+} else {
+    console.error("Critical error: 'productData' array is missing or not initialized yet.");
+}
+
+// ULTIMATE FALLBACK: If absolutely no match is discovered, use your default array card safely
+if (!product) {
+    if (typeof productData !== 'undefined' && productData.length > 0) {
+        console.warn("Could not find a safe data category match for value:", rawParam, "- Defaulting to first array card entry.");
+        product = productData[0];
+    } else {
+        console.error("Critical: Fallback failed because productData is empty or missing.");
+        product = { name: "Default", price: 0 }; // Temporary object placeholder to avoid page breaks
     }
 }
 
-// ULTIMATE FALLBACK: If absolutely no match is discovered, use your default array card
-if (!product) {
-    console.warn("Could not find a safe data category match for value:", rawParam, "- Defaulting to first array card entry.");
-    product = productData[0];
-}
-
-console.log("Successfully matched active layout to group name:", product.name);
+console.log("Successfully matched active layout to group name:", product?.name || "Unknown");
 
 // ==========================================
 // 2. Update Main Texts with Dynamic Discounts & Floating Promo Bubble
