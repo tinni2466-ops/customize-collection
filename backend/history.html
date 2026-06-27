@@ -1202,9 +1202,18 @@ function toggleGranularStock(attributeType, targetProduct, valueLabel, buttonNod
 document.addEventListener("DOMContentLoaded", renderInventoryCoreManagement);
 
 // Automatically check if the server already knows we are logged in
-window.addEventListener('DOMContentLoaded', () => {
-    // If you already verified recently, the server session handles it, but let's secure the interface view
-    document.getElementById('twoFactorPinInput').focus();
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch('/api/admin/session-status', { credentials: 'include' });
+        const data = await res.json();
+        if (data.authenticated) {
+            document.getElementById('twoFactorWall').style.display = 'none';
+        } else {
+            document.getElementById('twoFactorPinInput').focus();
+        }
+    } catch {
+        document.getElementById('twoFactorPinInput').focus();
+    }
 });
 
 async function submitAdmin2FACode() {
@@ -1217,6 +1226,7 @@ async function submitAdmin2FACode() {
     const response = await fetch('/api/verify-2fa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ token: pinCode })
     });
 
@@ -4642,7 +4652,7 @@ const sareeMaterials = {
             const key = resolveColorKey(hex.toLowerCase());
             return !savedStock[`${productKey}||Color Variant||${key}`];
         });
-        if (available.length === 0) return ALL_RANDOM_COLORS[Math.floor(Math.random() * ALL_RANDOM_COLORS.length)];
+        if (available.length === 0) return null;
         return available[Math.floor(Math.random() * available.length)];
     }
 
@@ -4655,8 +4665,8 @@ const sareeMaterials = {
             const type  = isObjects ? "Material option" : "Size Option";
             return !savedStock[`${productKey}||${type}||${label}`];
         });
-        const pool = available.length > 0 ? available : list;
-        return pool[Math.floor(Math.random() * pool.length)];
+        if (available.length === 0) return null;
+        return available[Math.floor(Math.random() * available.length)];
     }
 
     function _wrapWithStockContext(fn, productKey) {
@@ -4725,7 +4735,179 @@ const sareeMaterials = {
     }
 
 })();
-    
+
+// ── ADMIN REAL-TIME BRIDGE v3 ────────────────────────────────────
+(function () {
+    'use strict';
+
+    const BACKEND = window.location.origin.includes('localhost')
+        ? window.location.origin
+        : 'https://customize-collection.onrender.com';
+
+    function getOrderFromCache(orderId) {
+        try {
+            const list = JSON.parse(localStorage.getItem('allOrdersData') || '[]');
+            return Array.isArray(list) ? list.find(o => o.orderId === orderId) : null;
+        } catch { return null; }
+    }
+
+    function saveOrderToCache(updatedOrder) {
+        try {
+            let list = JSON.parse(localStorage.getItem('allOrdersData') || '[]');
+            if (!Array.isArray(list)) list = [];
+            const idx = list.findIndex(o => o.orderId === updatedOrder.orderId);
+            if (idx >= 0) list[idx] = updatedOrder; else list.push(updatedOrder);
+            localStorage.setItem('allOrdersData', JSON.stringify(list));
+        } catch { }
+    }
+
+    function mergeIncomingMessage(orderId, payload) {
+        const order = getOrderFromCache(orderId);
+        if (!order) return;
+        order.chatLedgerHistory = order.chatLedgerHistory || [];
+        const sender = payload.sender || (payload.isAudio ? 'Customer' : 'Customer');
+        const entry = {
+            id: payload.id || Date.now(),
+            sender: sender,
+            text: payload.message || payload.text || '',
+            stamp: payload.stamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isAudio: !!payload.isAudio,
+            audioUrl: payload.audioUrl || ''
+        };
+        if (order.chatLedgerHistory.some(m => m.id === entry.id)) return;
+        order.chatLedgerHistory.push(entry);
+        if (payload.chatEnabled !== undefined) order.chatEnabled = payload.chatEnabled;
+        saveOrderToCache(order);
+    }
+
+    function refreshSelectedOrderUI(orderId) {
+        if (typeof targetedOrderId !== 'undefined' && targetedOrderId === orderId) {
+            if (typeof loadSelectedOrderChat === 'function') loadSelectedOrderChat();
+            if (typeof loadSelectedOrderDetails === 'function') loadSelectedOrderDetails();
+        }
+    }
+
+    const _origStartChat = window.startSelectedOrderChat;
+    window.startSelectedOrderChat = function () {
+        if (typeof _origStartChat === 'function') _origStartChat();
+        const orderId = (typeof targetedOrderId !== 'undefined') ? targetedOrderId : null;
+        if (!orderId) return;
+
+        fetch(BACKEND + '/api/admin/toggle-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ orderId, enabled: true })
+        }).then(r => r.json()).then(data => {
+            if (data && data.chatEnabled) {
+                const order = getOrderFromCache(orderId);
+                if (order) {
+                    order.chatEnabled = true;
+                    order.adminChatStarted = true;
+                    saveOrderToCache(order);
+                }
+            }
+        }).catch(() => {});
+    };
+
+    let adminRealtimeSocket = null;
+
+    function connectAdminRealtimeSocket() {
+        if (typeof io === 'undefined') { setTimeout(connectAdminRealtimeSocket, 500); return; }
+        if (adminRealtimeSocket && adminRealtimeSocket.connected) return;
+
+        try {
+            adminRealtimeSocket = io(BACKEND, { transports: ['polling', 'websocket'] });
+
+            adminRealtimeSocket.on('connect', () => {
+                adminRealtimeSocket.emit('join_admin_channel');
+            });
+
+            adminRealtimeSocket.on('customer_message_received', (data) => {
+                if (!data || !data.orderId) return;
+                mergeIncomingMessage(data.orderId, data);
+                refreshSelectedOrderUI(data.orderId);
+                if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            });
+
+            adminRealtimeSocket.on('receive_chat_message', (data) => {
+                if (!data || !data.orderId) return;
+                mergeIncomingMessage(data.orderId, {
+                    id: data.id,
+                    sender: data.sender || 'Owner',
+                    message: data.text || data.message,
+                    stamp: data.stamp,
+                    isAudio: data.isAudio,
+                    audioUrl: data.audioUrl
+                });
+                refreshSelectedOrderUI(data.orderId);
+            });
+
+            adminRealtimeSocket.on('chat_status_updated', (data) => {
+                if (!data || !data.orderId) return;
+                const order = getOrderFromCache(data.orderId);
+                if (order) {
+                    order.chatEnabled = !!data.chatEnabled;
+                    saveOrderToCache(order);
+                }
+                refreshSelectedOrderUI(data.orderId);
+            });
+
+            adminRealtimeSocket.on('orders_updated', () => {
+                if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            });
+
+            adminRealtimeSocket.on('inventory_cache_updated', (data) => {
+                if (data && data.cache) {
+                    localStorage.setItem('storefront_inventory_cache', JSON.stringify(data.cache));
+                    if (typeof renderInventoryCoreManagement === 'function') renderInventoryCoreManagement();
+                    if (typeof applyMasterStockSync === 'function') applyMasterStockSync();
+                    window.dispatchEvent(new Event('storage'));
+                }
+            });
+
+            adminRealtimeSocket.on('order_status_changed', () => {
+                if (typeof loadAdminOrders === 'function') loadAdminOrders();
+            });
+        } catch (e) {
+            console.warn('[Admin Realtime] Socket error:', e);
+        }
+    }
+
+    connectAdminRealtimeSocket();
+
+    async function pollAdminState() {
+        try {
+            const res = await fetch('/api/all-orders', { credentials: 'include' });
+            if (!res.ok) return;
+            const orders = await res.json();
+            if (!Array.isArray(orders)) return;
+
+            localStorage.setItem('allOrdersData', JSON.stringify(orders));
+            if (typeof targetedOrderId !== 'undefined' && targetedOrderId) {
+                refreshSelectedOrderUI(targetedOrderId);
+            }
+            if (typeof loadAdminOrders === 'function') loadAdminOrders();
+        } catch { }
+
+        try {
+            const invRes = await fetch(BACKEND + '/api/get-inventory-cache');
+            if (invRes.ok) {
+                const cache = await invRes.json();
+                if (cache && Object.keys(cache).length > 0) {
+                    localStorage.setItem('storefront_inventory_cache', JSON.stringify(cache));
+                    if (typeof renderInventoryCoreManagement === 'function') renderInventoryCoreManagement();
+                    if (typeof applyMasterStockSync === 'function') applyMasterStockSync();
+                }
+            }
+        } catch { }
+    }
+
+    setInterval(pollAdminState, 4000);
+
+    console.log('[Admin Realtime Bridge v3] Loaded.');
+})();
+
 </script>
 </body>
 </html>
