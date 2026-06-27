@@ -28,7 +28,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        httpOnly: true
+        httpOnly: true,
+        sameSite: 'lax'
         // No maxAge = session cookie; browser clears it on close
     }
 }));
@@ -166,7 +167,7 @@ io.on('connection', (socket) => {
 app.use(express.static(path.join(__dirname, '../')));
 
 // =============================================================
-// INVENTORY ROUTES (SYNCHRONIZED REAL-TIME VERSION)
+// INVENTORY ROUTES
 // =============================================================
 app.get('/api/inventory', (req, res) => {
     db.all('SELECT * FROM inventory', [], (err, rows) => res.json(rows));
@@ -174,24 +175,15 @@ app.get('/api/inventory', (req, res) => {
 
 app.post('/api/inventory/toggle', (req, res) => {
     const { id, status } = req.body;
-    
-    db.run('UPDATE inventory SET status = ? WHERE id = ?', [status, id], function (err) {
-        if (err) {
-            console.error('Failed to update product stock status:', err.message);
-            return res.status(500).json({ success: false, error: err.message });
-        }
-        
-        console.log(`📦 Real-time Sync: Product ID ${id} set to status ${status}`);
+    db.run('UPDATE inventory SET status = ? WHERE id = ?', [status, id], () => res.json({ success: true }));
+});
 
-        // 🔥 THE FIX: Instantly broadcast the updated stock status across the WebSocket pipe
-        // This alerts index.html, product-details.html, and all other templates to adapt immediately.
-        io.emit('product_status_updated', { 
-            id: parseInt(id), 
-            status: parseInt(status) 
-        });
-        
-        res.json({ success: true, id, status });
-    });
+app.get('/api/chat/history/:orderId', (req, res) => {
+    db.all(
+        'SELECT * FROM order_chats WHERE order_id = ? ORDER BY logged_time ASC',
+        [req.params.orderId],
+        (err, rows) => res.json(rows)
+    );
 });
 
 // =============================================================
@@ -340,6 +332,11 @@ app.post('/api/verify-2fa', (req, res) => {
     }
 });
 
+// Session probe — lets history.html skip 2FA wall on refresh when cookie is still valid
+app.get('/api/admin/session-status', (req, res) => {
+    res.json({ authenticated: !!req.session.isAdminAuthenticated });
+});
+
 // =============================================================
 // SECURE ADMIN GATEWAY (Fixes Page Refresh Loop Error)
 // =============================================================
@@ -444,12 +441,44 @@ app.post('/api/admin/toggle-chat', (req, res) => {
     const statusValue = enabled ? 1 : 0;
     db.run('UPDATE orders SET chat_enabled = ? WHERE order_id = ?', [statusValue, orderId], (err) => {
         if (err) return res.status(500).json({ success: false, error: err.message });
-        
-        // Broadcast change in real-time across WebSockets to lock/unlock inputs immediately
-        io.to(orderId).emit('chat_status_updated', { orderId, chatEnabled: !!statusValue });
-        io.to('admin_room').emit('chat_status_updated', { orderId, chatEnabled: !!statusValue });
-        
-        res.json({ success: true, chatEnabled: !!statusValue });
+
+        const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        function broadcastChatStatus() {
+            io.to(orderId).emit('chat_status_updated', { orderId, chatEnabled: !!statusValue });
+            io.to('admin_room').emit('chat_status_updated', { orderId, chatEnabled: !!statusValue });
+            io.to('admin_room').emit('orders_updated', { orderId });
+            res.json({ success: true, chatEnabled: !!statusValue });
+        }
+
+        if (!statusValue) {
+            return broadcastChatStatus();
+        }
+
+        db.get('SELECT chat_history FROM orders WHERE order_id = ?', [orderId], (histErr, row) => {
+            if (histErr || !row) return broadcastChatStatus();
+
+            let history = [];
+            try { history = JSON.parse(row.chat_history || '[]'); } catch { }
+
+            const noticeText = 'The store owner has opened chat. You can now send messages and voice notes.';
+            if (!history.some(m => m.text === noticeText)) {
+                const entry = { id: Date.now(), sender: 'System', text: noticeText, stamp };
+                history.push(entry);
+                db.run('UPDATE orders SET chat_history = ? WHERE order_id = ?',
+                    [JSON.stringify(history), orderId],
+                    () => {
+                        io.to(orderId).emit('receive_chat_message', { orderId, ...entry });
+                        io.to('admin_room').emit('customer_message_received', {
+                            orderId, message: noticeText, sender: 'System', stamp, id: entry.id
+                        });
+                        broadcastChatStatus();
+                    }
+                );
+            } else {
+                broadcastChatStatus();
+            }
+        });
     });
 });
 
@@ -498,8 +527,9 @@ app.post('/api/customer-send-chat', (req, res) => {
         db.run('UPDATE orders SET chat_history = ? WHERE order_id = ?',
             [JSON.stringify(history), orderId],
             () => {
-                // Emit symmetrically to admin tracking view and individual customer views
-                io.to('admin_room').emit('customer_message_received', { orderId, message, stamp });
+                const payload = { orderId, message, stamp, id: entry.id, sender: 'Customer' };
+                io.to('admin_room').emit('customer_message_received', payload);
+                io.to('admin_room').emit('orders_updated', { orderId });
                 io.to(orderId).emit('receive_chat_message', { orderId, ...entry });
                 res.json({ success: true });
             }
@@ -579,38 +609,15 @@ app.post('/api/send-voice-message', uploadVoice.single('audio'), (req, res) => {
         db.run('UPDATE orders SET chat_history = ? WHERE order_id = ?',
             [JSON.stringify(history), orderId],
             () => {
-                // Real-time synchronization fallback triggers across general admin panels and order rooms
                 io.to('admin_room').emit('customer_message_received', {
-                    orderId, message: messageText, isAudio: true, audioUrl, stamp: msgStamp
+                    orderId, message: messageText, isAudio: true, audioUrl,
+                    stamp: msgStamp, id: entry.id, sender: 'Customer'
                 });
-                io.to(orderId).emit('receive_chat_message', {
-                    orderId, ...entry
-                });
+                io.to('admin_room').emit('orders_updated', { orderId });
+                io.to(orderId).emit('receive_chat_message', { orderId, ...entry });
                 res.json({ success: true, audioUrl });
             }
         );
-    });
-});
-
-// ── GET CURRENT INVENTORY CACHE FROM DATABASE ──────────────────
-app.get('/api/get-inventory-cache', (req, res) => {
-    db.all('SELECT * FROM inventory_cache', [], (err, rows) => {
-        if (err) {
-            console.error('Failed to fetch inventory cache:', err.message);
-            return res.status(500).json({ error: err.message });
-        }
-
-        // Reconstruct the cache object from the database rows
-        const cache = {};
-        rows.forEach(row => {
-            try {
-                cache[row.cache_key] = JSON.parse(row.cache_value);
-            } catch (e) {
-                cache[row.cache_key] = row.cache_value;
-            }
-        });
-
-        res.json(cache);
     });
 });
 
@@ -658,6 +665,21 @@ app.post('/api/sync-inventory', (req, res) => {
         }
 
         insertNext(); // Initialize execution chain
+    });
+});
+
+app.get('/api/get-inventory-cache', (req, res) => {
+    db.all('SELECT cache_key, cache_value FROM inventory_cache', [], (err, rows) => {
+        if (err) return res.status(500).json({});
+        const cache = {};
+        (rows || []).forEach(row => {
+            try {
+                cache[row.cache_key] = JSON.parse(row.cache_value);
+            } catch {
+                cache[row.cache_key] = row.cache_value;
+            }
+        });
+        res.json(cache);
     });
 });
 
