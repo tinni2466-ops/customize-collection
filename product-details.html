@@ -5928,7 +5928,7 @@ function _stockAwareGetRandomColor() {
         const key = resolveColorKey(hex.toLowerCase());
         return !savedStock[`${productKey}||Color Variant||${key}`];
     });
-    if (available.length === 0) return ALL_RANDOM_COLORS[Math.floor(Math.random() * ALL_RANDOM_COLORS.length)];
+    if (available.length === 0) return null;
     return available[Math.floor(Math.random() * available.length)];
 }
 
@@ -5941,8 +5941,8 @@ function _stockAwareRandomPick(list) {
         const type  = isObjects ? "Material option" : "Size Option";
         return !savedStock[`${productKey}||${type}||${label}`];
     });
-    const pool = available.length > 0 ? available : list;
-    return pool[Math.floor(Math.random() * pool.length)];
+    if (available.length === 0) return null;
+    return available[Math.floor(Math.random() * available.length)];
 }
 
 function _wrapWithStockContext(fn, productKey) {
